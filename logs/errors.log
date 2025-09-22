@@ -1,0 +1,106 @@
+2025-09-22 12:15:14 - src.resume_parser.core.parser - ERROR - Error parsing resume text: 'HybridExtractor' object has no attribute 'calculate_total_experience'
+2025-09-22 12:15:14 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'HybridExtractor' object has no attribute 'calculate_total_experience'
+2025-09-22 12:19:32 - src.resume_parser.core.parser - ERROR - Error parsing resume text: 'HybridExtractor' object has no attribute 'calculate_total_experience'
+2025-09-22 12:19:32 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'HybridExtractor' object has no attribute 'calculate_total_experience'
+2025-09-22 12:20:36 - src.resume_parser.core.parser - ERROR - Error parsing resume text: 'description'
+2025-09-22 12:20:36 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'description'
+2025-09-22 12:22:18 - src.resume_parser.core.parser - ERROR - Error parsing resume text: 'description'
+2025-09-22 12:22:18 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'description'
+2025-09-22 12:24:41 - src.resume_parser.core.parser - ERROR - Error parsing resume text: 'description'
+2025-09-22 12:24:41 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'description'
+2025-09-22 12:25:39 - src.resume_parser.core.parser - ERROR - Error parsing resume text: 'description'
+2025-09-22 12:25:39 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'description'
+2025-09-22 12:28:15 - app - ERROR - Error in resume search: Error code: 404 - {'error': {'code': '404', 'message': 'Resource not found'}}
+2025-09-22 12:29:16 - app - ERROR - Error in resume search: Error code: 404 - {'error': {'code': '404', 'message': 'Resource not found'}}
+2025-09-22 12:29:50 - src.resume_parser.core.parser - ERROR - Error parsing resume text: 'description'
+2025-09-22 12:29:50 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'description'
+2025-09-22 15:31:42 - src.resume_parser.core.parser - ERROR - Error parsing resume text: 'description'
+2025-09-22 15:31:42 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'description'
+2025-09-22 15:33:32 - src.resume_parser.core.parser - ERROR - Error parsing resume text: 'description'
+2025-09-22 15:33:32 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'description'
+2025-09-22 15:35:23 - src.resume_parser.core.parser - ERROR - Error parsing resume text: 'description'
+2025-09-22 15:35:23 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'description'
+2025-09-22 15:37:44 - src.resume_parser.core.parser - ERROR - Error parsing resume text: 'description'
+2025-09-22 15:37:44 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'description'
+2025-09-22 15:39:12 - src.resume_parser.core.parser - ERROR - Error parsing resume text: 'description'
+2025-09-22 15:39:12 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'description'
+2025-09-22 15:40:48 - src.resume_parser.core.parser - ERROR - Error in experience calculation: 'description'
+2025-09-22 15:40:49 - src.resume_parser.core.parser - ERROR - Error creating embedding: Error code: 404 - {'error': {'code': '404', 'message': 'Resource not found'}}
+2025-09-22 15:40:49 - app - ERROR - ❌ Error processing resume: Object of type datetime is not JSON serializable
+2025-09-22 15:42:43 - src.resume_parser.core.parser - ERROR - Error in experience calculation: 'description'
+2025-09-22 15:44:32 - app - ERROR - Error in resume search: object CreateEmbeddingResponse can't be used in 'await' expression
+2025-09-22 15:51:01 - src.resume_parser.database.qdrant_client - ERROR - Error searching similar embeddings: 2 validation errors for Filter
+role_category
+  Extra inputs are not permitted [type=extra_forbidden, input_value={'$in': ['HR Manager', 'H...'Business Development']}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/extra_forbidden
+seniority
+  Extra inputs are not permitted [type=extra_forbidden, input_value={'$in': ['Manager', 'Team Lead']}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/extra_forbidden
+2025-09-22 15:51:01 - app - ERROR - Error in resume search: 2 validation errors for Filter
+role_category
+  Extra inputs are not permitted [type=extra_forbidden, input_value={'$in': ['HR Manager', 'H...'Business Development']}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/extra_forbidden
+seniority
+  Extra inputs are not permitted [type=extra_forbidden, input_value={'$in': ['Manager', 'Team Lead']}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/extra_forbidden
+2025-09-22 15:51:19 - src.resume_parser.database.qdrant_client - ERROR - Error searching similar embeddings: 2 validation errors for Filter
+role_category
+  Extra inputs are not permitted [type=extra_forbidden, input_value={'$in': ['HR Manager', 'H...'Business Development']}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/extra_forbidden
+seniority
+  Extra inputs are not permitted [type=extra_forbidden, input_value={'$in': ['Manager', 'Team Lead']}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/extra_forbidden
+2025-09-22 15:51:19 - app - ERROR - Error in resume search: 2 validation errors for Filter
+role_category
+  Extra inputs are not permitted [type=extra_forbidden, input_value={'$in': ['HR Manager', 'H...'Business Development']}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/extra_forbidden
+seniority
+  Extra inputs are not permitted [type=extra_forbidden, input_value={'$in': ['Manager', 'Team Lead']}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/extra_forbidden
+2025-09-22 16:20:41 - app - ERROR - ❌ Error processing file 1 (test_resume1.txt): ResumeParser.process_resume_file() missing 1 required positional argument: 'file_size'
+2025-09-22 16:20:41 - app - ERROR - ❌ Error processing file 2 (test_resume2.txt): ResumeParser.process_resume_file() missing 1 required positional argument: 'file_size'
+2025-09-22 16:21:30 - src.resume_parser.utils.file_handler - ERROR - Error extracting text from file: 'str' object has no attribute 'name'
+2025-09-22 16:21:30 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'str' object has no attribute 'name'
+2025-09-22 16:21:30 - app - ERROR - ❌ Error processing file 1 (test_resume1.txt): Failed to parse resume: 'str' object has no attribute 'name'
+2025-09-22 16:21:30 - src.resume_parser.utils.file_handler - ERROR - Error extracting text from file: 'str' object has no attribute 'name'
+2025-09-22 16:21:30 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'str' object has no attribute 'name'
+2025-09-22 16:21:30 - app - ERROR - ❌ Error processing file 2 (test_resume2.txt): Failed to parse resume: 'str' object has no attribute 'name'
+2025-09-22 16:22:19 - src.resume_parser.utils.file_handler - ERROR - Error extracting text from file: 'str' object has no attribute 'name'
+2025-09-22 16:22:19 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'str' object has no attribute 'name'
+2025-09-22 16:22:19 - app - ERROR - ❌ Error processing file 1 (test_resume1.txt): Failed to parse resume: 'str' object has no attribute 'name'
+2025-09-22 16:22:19 - src.resume_parser.utils.file_handler - ERROR - Error extracting text from file: 'str' object has no attribute 'name'
+2025-09-22 16:22:19 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'str' object has no attribute 'name'
+2025-09-22 16:22:19 - app - ERROR - ❌ Error processing file 2 (test_resume2.txt): Failed to parse resume: 'str' object has no attribute 'name'
+2025-09-22 16:23:00 - src.resume_parser.utils.file_handler - ERROR - Error extracting text from file: 'str' object has no attribute 'name'
+2025-09-22 16:23:00 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'str' object has no attribute 'name'
+2025-09-22 16:23:00 - app - ERROR - ❌ Error processing file 1 (test_resume1.txt): Failed to parse resume: 'str' object has no attribute 'name'
+2025-09-22 16:23:52 - src.resume_parser.core.parser - ERROR - Error in experience calculation: 'description'
+2025-09-22 16:24:30 - src.resume_parser.utils.file_handler - ERROR - Error extracting text from file: 'str' object has no attribute 'name'
+2025-09-22 16:24:30 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'str' object has no attribute 'name'
+2025-09-22 16:24:30 - app - ERROR - ❌ Error processing file 1 (test_resume1.txt): Failed to parse resume: 'str' object has no attribute 'name'
+2025-09-22 16:26:30 - src.resume_parser.utils.file_handler - ERROR - Error extracting text from file: 'str' object has no attribute 'name'
+2025-09-22 16:26:30 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'str' object has no attribute 'name'
+2025-09-22 16:26:30 - app - ERROR - ❌ Error processing file 1 (test_resume1.txt): Failed to parse resume: 'str' object has no attribute 'name'
+2025-09-22 16:26:30 - src.resume_parser.utils.file_handler - ERROR - Error extracting text from file: 'str' object has no attribute 'name'
+2025-09-22 16:26:30 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'str' object has no attribute 'name'
+2025-09-22 16:26:30 - app - ERROR - ❌ Error processing file 2 (test_resume2.txt): Failed to parse resume: 'str' object has no attribute 'name'
+2025-09-22 16:27:11 - src.resume_parser.core.parser - ERROR - Error in experience calculation: 'description'
+2025-09-22 16:28:41 - src.resume_parser.utils.file_handler - ERROR - Error extracting text from file: 'str' object has no attribute 'name'
+2025-09-22 16:28:41 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'str' object has no attribute 'name'
+2025-09-22 16:28:41 - app - ERROR - ❌ Error processing file 1 (test_resume1.txt): Failed to parse resume: 'str' object has no attribute 'name'
+2025-09-22 16:28:41 - src.resume_parser.utils.file_handler - ERROR - Error extracting text from file: 'str' object has no attribute 'name'
+2025-09-22 16:28:41 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'str' object has no attribute 'name'
+2025-09-22 16:28:41 - app - ERROR - ❌ Error processing file 2 (test_resume2.txt): Failed to parse resume: 'str' object has no attribute 'name'
+2025-09-22 16:30:13 - src.resume_parser.utils.file_handler - ERROR - Error extracting text from file: 'str' object has no attribute 'name'
+2025-09-22 16:30:13 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'str' object has no attribute 'name'
+2025-09-22 16:30:13 - app - ERROR - ❌ Error processing file 1 (test_resume1.txt): Failed to parse resume: 'str' object has no attribute 'name'
+2025-09-22 16:30:13 - src.resume_parser.utils.file_handler - ERROR - Error extracting text from file: 'str' object has no attribute 'name'
+2025-09-22 16:30:13 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'str' object has no attribute 'name'
+2025-09-22 16:30:13 - app - ERROR - ❌ Error processing file 2 (test_resume2.txt): Failed to parse resume: 'str' object has no attribute 'name'
+2025-09-22 16:31:12 - src.resume_parser.core.parser - ERROR - Error in experience calculation: 'description'
+2025-09-22 16:31:26 - src.resume_parser.core.parser - ERROR - Error in experience calculation: 'description'
+2025-09-22 16:32:49 - src.resume_parser.core.parser - ERROR - Error in experience calculation: 'description'
+2025-09-22 16:33:04 - src.resume_parser.core.parser - ERROR - Error in experience calculation: 'description'
+2025-09-22 16:33:21 - src.resume_parser.core.parser - ERROR - Error in experience calculation: 'description'
+2025-09-22 16:33:54 - src.resume_parser.core.parser - ERROR - Error in experience calculation: 'description'
+2025-09-22 17:08:04 - app - ERROR - Error in resume search: Connection error.

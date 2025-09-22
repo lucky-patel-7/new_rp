@@ -1,0 +1,40 @@
+Sarah Johnson
+Data Scientist
+Email: sarah.johnson@datatech.com
+Phone: +1-555-987-6543
+Location: New York, NY
+
+SUMMARY
+Experienced Data Scientist with 4+ years of experience in machine learning and statistical analysis.
+Expertise in Python, R, and big data technologies.
+
+SKILLS
+- Programming: Python, R, SQL, Scala
+- Machine Learning: Scikit-learn, TensorFlow, PyTorch
+- Data Analysis: Pandas, NumPy, Matplotlib, Seaborn
+- Big Data: Spark, Hadoop, Kafka
+- Cloud: AWS, GCP, Azure
+- Tools: Jupyter, Git, Docker
+
+EXPERIENCE
+Senior Data Scientist at DataTech Inc (2022 - Present)
+- Developed machine learning models for customer segmentation and recommendation systems
+- Built data pipelines processing 10M+ records daily using Apache Spark
+- Collaborated with product teams to implement A/B testing frameworks
+- Improved model accuracy by 25% through feature engineering and hyperparameter tuning
+
+Data Analyst at Analytics Corp (2020 - 2022)
+- Performed statistical analysis on customer behavior data
+- Created interactive dashboards using Tableau and Power BI
+- Conducted market research and competitive analysis
+
+EDUCATION
+Master of Science in Data Science
+Stanford University (2020)
+
+Bachelor of Science in Mathematics
+MIT (2018)
+
+PROJECTS
+Customer Churn Prediction - Built ML model achieving 92% accuracy using ensemble methods
+Real-time Fraud Detection - Implemented streaming analytics pipeline with 99.9% uptime

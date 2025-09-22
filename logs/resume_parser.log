@@ -1,0 +1,1713 @@
+2025-09-22 12:12:21 - root - INFO - Logging configured with level: INFO
+2025-09-22 12:12:21 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 12:12:21 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 12:13:58 - root - INFO - Logging configured with level: INFO
+2025-09-22 12:13:58 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 12:13:58 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 12:13:58 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 12:13:58 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 12:13:58 - app - INFO - 🔧 Debug mode: False
+2025-09-22 12:13:58 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resumes', 'points_count': 0, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 12:14:59 - app - INFO - 📄 Processing resume upload: Resume-Lucky.pdf
+2025-09-22 12:14:59 - app - INFO - 📊 File size: 90507 bytes
+2025-09-22 12:14:59 - src.resume_parser.utils.file_handler - INFO - Extracting text from application/pdf file: tmp9_bb6_wz.pdf
+2025-09-22 12:14:59 - src.resume_parser.core.parser - INFO - Starting resume parsing for user: 1f09728b-f2e2-418e-80bb-6e6d6ec434ee
+2025-09-22 12:15:14 - src.resume_parser.core.parser - ERROR - Error parsing resume text: 'HybridExtractor' object has no attribute 'calculate_total_experience'
+2025-09-22 12:15:14 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'HybridExtractor' object has no attribute 'calculate_total_experience'
+2025-09-22 12:18:50 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 12:18:51 - root - INFO - Logging configured with level: INFO
+2025-09-22 12:18:51 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 12:18:51 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 12:18:51 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 12:18:51 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 12:18:51 - app - INFO - 🔧 Debug mode: False
+2025-09-22 12:18:51 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resumes', 'points_count': 0, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 12:19:07 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 12:19:08 - root - INFO - Logging configured with level: INFO
+2025-09-22 12:19:08 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 12:19:08 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 12:19:08 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 12:19:08 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 12:19:08 - app - INFO - 🔧 Debug mode: False
+2025-09-22 12:19:08 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resumes', 'points_count': 0, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 12:19:10 - app - INFO - 📄 Processing resume upload: Resume-Lucky.pdf
+2025-09-22 12:19:10 - app - INFO - 📊 File size: 90507 bytes
+2025-09-22 12:19:10 - src.resume_parser.utils.file_handler - INFO - Extracting text from application/pdf file: tmp6ger9s8m.pdf
+2025-09-22 12:19:10 - src.resume_parser.core.parser - INFO - Starting resume parsing for user: f510284e-bf8f-43c2-9ac9-0880d9e9ee92
+2025-09-22 12:19:32 - src.resume_parser.core.parser - ERROR - Error parsing resume text: 'HybridExtractor' object has no attribute 'calculate_total_experience'
+2025-09-22 12:19:32 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'HybridExtractor' object has no attribute 'calculate_total_experience'
+2025-09-22 12:20:19 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 12:20:20 - root - INFO - Logging configured with level: INFO
+2025-09-22 12:20:20 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 12:20:20 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 12:20:20 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 12:20:20 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 12:20:20 - app - INFO - 🔧 Debug mode: False
+2025-09-22 12:20:20 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resumes', 'points_count': 0, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 12:20:21 - app - INFO - 📄 Processing resume upload: Resume-Lucky.pdf
+2025-09-22 12:20:21 - app - INFO - 📊 File size: 90507 bytes
+2025-09-22 12:20:21 - src.resume_parser.utils.file_handler - INFO - Extracting text from application/pdf file: tmpplxrus4e.pdf
+2025-09-22 12:20:21 - src.resume_parser.core.parser - INFO - Starting resume parsing for user: 2cf2d505-c9fd-4054-b1ca-9ca9fcbee727
+2025-09-22 12:20:36 - src.resume_parser.core.parser - ERROR - Error parsing resume text: 'description'
+2025-09-22 12:20:36 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'description'
+2025-09-22 12:21:39 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 12:21:40 - root - INFO - Logging configured with level: INFO
+2025-09-22 12:21:40 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 12:21:40 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 12:21:40 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 12:21:40 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 12:21:40 - app - INFO - 🔧 Debug mode: False
+2025-09-22 12:21:40 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resumes', 'points_count': 0, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 12:21:49 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 12:21:50 - root - INFO - Logging configured with level: INFO
+2025-09-22 12:21:50 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 12:21:50 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 12:21:50 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 12:21:50 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 12:21:50 - app - INFO - 🔧 Debug mode: False
+2025-09-22 12:21:50 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resumes', 'points_count': 0, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 12:21:51 - app - INFO - 📄 Processing resume upload: Resume-Lucky.pdf
+2025-09-22 12:21:51 - app - INFO - 📊 File size: 90507 bytes
+2025-09-22 12:21:51 - src.resume_parser.utils.file_handler - INFO - Extracting text from application/pdf file: tmpadwk70uz.pdf
+2025-09-22 12:21:51 - src.resume_parser.core.parser - INFO - Starting resume parsing for user: ce372bc9-d473-4529-bfe9-db8cf4a25a41
+2025-09-22 12:22:18 - src.resume_parser.core.parser - ERROR - Error parsing resume text: 'description'
+2025-09-22 12:22:18 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'description'
+2025-09-22 12:23:39 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 12:23:40 - root - INFO - Logging configured with level: INFO
+2025-09-22 12:23:40 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 12:23:40 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 12:23:40 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 12:23:40 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 12:23:40 - app - INFO - 🔧 Debug mode: False
+2025-09-22 12:23:40 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 1, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 12:24:21 - app - INFO - 📄 Processing resume upload: Resume-Lucky.pdf
+2025-09-22 12:24:21 - app - INFO - 📊 File size: 90507 bytes
+2025-09-22 12:24:21 - src.resume_parser.utils.file_handler - INFO - Extracting text from application/pdf file: tmpaiayp_6p.pdf
+2025-09-22 12:24:21 - src.resume_parser.core.parser - INFO - Starting resume parsing for user: 656ce95a-4b54-47bd-997b-d8380f3ac80a
+2025-09-22 12:24:41 - src.resume_parser.core.parser - ERROR - Error parsing resume text: 'description'
+2025-09-22 12:24:41 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'description'
+2025-09-22 12:25:16 - app - INFO - 📄 Processing resume upload: Ranjeet Kumar 2025.docx
+2025-09-22 12:25:16 - app - INFO - 📊 File size: 60162 bytes
+2025-09-22 12:25:16 - src.resume_parser.utils.file_handler - INFO - Extracting text from application/vnd.openxmlformats-officedocument.wordprocessingml.document file: tmpnj928vc7.docx
+2025-09-22 12:25:24 - app - INFO - 📄 Processing resume upload: Kiran Jaybhaye.pdf
+2025-09-22 12:25:24 - app - INFO - 📊 File size: 207330 bytes
+2025-09-22 12:25:24 - src.resume_parser.utils.file_handler - INFO - Extracting text from application/pdf file: tmp1miq472y.pdf
+2025-09-22 12:25:24 - src.resume_parser.core.parser - INFO - Starting resume parsing for user: 4c5f1aff-1699-43b9-9e77-05315c0991ba
+2025-09-22 12:25:39 - src.resume_parser.core.parser - ERROR - Error parsing resume text: 'description'
+2025-09-22 12:25:39 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'description'
+2025-09-22 12:26:08 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 12:26:09 - root - INFO - Logging configured with level: INFO
+2025-09-22 12:26:09 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 12:26:09 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 12:26:09 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 12:26:09 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 12:26:09 - app - INFO - 🔧 Debug mode: False
+2025-09-22 12:26:09 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 1, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 12:27:39 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 12:27:40 - root - INFO - Logging configured with level: INFO
+2025-09-22 12:27:40 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 12:27:40 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 12:27:40 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 12:27:40 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 12:27:40 - app - INFO - 🔧 Debug mode: False
+2025-09-22 12:27:40 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 1, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 12:28:15 - app - ERROR - Error in resume search: Error code: 404 - {'error': {'code': '404', 'message': 'Resource not found'}}
+2025-09-22 12:28:23 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 12:28:24 - root - INFO - Logging configured with level: INFO
+2025-09-22 12:28:24 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 12:28:24 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 12:28:24 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 12:28:24 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 12:28:24 - app - INFO - 🔧 Debug mode: False
+2025-09-22 12:28:24 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 1, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 12:29:02 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 12:29:03 - root - INFO - Logging configured with level: INFO
+2025-09-22 12:29:03 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 12:29:03 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 12:29:03 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 12:29:03 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 12:29:03 - app - INFO - 🔧 Debug mode: False
+2025-09-22 12:29:03 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 1, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 12:29:08 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 12:29:09 - root - INFO - Logging configured with level: INFO
+2025-09-22 12:29:09 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 12:29:09 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 12:29:09 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 12:29:09 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 12:29:09 - app - INFO - 🔧 Debug mode: False
+2025-09-22 12:29:09 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 1, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 12:29:16 - app - ERROR - Error in resume search: Error code: 404 - {'error': {'code': '404', 'message': 'Resource not found'}}
+2025-09-22 12:29:23 - app - INFO - 📄 Processing resume upload: Resume-Lucky.pdf
+2025-09-22 12:29:23 - app - INFO - 📊 File size: 90507 bytes
+2025-09-22 12:29:23 - src.resume_parser.utils.file_handler - INFO - Extracting text from application/pdf file: tmp54tbpr7e.pdf
+2025-09-22 12:29:23 - src.resume_parser.core.parser - INFO - Starting resume parsing for user: be7de98a-cae8-4c9a-9d44-b9523f464a01
+2025-09-22 12:29:50 - src.resume_parser.core.parser - ERROR - Error parsing resume text: 'description'
+2025-09-22 12:29:50 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'description'
+2025-09-22 15:30:42 - root - INFO - Logging configured with level: INFO
+2025-09-22 15:30:42 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:30:42 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:30:42 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:30:42 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:30:42 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:30:42 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 1, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:31:33 - app - INFO - 📄 Processing resume upload: test_resume.txt
+2025-09-22 15:31:33 - app - INFO - 📊 File size: 1001 bytes
+2025-09-22 15:31:33 - src.resume_parser.utils.file_handler - INFO - Extracting text from text/plain file: tmp7qytdqx0.txt
+2025-09-22 15:31:33 - src.resume_parser.core.parser - INFO - Starting resume parsing for user: f6feaf02-7c0e-4358-862c-92a2af3bcc39
+2025-09-22 15:31:42 - src.resume_parser.core.parser - ERROR - Error parsing resume text: 'description'
+2025-09-22 15:31:42 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'description'
+2025-09-22 15:33:01 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 15:33:03 - root - INFO - Logging configured with level: INFO
+2025-09-22 15:33:03 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:33:03 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:33:03 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:33:03 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:33:03 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:33:03 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 1, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:33:06 - app - INFO - 📄 Processing resume upload: Resume-Lucky.pdf
+2025-09-22 15:33:06 - app - INFO - 📊 File size: 90507 bytes
+2025-09-22 15:33:06 - src.resume_parser.utils.file_handler - INFO - Extracting text from application/pdf file: tmpnzn75u1f.pdf
+2025-09-22 15:33:06 - src.resume_parser.core.parser - INFO - Starting resume parsing for user: 49c6a3a0-a8ac-4641-830b-c96c3e5ce999
+2025-09-22 15:33:32 - src.resume_parser.core.parser - ERROR - Error parsing resume text: 'description'
+2025-09-22 15:33:32 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'description'
+2025-09-22 15:34:20 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 15:34:21 - root - INFO - Logging configured with level: INFO
+2025-09-22 15:34:21 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:34:21 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:34:21 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:34:21 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:34:21 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:34:21 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 1, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:34:30 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 15:34:31 - root - INFO - Logging configured with level: INFO
+2025-09-22 15:34:31 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:34:31 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:34:31 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:34:31 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:34:31 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:34:31 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 1, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:34:36 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 15:34:37 - root - INFO - Logging configured with level: INFO
+2025-09-22 15:34:37 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:34:37 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:34:37 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:34:37 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:34:37 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:34:37 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 1, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:35:00 - app - INFO - 📄 Processing resume upload: Resume-Lucky.pdf
+2025-09-22 15:35:00 - app - INFO - 📊 File size: 90507 bytes
+2025-09-22 15:35:00 - src.resume_parser.utils.file_handler - INFO - Extracting text from application/pdf file: tmp9wnnmdk5.pdf
+2025-09-22 15:35:00 - src.resume_parser.core.parser - INFO - Starting resume parsing for user: ee21ad83-8af6-4499-a5e9-0e7a651db7ab
+2025-09-22 15:35:23 - src.resume_parser.core.parser - ERROR - Error parsing resume text: 'description'
+2025-09-22 15:35:23 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'description'
+2025-09-22 15:36:31 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 15:36:32 - root - INFO - Logging configured with level: INFO
+2025-09-22 15:36:32 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:36:32 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:36:32 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:36:32 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:36:32 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:36:32 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 1, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:36:42 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 15:36:43 - root - INFO - Logging configured with level: INFO
+2025-09-22 15:36:43 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:36:43 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:36:43 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:36:43 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:36:43 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:36:43 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 1, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:36:55 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 15:36:56 - root - INFO - Logging configured with level: INFO
+2025-09-22 15:36:56 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:36:56 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:36:56 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:36:56 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:36:56 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:36:56 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 1, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:37:00 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 15:37:00 - root - INFO - Logging configured with level: DEBUG
+2025-09-22 15:37:00 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:37:00 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:37:00 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:37:00 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:37:00 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:37:00 - httpcore.connection - DEBUG - connect_tcp.started host='localhost' port=6333 local_address=None timeout=5.0 socket_options=None
+2025-09-22 15:37:00 - httpcore.connection - DEBUG - connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x113316310>
+2025-09-22 15:37:00 - httpcore.http11 - DEBUG - send_request_headers.started request=<Request [b'GET']>
+2025-09-22 15:37:00 - httpcore.http11 - DEBUG - send_request_headers.complete
+2025-09-22 15:37:00 - httpcore.http11 - DEBUG - send_request_body.started request=<Request [b'GET']>
+2025-09-22 15:37:00 - httpcore.http11 - DEBUG - send_request_body.complete
+2025-09-22 15:37:00 - httpcore.http11 - DEBUG - receive_response_headers.started request=<Request [b'GET']>
+2025-09-22 15:37:00 - httpcore.http11 - DEBUG - receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Mon, 22 Sep 2025 10:07:00 GMT')])
+2025-09-22 15:37:00 - httpcore.http11 - DEBUG - receive_response_body.started request=<Request [b'GET']>
+2025-09-22 15:37:00 - httpcore.http11 - DEBUG - receive_response_body.complete
+2025-09-22 15:37:00 - httpcore.http11 - DEBUG - response_closed.started
+2025-09-22 15:37:00 - httpcore.http11 - DEBUG - response_closed.complete
+2025-09-22 15:37:00 - httpcore.connection - DEBUG - close.started
+2025-09-22 15:37:00 - httpcore.connection - DEBUG - close.complete
+2025-09-22 15:37:00 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 1, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:37:07 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 15:37:08 - root - INFO - Logging configured with level: DEBUG
+2025-09-22 15:37:08 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:37:08 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:37:08 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:37:08 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:37:08 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:37:08 - httpcore.connection - DEBUG - connect_tcp.started host='localhost' port=6333 local_address=None timeout=5.0 socket_options=None
+2025-09-22 15:37:08 - httpcore.connection - DEBUG - connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x110d820d0>
+2025-09-22 15:37:08 - httpcore.http11 - DEBUG - send_request_headers.started request=<Request [b'GET']>
+2025-09-22 15:37:08 - httpcore.http11 - DEBUG - send_request_headers.complete
+2025-09-22 15:37:08 - httpcore.http11 - DEBUG - send_request_body.started request=<Request [b'GET']>
+2025-09-22 15:37:08 - httpcore.http11 - DEBUG - send_request_body.complete
+2025-09-22 15:37:08 - httpcore.http11 - DEBUG - receive_response_headers.started request=<Request [b'GET']>
+2025-09-22 15:37:08 - httpcore.http11 - DEBUG - receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-encoding', b'gzip'), (b'date', b'Mon, 22 Sep 2025 10:07:08 GMT')])
+2025-09-22 15:37:08 - httpcore.http11 - DEBUG - receive_response_body.started request=<Request [b'GET']>
+2025-09-22 15:37:08 - httpcore.http11 - DEBUG - receive_response_body.complete
+2025-09-22 15:37:08 - httpcore.http11 - DEBUG - response_closed.started
+2025-09-22 15:37:08 - httpcore.http11 - DEBUG - response_closed.complete
+2025-09-22 15:37:08 - httpcore.connection - DEBUG - close.started
+2025-09-22 15:37:08 - httpcore.connection - DEBUG - close.complete
+2025-09-22 15:37:08 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 1, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:37:12 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 15:37:13 - root - INFO - Logging configured with level: DEBUG
+2025-09-22 15:37:13 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:37:13 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:37:13 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:37:13 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:37:13 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:37:13 - httpcore.connection - DEBUG - connect_tcp.started host='localhost' port=6333 local_address=None timeout=5.0 socket_options=None
+2025-09-22 15:37:13 - httpcore.connection - DEBUG - connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x110e6dfd0>
+2025-09-22 15:37:13 - httpcore.http11 - DEBUG - send_request_headers.started request=<Request [b'GET']>
+2025-09-22 15:37:13 - httpcore.http11 - DEBUG - send_request_headers.complete
+2025-09-22 15:37:13 - httpcore.http11 - DEBUG - send_request_body.started request=<Request [b'GET']>
+2025-09-22 15:37:13 - httpcore.http11 - DEBUG - send_request_body.complete
+2025-09-22 15:37:13 - httpcore.http11 - DEBUG - receive_response_headers.started request=<Request [b'GET']>
+2025-09-22 15:37:13 - httpcore.http11 - DEBUG - receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'content-type', b'application/json'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'date', b'Mon, 22 Sep 2025 10:07:13 GMT')])
+2025-09-22 15:37:13 - httpcore.http11 - DEBUG - receive_response_body.started request=<Request [b'GET']>
+2025-09-22 15:37:13 - httpcore.http11 - DEBUG - receive_response_body.complete
+2025-09-22 15:37:13 - httpcore.http11 - DEBUG - response_closed.started
+2025-09-22 15:37:13 - httpcore.http11 - DEBUG - response_closed.complete
+2025-09-22 15:37:13 - httpcore.connection - DEBUG - close.started
+2025-09-22 15:37:13 - httpcore.connection - DEBUG - close.complete
+2025-09-22 15:37:13 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 1, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:37:17 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 15:37:18 - root - INFO - Logging configured with level: DEBUG
+2025-09-22 15:37:18 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:37:18 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:37:18 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:37:18 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:37:18 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:37:18 - httpcore.connection - DEBUG - connect_tcp.started host='localhost' port=6333 local_address=None timeout=5.0 socket_options=None
+2025-09-22 15:37:18 - httpcore.connection - DEBUG - connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x112c86ad0>
+2025-09-22 15:37:18 - httpcore.http11 - DEBUG - send_request_headers.started request=<Request [b'GET']>
+2025-09-22 15:37:18 - httpcore.http11 - DEBUG - send_request_headers.complete
+2025-09-22 15:37:18 - httpcore.http11 - DEBUG - send_request_body.started request=<Request [b'GET']>
+2025-09-22 15:37:18 - httpcore.http11 - DEBUG - send_request_body.complete
+2025-09-22 15:37:18 - httpcore.http11 - DEBUG - receive_response_headers.started request=<Request [b'GET']>
+2025-09-22 15:37:18 - httpcore.http11 - DEBUG - receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-encoding', b'gzip'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-type', b'application/json'), (b'date', b'Mon, 22 Sep 2025 10:07:18 GMT')])
+2025-09-22 15:37:18 - httpcore.http11 - DEBUG - receive_response_body.started request=<Request [b'GET']>
+2025-09-22 15:37:18 - httpcore.http11 - DEBUG - receive_response_body.complete
+2025-09-22 15:37:18 - httpcore.http11 - DEBUG - response_closed.started
+2025-09-22 15:37:18 - httpcore.http11 - DEBUG - response_closed.complete
+2025-09-22 15:37:18 - httpcore.connection - DEBUG - close.started
+2025-09-22 15:37:18 - httpcore.connection - DEBUG - close.complete
+2025-09-22 15:37:18 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 1, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:37:25 - python_multipart.multipart - DEBUG - Calling on_part_begin with no data
+2025-09-22 15:37:25 - python_multipart.multipart - DEBUG - Calling on_header_field with data[54:73]
+2025-09-22 15:37:25 - python_multipart.multipart - DEBUG - Calling on_header_value with data[75:100]
+2025-09-22 15:37:25 - python_multipart.multipart - DEBUG - Calling on_header_end with no data
+2025-09-22 15:37:25 - python_multipart.multipart - DEBUG - Calling on_headers_finished with no data
+2025-09-22 15:37:25 - python_multipart.multipart - DEBUG - Calling on_part_data with data[104:125]
+2025-09-22 15:37:25 - python_multipart.multipart - DEBUG - Calling on_part_end with no data
+2025-09-22 15:37:25 - python_multipart.multipart - DEBUG - Calling on_part_begin with no data
+2025-09-22 15:37:25 - python_multipart.multipart - DEBUG - Calling on_header_field with data[181:200]
+2025-09-22 15:37:25 - python_multipart.multipart - DEBUG - Calling on_header_value with data[202:253]
+2025-09-22 15:37:25 - python_multipart.multipart - DEBUG - Calling on_header_end with no data
+2025-09-22 15:37:25 - python_multipart.multipart - DEBUG - Calling on_header_field with data[255:267]
+2025-09-22 15:37:25 - python_multipart.multipart - DEBUG - Calling on_header_value with data[269:284]
+2025-09-22 15:37:25 - python_multipart.multipart - DEBUG - Calling on_header_end with no data
+2025-09-22 15:37:25 - python_multipart.multipart - DEBUG - Calling on_headers_finished with no data
+2025-09-22 15:37:25 - python_multipart.multipart - DEBUG - Calling on_part_data with data[288:65824]
+2025-09-22 15:37:25 - python_multipart.multipart - DEBUG - Calling on_part_data with data[0:24971]
+2025-09-22 15:37:25 - python_multipart.multipart - DEBUG - Calling on_part_end with no data
+2025-09-22 15:37:25 - python_multipart.multipart - DEBUG - Calling on_end with no data
+2025-09-22 15:37:25 - app - INFO - 📄 Processing resume upload: Resume-Lucky.pdf
+2025-09-22 15:37:25 - app - INFO - 📊 File size: 90507 bytes
+2025-09-22 15:37:25 - src.resume_parser.utils.file_handler - DEBUG - Detected file type: application/pdf
+2025-09-22 15:37:25 - src.resume_parser.utils.file_handler - INFO - Extracting text from application/pdf file: tmpgszufus_.pdf
+2025-09-22 15:37:25 - src.resume_parser.utils.file_handler - DEBUG - Extracted 5758 characters from PDF
+2025-09-22 15:37:25 - src.resume_parser.core.parser - INFO - Starting resume parsing for user: fd633f8e-7483-49fe-8885-6640b2f46a24
+2025-09-22 15:37:25 - src.resume_parser.core.parser - DEBUG - Using Azure OpenAI for resume structuring
+2025-09-22 15:37:25 - httpcore.connection - DEBUG - connect_tcp.started host='aksha-m50wjng9-northcentralus.cognitiveservices.azure.com' port=443 local_address=None timeout=5.0 socket_options=None
+2025-09-22 15:37:26 - httpcore.connection - DEBUG - connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x113c65790>
+2025-09-22 15:37:26 - httpcore.connection - DEBUG - start_tls.started ssl_context=<ssl.SSLContext object at 0x112b6bda0> server_hostname='aksha-m50wjng9-northcentralus.cognitiveservices.azure.com' timeout=5.0
+2025-09-22 15:37:26 - httpcore.connection - DEBUG - start_tls.complete return_value=<httpcore._backends.sync.SyncStream object at 0x112c74d90>
+2025-09-22 15:37:26 - httpcore.http11 - DEBUG - send_request_headers.started request=<Request [b'POST']>
+2025-09-22 15:37:26 - httpcore.http11 - DEBUG - send_request_headers.complete
+2025-09-22 15:37:26 - httpcore.http11 - DEBUG - send_request_body.started request=<Request [b'POST']>
+2025-09-22 15:37:26 - httpcore.http11 - DEBUG - send_request_body.complete
+2025-09-22 15:37:26 - httpcore.http11 - DEBUG - receive_response_headers.started request=<Request [b'POST']>
+2025-09-22 15:37:42 - httpcore.http11 - DEBUG - receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Content-Length', b'8294'), (b'Content-Type', b'application/json'), (b'apim-request-id', b'e94f61df-e6f9-41f3-aebc-2d04361b7c1d'), (b'Strict-Transport-Security', b'max-age=31536000; includeSubDomains; preload'), (b'x-content-type-options', b'nosniff'), (b'x-ms-region', b'North Central US'), (b'x-ratelimit-remaining-requests', b'15919'), (b'x-ratelimit-limit-requests', b'15920'), (b'x-ratelimit-remaining-tokens', b'15918023'), (b'x-ratelimit-limit-tokens', b'15920000'), (b'azureml-model-session', b'd182-20250904155735'), (b'x-accel-buffering', b'no'), (b'x-ms-rai-invoked', b'true'), (b'x-request-id', b'9b90e3ac-fdd0-4587-a7ad-b841c9d55c31'), (b'x-ms-deployment-name', b'gpt-4o-resume-parser'), (b'Date', b'Mon, 22 Sep 2025 10:07:41 GMT')])
+2025-09-22 15:37:42 - httpcore.http11 - DEBUG - receive_response_body.started request=<Request [b'POST']>
+2025-09-22 15:37:42 - httpcore.http11 - DEBUG - receive_response_body.complete
+2025-09-22 15:37:42 - httpcore.http11 - DEBUG - response_closed.started
+2025-09-22 15:37:42 - httpcore.http11 - DEBUG - response_closed.complete
+2025-09-22 15:37:42 - src.resume_parser.core.parser - DEBUG - ✅ AI structuring completed successfully
+2025-09-22 15:37:42 - src.resume_parser.core.parser - DEBUG - AI structuring completed, projects: 8
+2025-09-22 15:37:42 - src.resume_parser.core.parser - DEBUG - Starting hybrid extraction enhancement
+2025-09-22 15:37:42 - src.resume_parser.core.parser - DEBUG - Enhancing with hybrid extraction
+2025-09-22 15:37:42 - httpcore.http11 - DEBUG - send_request_headers.started request=<Request [b'POST']>
+2025-09-22 15:37:42 - httpcore.http11 - DEBUG - send_request_headers.complete
+2025-09-22 15:37:42 - httpcore.http11 - DEBUG - send_request_body.started request=<Request [b'POST']>
+2025-09-22 15:37:42 - httpcore.http11 - DEBUG - send_request_body.complete
+2025-09-22 15:37:42 - httpcore.http11 - DEBUG - receive_response_headers.started request=<Request [b'POST']>
+2025-09-22 15:37:44 - httpcore.http11 - DEBUG - receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Content-Length', b'1216'), (b'Content-Type', b'application/json'), (b'apim-request-id', b'ddbdf74f-a250-4abf-a8b1-23e1f74275d8'), (b'Strict-Transport-Security', b'max-age=31536000; includeSubDomains; preload'), (b'x-content-type-options', b'nosniff'), (b'x-ms-region', b'North Central US'), (b'x-ratelimit-remaining-requests', b'15919'), (b'x-ratelimit-limit-requests', b'15920'), (b'x-ratelimit-remaining-tokens', b'15917372'), (b'x-ratelimit-limit-tokens', b'15920000'), (b'azureml-model-session', b'd268-20250920150247'), (b'x-accel-buffering', b'no'), (b'x-ms-rai-invoked', b'true'), (b'x-request-id', b'9c26127c-0b92-46d1-992c-8cea1ad7242f'), (b'x-ms-deployment-name', b'gpt-4o-resume-parser'), (b'Date', b'Mon, 22 Sep 2025 10:07:43 GMT')])
+2025-09-22 15:37:44 - httpcore.http11 - DEBUG - receive_response_body.started request=<Request [b'POST']>
+2025-09-22 15:37:44 - httpcore.http11 - DEBUG - receive_response_body.complete
+2025-09-22 15:37:44 - httpcore.http11 - DEBUG - response_closed.started
+2025-09-22 15:37:44 - httpcore.http11 - DEBUG - response_closed.complete
+2025-09-22 15:37:44 - src.resume_parser.core.parser - ERROR - Error parsing resume text: 'description'
+2025-09-22 15:37:44 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'description'
+2025-09-22 15:37:44 - src.resume_parser.utils.file_handler - DEBUG - Cleaned up file: /var/folders/81/zhsmjr8d59sck473fk2nmfxw0000gn/T/tmpgszufus_.pdf
+2025-09-22 15:38:31 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 15:38:32 - root - INFO - Logging configured with level: DEBUG
+2025-09-22 15:38:32 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:38:32 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:38:32 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:38:32 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:38:32 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:38:32 - httpcore.connection - DEBUG - connect_tcp.started host='localhost' port=6333 local_address=None timeout=5.0 socket_options=None
+2025-09-22 15:38:32 - httpcore.connection - DEBUG - connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x10f2e1f50>
+2025-09-22 15:38:32 - httpcore.http11 - DEBUG - send_request_headers.started request=<Request [b'GET']>
+2025-09-22 15:38:32 - httpcore.http11 - DEBUG - send_request_headers.complete
+2025-09-22 15:38:32 - httpcore.http11 - DEBUG - send_request_body.started request=<Request [b'GET']>
+2025-09-22 15:38:32 - httpcore.http11 - DEBUG - send_request_body.complete
+2025-09-22 15:38:32 - httpcore.http11 - DEBUG - receive_response_headers.started request=<Request [b'GET']>
+2025-09-22 15:38:32 - httpcore.http11 - DEBUG - receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'transfer-encoding', b'chunked'), (b'content-type', b'application/json'), (b'vary', b'accept-encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers'), (b'content-encoding', b'gzip'), (b'date', b'Mon, 22 Sep 2025 10:08:32 GMT')])
+2025-09-22 15:38:32 - httpcore.http11 - DEBUG - receive_response_body.started request=<Request [b'GET']>
+2025-09-22 15:38:32 - httpcore.http11 - DEBUG - receive_response_body.complete
+2025-09-22 15:38:32 - httpcore.http11 - DEBUG - response_closed.started
+2025-09-22 15:38:32 - httpcore.http11 - DEBUG - response_closed.complete
+2025-09-22 15:38:32 - httpcore.connection - DEBUG - close.started
+2025-09-22 15:38:32 - httpcore.connection - DEBUG - close.complete
+2025-09-22 15:38:32 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 1, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:38:37 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 15:38:38 - root - INFO - Logging configured with level: INFO
+2025-09-22 15:38:38 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:38:38 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:38:38 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:38:38 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:38:38 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:38:38 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 1, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:38:49 - app - INFO - 📄 Processing resume upload: Resume-Lucky.pdf
+2025-09-22 15:38:49 - app - INFO - 📊 File size: 90507 bytes
+2025-09-22 15:38:49 - src.resume_parser.utils.file_handler - INFO - Extracting text from application/pdf file: tmp4_vi4sca.pdf
+2025-09-22 15:38:49 - src.resume_parser.core.parser - INFO - Starting resume parsing for user: 4222f742-5142-46a6-b999-12e14d0ec627
+2025-09-22 15:39:12 - src.resume_parser.core.parser - ERROR - Error parsing resume text: 'description'
+2025-09-22 15:39:12 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'description'
+2025-09-22 15:39:43 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 15:39:44 - root - INFO - Logging configured with level: INFO
+2025-09-22 15:39:44 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:39:44 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:39:44 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:39:44 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:39:44 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:39:44 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 1, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:40:06 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 15:40:07 - root - INFO - Logging configured with level: INFO
+2025-09-22 15:40:07 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:40:07 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:40:07 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:40:07 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:40:07 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:40:07 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 1, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:40:23 - app - INFO - 📄 Processing resume upload: Resume-Lucky.pdf
+2025-09-22 15:40:23 - app - INFO - 📊 File size: 90507 bytes
+2025-09-22 15:40:23 - src.resume_parser.utils.file_handler - INFO - Extracting text from application/pdf file: tmpj0wv4rdv.pdf
+2025-09-22 15:40:23 - src.resume_parser.core.parser - INFO - Starting resume parsing for user: 32784602-4205-47d1-bd7c-76a76a1ceae9
+2025-09-22 15:40:48 - src.resume_parser.core.parser - ERROR - Error in experience calculation: 'description'
+2025-09-22 15:40:48 - src.resume_parser.core.parser - INFO - ✅ Resume parsing completed for user: 32784602-4205-47d1-bd7c-76a76a1ceae9
+2025-09-22 15:40:48 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 15:40:49 - src.resume_parser.core.parser - ERROR - Error creating embedding: Error code: 404 - {'error': {'code': '404', 'message': 'Resource not found'}}
+2025-09-22 15:40:49 - app - INFO - ✅ Resume processing completed for user: 32784602-4205-47d1-bd7c-76a76a1ceae9
+2025-09-22 15:40:49 - app - ERROR - ❌ Error processing resume: Object of type datetime is not JSON serializable
+2025-09-22 15:41:18 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 15:41:19 - root - INFO - Logging configured with level: INFO
+2025-09-22 15:41:19 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:41:19 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:41:19 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:41:19 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:41:19 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:41:19 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 1, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:41:25 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 15:41:26 - root - INFO - Logging configured with level: INFO
+2025-09-22 15:41:26 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:41:26 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:41:26 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:41:26 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:41:26 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:41:26 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 1, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:42:00 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 15:42:01 - root - INFO - Logging configured with level: INFO
+2025-09-22 15:42:01 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:42:01 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:42:01 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:42:01 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:42:01 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:42:01 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 1, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:42:21 - app - INFO - 📄 Processing resume upload: Resume-Lucky.pdf
+2025-09-22 15:42:21 - app - INFO - 📊 File size: 90507 bytes
+2025-09-22 15:42:21 - src.resume_parser.utils.file_handler - INFO - Extracting text from application/pdf file: tmpixr5ftst.pdf
+2025-09-22 15:42:21 - src.resume_parser.core.parser - INFO - Starting resume parsing for user: c7ef63ac-6f79-42fe-a84e-43aa24beb6ce
+2025-09-22 15:42:43 - src.resume_parser.core.parser - ERROR - Error in experience calculation: 'description'
+2025-09-22 15:42:43 - src.resume_parser.core.parser - INFO - ✅ Resume parsing completed for user: c7ef63ac-6f79-42fe-a84e-43aa24beb6ce
+2025-09-22 15:42:43 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 15:42:45 - src.resume_parser.database.qdrant_client - INFO - Successfully stored embedding for user: c7ef63ac-6f79-42fe-a84e-43aa24beb6ce
+2025-09-22 15:42:45 - app - INFO - ✅ Stored in Qdrant with ID: c7ef63ac-6f79-42fe-a84e-43aa24beb6ce
+2025-09-22 15:42:45 - app - INFO - ✅ Resume processing completed for user: c7ef63ac-6f79-42fe-a84e-43aa24beb6ce
+2025-09-22 15:44:32 - app - ERROR - Error in resume search: object CreateEmbeddingResponse can't be used in 'await' expression
+2025-09-22 15:45:01 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 15:45:02 - root - INFO - Logging configured with level: INFO
+2025-09-22 15:45:02 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:45:02 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:45:02 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:45:02 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:45:02 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:45:02 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 2, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:45:29 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 15:45:31 - src.resume_parser.database.qdrant_client - INFO - Found 2 similar resumes
+2025-09-22 15:46:01 - src.resume_parser.database.qdrant_client - INFO - Found 2 similar resumes
+2025-09-22 15:47:00 - src.resume_parser.database.qdrant_client - INFO - Found 2 similar resumes
+2025-09-22 15:49:23 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 15:49:23 - root - INFO - Logging configured with level: INFO
+2025-09-22 15:49:23 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:49:23 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:49:51 - root - INFO - Logging configured with level: INFO
+2025-09-22 15:49:51 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:49:51 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:50:32 - root - INFO - Logging configured with level: INFO
+2025-09-22 15:50:32 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:50:32 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:50:54 - root - INFO - Logging configured with level: INFO
+2025-09-22 15:50:54 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:50:54 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:50:54 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:50:54 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:50:54 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:50:54 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 2, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:50:59 - app - INFO - 🔍 Processing search query: i need hr manager
+2025-09-22 15:50:59 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need hr manager
+2025-09-22 15:50:59 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['hr_manager', 'product_manager', 'marketing_manager', 'sales_manager'], Skills: [], Seniority: manager
+2025-09-22 15:50:59 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 15:51:01 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['HR Manager', 'Human Resources', 'People Manager', 'Product Manager', 'Product Owner', 'Marketing Manager', 'Digital Marketing', 'Sales Manager', 'Account Manager', 'Business Development']}, 'seniority': {'$in': ['Manager', 'Team Lead']}}
+2025-09-22 15:51:01 - app - INFO - 📊 Detected roles: ['hr_manager', 'product_manager', 'marketing_manager', 'sales_manager']
+2025-09-22 15:51:01 - app - INFO - 🔧 Detected skills: []
+2025-09-22 15:51:01 - src.resume_parser.database.qdrant_client - ERROR - Error searching similar embeddings: 2 validation errors for Filter
+role_category
+  Extra inputs are not permitted [type=extra_forbidden, input_value={'$in': ['HR Manager', 'H...'Business Development']}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/extra_forbidden
+seniority
+  Extra inputs are not permitted [type=extra_forbidden, input_value={'$in': ['Manager', 'Team Lead']}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/extra_forbidden
+2025-09-22 15:51:01 - app - ERROR - Error in resume search: 2 validation errors for Filter
+role_category
+  Extra inputs are not permitted [type=extra_forbidden, input_value={'$in': ['HR Manager', 'H...'Business Development']}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/extra_forbidden
+seniority
+  Extra inputs are not permitted [type=extra_forbidden, input_value={'$in': ['Manager', 'Team Lead']}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/extra_forbidden
+2025-09-22 15:51:17 - app - INFO - 🔍 Processing search query: i need hr manager
+2025-09-22 15:51:17 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need hr manager
+2025-09-22 15:51:17 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['hr_manager', 'product_manager', 'marketing_manager', 'sales_manager'], Skills: [], Seniority: manager
+2025-09-22 15:51:19 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['HR Manager', 'Human Resources', 'People Manager', 'Product Manager', 'Product Owner', 'Marketing Manager', 'Digital Marketing', 'Sales Manager', 'Account Manager', 'Business Development']}, 'seniority': {'$in': ['Manager', 'Team Lead']}}
+2025-09-22 15:51:19 - app - INFO - 📊 Detected roles: ['hr_manager', 'product_manager', 'marketing_manager', 'sales_manager']
+2025-09-22 15:51:19 - app - INFO - 🔧 Detected skills: []
+2025-09-22 15:51:19 - src.resume_parser.database.qdrant_client - ERROR - Error searching similar embeddings: 2 validation errors for Filter
+role_category
+  Extra inputs are not permitted [type=extra_forbidden, input_value={'$in': ['HR Manager', 'H...'Business Development']}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/extra_forbidden
+seniority
+  Extra inputs are not permitted [type=extra_forbidden, input_value={'$in': ['Manager', 'Team Lead']}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/extra_forbidden
+2025-09-22 15:51:19 - app - ERROR - Error in resume search: 2 validation errors for Filter
+role_category
+  Extra inputs are not permitted [type=extra_forbidden, input_value={'$in': ['HR Manager', 'H...'Business Development']}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/extra_forbidden
+seniority
+  Extra inputs are not permitted [type=extra_forbidden, input_value={'$in': ['Manager', 'Team Lead']}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/extra_forbidden
+2025-09-22 15:52:06 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 15:52:07 - root - INFO - Logging configured with level: INFO
+2025-09-22 15:52:07 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:52:07 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:52:07 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:52:07 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:52:07 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:52:07 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 2, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:52:31 - app - INFO - 🔍 Processing search query: i need hr manager
+2025-09-22 15:52:31 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need hr manager
+2025-09-22 15:52:31 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['hr_manager', 'product_manager', 'marketing_manager', 'sales_manager'], Skills: [], Seniority: manager
+2025-09-22 15:52:31 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 15:52:33 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['HR Manager', 'Human Resources', 'People Manager', 'Product Manager', 'Product Owner', 'Marketing Manager', 'Digital Marketing', 'Sales Manager', 'Account Manager', 'Business Development']}, 'seniority': {'$in': ['Manager', 'Team Lead']}}
+2025-09-22 15:52:33 - app - INFO - 📊 Detected roles: ['hr_manager', 'product_manager', 'marketing_manager', 'sales_manager']
+2025-09-22 15:52:33 - app - INFO - 🔧 Detected skills: []
+2025-09-22 15:52:33 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-22 15:52:52 - app - INFO - 🔍 Processing search query: i need full stack developer
+2025-09-22 15:52:52 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need full stack developer
+2025-09-22 15:52:52 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer'], Skills: [], Seniority: None
+2025-09-22 15:52:54 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer']}}
+2025-09-22 15:52:54 - app - INFO - 📊 Detected roles: ['software_engineer']
+2025-09-22 15:52:54 - app - INFO - 🔧 Detected skills: []
+2025-09-22 15:52:54 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-22 15:53:47 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 15:53:48 - root - INFO - Logging configured with level: INFO
+2025-09-22 15:53:48 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:53:48 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:53:48 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:53:48 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:53:48 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:53:48 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 2, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:53:58 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 15:53:59 - root - INFO - Logging configured with level: INFO
+2025-09-22 15:53:59 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:53:59 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:53:59 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:53:59 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:53:59 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:53:59 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 2, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:54:24 - root - INFO - Logging configured with level: INFO
+2025-09-22 15:54:24 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:54:24 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:54:24 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:54:24 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:54:24 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:54:24 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 2, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:55:28 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 15:55:29 - root - INFO - Logging configured with level: INFO
+2025-09-22 15:55:29 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:55:29 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:55:29 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:55:29 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:55:29 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:55:29 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 2, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:55:33 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 15:55:34 - root - INFO - Logging configured with level: INFO
+2025-09-22 15:55:34 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:55:34 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:55:34 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:55:34 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:55:34 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:55:34 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 2, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:55:40 - app - INFO - 🔍 Processing search query: i need hr manager
+2025-09-22 15:55:40 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need hr manager
+2025-09-22 15:55:40 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['hr_manager', 'product_manager', 'marketing_manager', 'sales_manager'], Skills: [], Seniority: manager
+2025-09-22 15:55:40 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 15:55:41 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['HR Manager', 'Human Resources', 'People Manager', 'Product Manager', 'Product Owner', 'Marketing Manager', 'Digital Marketing', 'Sales Manager', 'Account Manager', 'Business Development']}, 'seniority': {'$in': ['Manager', 'Team Lead']}}
+2025-09-22 15:55:41 - app - INFO - 📊 Detected roles: ['hr_manager', 'product_manager', 'marketing_manager', 'sales_manager']
+2025-09-22 15:55:41 - app - INFO - 🔧 Detected skills: []
+2025-09-22 15:55:42 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-22 15:56:25 - app - INFO - 🔍 Processing search query: software developer
+2025-09-22 15:56:25 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: software developer
+2025-09-22 15:56:25 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer'], Skills: [], Seniority: None
+2025-09-22 15:56:27 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer']}}
+2025-09-22 15:56:27 - app - INFO - 📊 Detected roles: ['software_engineer']
+2025-09-22 15:56:27 - app - INFO - 🔧 Detected skills: []
+2025-09-22 15:56:27 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-22 15:56:46 - app - INFO - 🔍 Processing search query: full stack developer
+2025-09-22 15:56:46 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: full stack developer
+2025-09-22 15:56:46 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer'], Skills: [], Seniority: None
+2025-09-22 15:56:48 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer']}}
+2025-09-22 15:56:48 - app - INFO - 📊 Detected roles: ['software_engineer']
+2025-09-22 15:56:48 - app - INFO - 🔧 Detected skills: []
+2025-09-22 15:56:48 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-22 15:57:00 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 15:57:01 - root - INFO - Logging configured with level: INFO
+2025-09-22 15:57:01 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:57:01 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:57:01 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:57:01 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:57:01 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:57:01 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 2, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:57:13 - app - INFO - 🔍 Processing search query: full stack developer
+2025-09-22 15:57:13 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: full stack developer
+2025-09-22 15:57:13 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer'], Skills: [], Seniority: None
+2025-09-22 15:57:13 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 15:57:16 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Web Developer', 'Mobile Developer']}}
+2025-09-22 15:57:16 - app - INFO - 📊 Detected roles: ['software_engineer']
+2025-09-22 15:57:16 - app - INFO - 🔧 Detected skills: []
+2025-09-22 15:57:16 - src.resume_parser.database.qdrant_client - INFO - Found 1 similar resumes
+2025-09-22 15:57:39 - app - INFO - 🔍 Processing search query: i need hr manager
+2025-09-22 15:57:39 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need hr manager
+2025-09-22 15:57:39 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['hr_manager', 'product_manager', 'marketing_manager', 'sales_manager'], Skills: [], Seniority: manager
+2025-09-22 15:57:43 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['HR Manager', 'Human Resources', 'People Manager', 'HR Specialist', 'Human Resources Manager', 'Product Manager', 'Product Owner', 'Senior Product Manager', 'Marketing Manager', 'Digital Marketing', 'Marketing Specialist', 'Brand Manager', 'Sales Manager', 'Account Manager', 'Business Development', 'Sales Representative', 'Account Executive']}, 'seniority': {'$in': ['Manager', 'Team Lead']}}
+2025-09-22 15:57:43 - app - INFO - 📊 Detected roles: ['hr_manager', 'product_manager', 'marketing_manager', 'sales_manager']
+2025-09-22 15:57:43 - app - INFO - 🔧 Detected skills: []
+2025-09-22 15:57:43 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-22 15:57:53 - app - INFO - 🔍 Processing search query: software engineer with react experience
+2025-09-22 15:57:53 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: software engineer with react experience
+2025-09-22 15:57:53 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer', 'data_scientist'], Skills: ['react', 'r'], Seniority: None
+2025-09-22 15:57:55 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Web Developer', 'Mobile Developer', 'Data Scientist', 'Data Analyst', 'ML Engineer', 'Machine Learning Engineer', 'AI Engineer']}}
+2025-09-22 15:57:55 - app - INFO - 📊 Detected roles: ['software_engineer', 'data_scientist']
+2025-09-22 15:57:55 - app - INFO - 🔧 Detected skills: ['react', 'r']
+2025-09-22 15:57:55 - src.resume_parser.database.qdrant_client - INFO - Found 1 similar resumes
+2025-09-22 15:58:47 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 15:58:51 - root - INFO - Logging configured with level: INFO
+2025-09-22 15:58:51 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 15:58:51 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 15:58:51 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 15:58:51 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 15:58:51 - app - INFO - 🔧 Debug mode: False
+2025-09-22 15:58:51 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 2, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 15:59:12 - app - INFO - 🔍 Processing search query: i need full stack developer
+2025-09-22 15:59:12 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need full stack developer
+2025-09-22 15:59:12 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer'], Skills: [], Seniority: None
+2025-09-22 15:59:12 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 15:59:15 - app - INFO - 🎯 Search filters: {'role_category': 'string', 'seniority': 'string'}
+2025-09-22 15:59:15 - app - INFO - 📊 Detected roles: ['software_engineer']
+2025-09-22 15:59:15 - app - INFO - 🔧 Detected skills: []
+2025-09-22 15:59:15 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-22 15:59:41 - app - INFO - 🔍 Processing search query: i need full stack developer with react js and pythin skills
+2025-09-22 15:59:41 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need full stack developer with react js and pythin skills
+2025-09-22 15:59:41 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer'], Skills: ['react'], Seniority: None
+2025-09-22 15:59:43 - app - INFO - 🎯 Search filters: {'role_category': 'string', 'seniority': 'string'}
+2025-09-22 15:59:43 - app - INFO - 📊 Detected roles: ['software_engineer']
+2025-09-22 15:59:43 - app - INFO - 🔧 Detected skills: ['react']
+2025-09-22 15:59:43 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-22 16:01:23 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:01:23 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:01:23 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:01:23 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:01:23 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:01:23 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:01:23 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 2, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:01:33 - app - INFO - 🔍 Processing search query: i need full stack developer with react js and python skills
+2025-09-22 16:01:33 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need full stack developer with react js and python skills
+2025-09-22 16:01:33 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer'], Skills: ['python', 'react'], Seniority: None
+2025-09-22 16:01:33 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 16:01:35 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Web Developer', 'Mobile Developer']}}
+2025-09-22 16:01:35 - app - INFO - 📊 Detected roles: ['software_engineer']
+2025-09-22 16:01:35 - app - INFO - 🔧 Detected skills: ['python', 'react']
+2025-09-22 16:01:35 - src.resume_parser.database.qdrant_client - INFO - Found 1 similar resumes
+2025-09-22 16:03:10 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:03:19 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:03:19 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:03:19 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:03:19 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:03:19 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:03:19 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:03:19 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 2, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:04:00 - app - INFO - 🔍 Processing search query: i need full stack developer with react js and pythin skills
+2025-09-22 16:04:00 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need full stack developer with react js and pythin skills
+2025-09-22 16:04:00 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer'], Skills: ['react'], Seniority: None
+2025-09-22 16:04:00 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 16:04:02 - app - INFO - 🎯 Search filters: {'role_category': 'string', 'seniority': 'string'}
+2025-09-22 16:04:02 - app - INFO - 📊 Detected roles: ['software_engineer']
+2025-09-22 16:04:02 - app - INFO - 🔧 Detected skills: ['react']
+2025-09-22 16:04:02 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-22 16:05:12 - app - INFO - 🔍 Processing search query: i need full stack developer with react js and pythin skills
+2025-09-22 16:05:12 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need full stack developer with react js and pythin skills
+2025-09-22 16:05:12 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer'], Skills: ['react'], Seniority: None
+2025-09-22 16:05:14 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Web Developer', 'Mobile Developer']}}
+2025-09-22 16:05:14 - app - INFO - 📊 Detected roles: ['software_engineer']
+2025-09-22 16:05:14 - app - INFO - 🔧 Detected skills: ['react']
+2025-09-22 16:05:14 - src.resume_parser.database.qdrant_client - INFO - Found 1 similar resumes
+2025-09-22 16:05:53 - app - INFO - 🔍 Processing search query: i need full stack developer with react js and pythin skills
+2025-09-22 16:05:53 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need full stack developer with react js and pythin skills
+2025-09-22 16:05:53 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer'], Skills: ['react'], Seniority: None
+2025-09-22 16:05:55 - app - INFO - 🎯 Search filters: {'role_category': 'string', 'seniority': 'string'}
+2025-09-22 16:05:55 - app - INFO - 📊 Detected roles: ['software_engineer']
+2025-09-22 16:05:55 - app - INFO - 🔧 Detected skills: ['react']
+2025-09-22 16:05:55 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-22 16:06:31 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:06:33 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:06:33 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:06:33 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:06:33 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:06:33 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:06:33 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:06:33 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 2, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:06:35 - app - INFO - 🔍 Processing search query: i need full stack developer with react js and pythin skills
+2025-09-22 16:06:35 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need full stack developer with react js and pythin skills
+2025-09-22 16:06:35 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer'], Skills: ['react'], Seniority: None
+2025-09-22 16:06:35 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 16:06:37 - app - INFO - 🎯 Search filters: {'role_category': 'string', 'seniority': 'string'}
+2025-09-22 16:06:37 - app - INFO - 📊 Detected roles: ['software_engineer']
+2025-09-22 16:06:37 - app - INFO - 🔧 Detected skills: ['react']
+2025-09-22 16:06:37 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-22 16:07:08 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:07:08 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:07:08 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:07:08 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:07:08 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:07:08 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:07:08 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 2, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:07:37 - app - INFO - 🔍 Processing search query: i need full stack developer with react js and pythin skills
+2025-09-22 16:07:37 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need full stack developer with react js and pythin skills
+2025-09-22 16:07:37 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer'], Skills: ['react'], Seniority: None
+2025-09-22 16:07:37 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 16:07:39 - app - INFO - 🎯 Search filters type: <class 'dict'>
+2025-09-22 16:07:39 - app - INFO - 🎯 Search filters content: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Web Developer', 'Mobile Developer']}}
+2025-09-22 16:07:39 - app - INFO - 🎯 Search filters keys: ['role_category']
+2025-09-22 16:07:39 - app - INFO - 🎯 Role category filter: {'$in': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Web Developer', 'Mobile Developer']}
+2025-09-22 16:07:39 - app - INFO - 📊 Detected roles: ['software_engineer']
+2025-09-22 16:07:39 - app - INFO - 🔧 Detected skills: ['react']
+2025-09-22 16:07:39 - app - INFO - 🔍 Query vector length: 3072 (should be 3072)
+2025-09-22 16:07:39 - src.resume_parser.database.qdrant_client - INFO - 🔍 Qdrant search called with filter_conditions: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Web Developer', 'Mobile Developer']}}
+2025-09-22 16:07:39 - src.resume_parser.database.qdrant_client - INFO - 🔍 Filter conditions type: <class 'dict'>
+2025-09-22 16:07:39 - src.resume_parser.database.qdrant_client - INFO - Found 1 similar resumes
+2025-09-22 16:08:18 - app - INFO - 🔍 Processing search query: hr manager
+2025-09-22 16:08:18 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: hr manager
+2025-09-22 16:08:18 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['hr_manager', 'product_manager', 'marketing_manager', 'sales_manager'], Skills: [], Seniority: manager
+2025-09-22 16:08:20 - app - INFO - 🎯 Search filters type: <class 'dict'>
+2025-09-22 16:08:20 - app - INFO - 🎯 Search filters content: {'role_category': {'$in': ['HR Manager', 'Human Resources', 'People Manager', 'HR Specialist', 'Human Resources Manager', 'Product Manager', 'Product Owner', 'Senior Product Manager', 'Marketing Manager', 'Digital Marketing', 'Marketing Specialist', 'Brand Manager', 'Sales Manager', 'Account Manager', 'Business Development', 'Sales Representative', 'Account Executive']}, 'seniority': {'$in': ['Manager', 'Team Lead']}}
+2025-09-22 16:08:20 - app - INFO - 🎯 Search filters keys: ['role_category', 'seniority']
+2025-09-22 16:08:20 - app - INFO - 🎯 Role category filter: {'$in': ['HR Manager', 'Human Resources', 'People Manager', 'HR Specialist', 'Human Resources Manager', 'Product Manager', 'Product Owner', 'Senior Product Manager', 'Marketing Manager', 'Digital Marketing', 'Marketing Specialist', 'Brand Manager', 'Sales Manager', 'Account Manager', 'Business Development', 'Sales Representative', 'Account Executive']}
+2025-09-22 16:08:20 - app - INFO - 📊 Detected roles: ['hr_manager', 'product_manager', 'marketing_manager', 'sales_manager']
+2025-09-22 16:08:20 - app - INFO - 🔧 Detected skills: []
+2025-09-22 16:08:20 - app - INFO - 🔍 Query vector length: 3072 (should be 3072)
+2025-09-22 16:08:20 - src.resume_parser.database.qdrant_client - INFO - 🔍 Qdrant search called with filter_conditions: {'role_category': {'$in': ['HR Manager', 'Human Resources', 'People Manager', 'HR Specialist', 'Human Resources Manager', 'Product Manager', 'Product Owner', 'Senior Product Manager', 'Marketing Manager', 'Digital Marketing', 'Marketing Specialist', 'Brand Manager', 'Sales Manager', 'Account Manager', 'Business Development', 'Sales Representative', 'Account Executive']}, 'seniority': {'$in': ['Manager', 'Team Lead']}}
+2025-09-22 16:08:20 - src.resume_parser.database.qdrant_client - INFO - 🔍 Filter conditions type: <class 'dict'>
+2025-09-22 16:08:20 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-22 16:08:27 - app - INFO - 🔍 Processing search query: software engineer with javascript
+2025-09-22 16:08:27 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: software engineer with javascript
+2025-09-22 16:08:27 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer', 'data_scientist'], Skills: ['java', 'r', 'javascript'], Seniority: None
+2025-09-22 16:08:29 - app - INFO - 🎯 Search filters type: <class 'dict'>
+2025-09-22 16:08:29 - app - INFO - 🎯 Search filters content: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Web Developer', 'Mobile Developer', 'Data Scientist', 'Data Analyst', 'ML Engineer', 'Machine Learning Engineer', 'AI Engineer']}}
+2025-09-22 16:08:29 - app - INFO - 🎯 Search filters keys: ['role_category']
+2025-09-22 16:08:29 - app - INFO - 🎯 Role category filter: {'$in': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Web Developer', 'Mobile Developer', 'Data Scientist', 'Data Analyst', 'ML Engineer', 'Machine Learning Engineer', 'AI Engineer']}
+2025-09-22 16:08:29 - app - INFO - 📊 Detected roles: ['software_engineer', 'data_scientist']
+2025-09-22 16:08:29 - app - INFO - 🔧 Detected skills: ['java', 'r', 'javascript']
+2025-09-22 16:08:29 - app - INFO - 🔍 Query vector length: 3072 (should be 3072)
+2025-09-22 16:08:29 - src.resume_parser.database.qdrant_client - INFO - 🔍 Qdrant search called with filter_conditions: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Web Developer', 'Mobile Developer', 'Data Scientist', 'Data Analyst', 'ML Engineer', 'Machine Learning Engineer', 'AI Engineer']}}
+2025-09-22 16:08:29 - src.resume_parser.database.qdrant_client - INFO - 🔍 Filter conditions type: <class 'dict'>
+2025-09-22 16:08:29 - src.resume_parser.database.qdrant_client - INFO - Found 1 similar resumes
+2025-09-22 16:08:37 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:08:38 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:08:38 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:08:38 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:08:38 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:08:38 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:08:38 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:08:38 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 2, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:08:44 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:08:45 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:08:45 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:08:45 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:08:45 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:08:45 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:08:45 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:08:45 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 2, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:09:40 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:09:42 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:09:42 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:09:42 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:09:42 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:09:42 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:09:42 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:09:42 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 2, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:09:43 - app - INFO - 🔍 Processing search query: i need full stack developer with react js and pythin skills
+2025-09-22 16:09:43 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need full stack developer with react js and pythin skills
+2025-09-22 16:09:43 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer'], Skills: ['react'], Seniority: None
+2025-09-22 16:09:43 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 16:09:45 - app - INFO - 🎯 Search filters: {'role_category': 'string', 'seniority': 'string'}
+2025-09-22 16:09:45 - app - INFO - 📊 Detected roles: ['software_engineer']
+2025-09-22 16:09:45 - app - INFO - 🔧 Detected skills: ['react']
+2025-09-22 16:09:45 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-22 16:11:24 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:11:25 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:11:25 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:11:25 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:11:25 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:11:25 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:11:25 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:11:25 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 2, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:11:31 - app - INFO - 🔍 Processing search query: i need full stack developer with react js and pythin skills
+2025-09-22 16:11:31 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need full stack developer with react js and pythin skills
+2025-09-22 16:11:31 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer'], Skills: ['react'], Seniority: None
+2025-09-22 16:11:31 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 16:11:33 - app - INFO - 🔧 role_filter param: None (type: <class 'NoneType'>)
+2025-09-22 16:11:33 - app - INFO - 🔧 seniority_filter param: None (type: <class 'NoneType'>)
+2025-09-22 16:11:33 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Web Developer', 'Mobile Developer']}}
+2025-09-22 16:11:33 - app - INFO - 📊 Detected roles: ['software_engineer']
+2025-09-22 16:11:33 - app - INFO - 🔧 Detected skills: ['react']
+2025-09-22 16:11:33 - src.resume_parser.database.qdrant_client - INFO - Found 1 similar resumes
+2025-09-22 16:11:59 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:11:59 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:11:59 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:11:59 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:11:59 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:11:59 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:11:59 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 2, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:12:37 - app - INFO - 🔍 Processing search query: i need full stack developer with react js and pythin skills
+2025-09-22 16:12:37 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need full stack developer with react js and pythin skills
+2025-09-22 16:12:37 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer'], Skills: ['react'], Seniority: None
+2025-09-22 16:12:37 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 16:12:39 - app - INFO - 🔧 role_filter param: None (type: <class 'NoneType'>)
+2025-09-22 16:12:39 - app - INFO - 🔧 seniority_filter param: None (type: <class 'NoneType'>)
+2025-09-22 16:12:39 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Web Developer', 'Mobile Developer']}}
+2025-09-22 16:12:39 - app - INFO - 📊 Detected roles: ['software_engineer']
+2025-09-22 16:12:39 - app - INFO - 🔧 Detected skills: ['react']
+2025-09-22 16:12:39 - src.resume_parser.database.qdrant_client - INFO - Found 1 similar resumes
+2025-09-22 16:13:12 - app - INFO - 🔍 Processing search query: i need full stack developer with react js and pythin skills
+2025-09-22 16:13:12 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need full stack developer with react js and pythin skills
+2025-09-22 16:13:12 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer'], Skills: ['react'], Seniority: None
+2025-09-22 16:13:13 - app - INFO - 🔧 role_filter param: string (type: <class 'str'>)
+2025-09-22 16:13:13 - app - INFO - 🔧 seniority_filter param: string (type: <class 'str'>)
+2025-09-22 16:13:13 - app - INFO - 🎯 Search filters: {'role_category': 'string', 'seniority': 'string'}
+2025-09-22 16:13:13 - app - INFO - 📊 Detected roles: ['software_engineer']
+2025-09-22 16:13:13 - app - INFO - 🔧 Detected skills: ['react']
+2025-09-22 16:13:13 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-22 16:13:34 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:13:39 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:13:39 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:13:39 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:13:39 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:13:39 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:13:39 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:13:39 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 2, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:13:41 - app - INFO - 🔍 Processing search query: i need full stack developer with react js and pythin skills
+2025-09-22 16:13:41 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need full stack developer with react js and pythin skills
+2025-09-22 16:13:41 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer'], Skills: ['react'], Seniority: None
+2025-09-22 16:13:41 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 16:13:43 - app - INFO - 🔧 role_filter param: string (type: <class 'str'>)
+2025-09-22 16:13:43 - app - INFO - 🔧 seniority_filter param: string (type: <class 'str'>)
+2025-09-22 16:13:43 - app - INFO - 🎯 Search filters: {'role_category': 'string', 'seniority': 'string'}
+2025-09-22 16:13:43 - app - INFO - 📊 Detected roles: ['software_engineer']
+2025-09-22 16:13:43 - app - INFO - 🔧 Detected skills: ['react']
+2025-09-22 16:13:43 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-22 16:13:59 - app - INFO - 🔍 Processing search query: i need full stack developer
+2025-09-22 16:13:59 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need full stack developer
+2025-09-22 16:13:59 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer'], Skills: [], Seniority: None
+2025-09-22 16:14:01 - app - INFO - 🔧 role_filter param: string (type: <class 'str'>)
+2025-09-22 16:14:01 - app - INFO - 🔧 seniority_filter param: string (type: <class 'str'>)
+2025-09-22 16:14:01 - app - INFO - 🎯 Search filters: {'role_category': 'string', 'seniority': 'string'}
+2025-09-22 16:14:01 - app - INFO - 📊 Detected roles: ['software_engineer']
+2025-09-22 16:14:01 - app - INFO - 🔧 Detected skills: []
+2025-09-22 16:14:01 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-22 16:14:32 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:14:33 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:14:33 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:14:33 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:14:33 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:14:33 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:14:33 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:14:33 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 2, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:14:41 - app - INFO - 🔍 Processing search query: i need full stack developer
+2025-09-22 16:14:41 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need full stack developer
+2025-09-22 16:14:41 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer'], Skills: [], Seniority: None
+2025-09-22 16:14:41 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 16:14:43 - app - INFO - 🔧 role_filter param: string (type: <class 'str'>)
+2025-09-22 16:14:43 - app - INFO - 🔧 seniority_filter param: string (type: <class 'str'>)
+2025-09-22 16:14:43 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Web Developer', 'Mobile Developer']}}
+2025-09-22 16:14:43 - app - INFO - 📊 Detected roles: ['software_engineer']
+2025-09-22 16:14:43 - app - INFO - 🔧 Detected skills: []
+2025-09-22 16:14:43 - src.resume_parser.database.qdrant_client - INFO - Found 1 similar resumes
+2025-09-22 16:15:09 - app - INFO - 🔍 Processing search query: i need full stack developer
+2025-09-22 16:15:09 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need full stack developer
+2025-09-22 16:15:09 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer'], Skills: [], Seniority: None
+2025-09-22 16:15:10 - app - INFO - 🔧 role_filter param: string (type: <class 'str'>)
+2025-09-22 16:15:10 - app - INFO - 🔧 seniority_filter param: string (type: <class 'str'>)
+2025-09-22 16:15:10 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Web Developer', 'Mobile Developer']}}
+2025-09-22 16:15:10 - app - INFO - 📊 Detected roles: ['software_engineer']
+2025-09-22 16:15:10 - app - INFO - 🔧 Detected skills: []
+2025-09-22 16:15:10 - src.resume_parser.database.qdrant_client - INFO - Found 1 similar resumes
+2025-09-22 16:15:19 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:15:20 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:15:20 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:15:20 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:15:20 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:15:20 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:15:20 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:15:20 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 2, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:15:38 - app - INFO - 🔍 Processing search query: i need full stack developer
+2025-09-22 16:15:38 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need full stack developer
+2025-09-22 16:15:38 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer'], Skills: [], Seniority: None
+2025-09-22 16:15:38 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 16:15:40 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Web Developer', 'Mobile Developer']}}
+2025-09-22 16:15:40 - app - INFO - 📊 Detected roles: ['software_engineer']
+2025-09-22 16:15:40 - app - INFO - 🔧 Detected skills: []
+2025-09-22 16:15:40 - src.resume_parser.database.qdrant_client - INFO - Found 1 similar resumes
+2025-09-22 16:16:45 - app - INFO - 🔍 Processing search query: i need full stack developer who know react
+2025-09-22 16:16:45 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need full stack developer who know react
+2025-09-22 16:16:45 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer'], Skills: ['react'], Seniority: None
+2025-09-22 16:16:47 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Web Developer', 'Mobile Developer']}}
+2025-09-22 16:16:47 - app - INFO - 📊 Detected roles: ['software_engineer']
+2025-09-22 16:16:47 - app - INFO - 🔧 Detected skills: ['react']
+2025-09-22 16:16:47 - src.resume_parser.database.qdrant_client - INFO - Found 1 similar resumes
+2025-09-22 16:17:06 - app - INFO - 🔍 Processing search query: i need full stack developer who know react and from gujarat
+2025-09-22 16:17:06 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need full stack developer who know react and from gujarat
+2025-09-22 16:17:06 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer'], Skills: ['react'], Seniority: None
+2025-09-22 16:17:08 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Web Developer', 'Mobile Developer']}}
+2025-09-22 16:17:08 - app - INFO - 📊 Detected roles: ['software_engineer']
+2025-09-22 16:17:08 - app - INFO - 🔧 Detected skills: ['react']
+2025-09-22 16:17:08 - src.resume_parser.database.qdrant_client - INFO - Found 1 similar resumes
+2025-09-22 16:19:50 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:19:51 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:19:51 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:19:51 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:19:51 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:19:51 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:19:51 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:19:51 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 2, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:20:41 - app - INFO - 📁 Processing bulk upload: 2 files
+2025-09-22 16:20:41 - app - INFO - 📄 Processing file 1/2: test_resume1.txt
+2025-09-22 16:20:41 - app - INFO - 📊 File size: 1226 bytes
+2025-09-22 16:20:41 - app - ERROR - ❌ Error processing file 1 (test_resume1.txt): ResumeParser.process_resume_file() missing 1 required positional argument: 'file_size'
+2025-09-22 16:20:41 - app - INFO - 📄 Processing file 2/2: test_resume2.txt
+2025-09-22 16:20:41 - app - INFO - 📊 File size: 1416 bytes
+2025-09-22 16:20:41 - app - ERROR - ❌ Error processing file 2 (test_resume2.txt): ResumeParser.process_resume_file() missing 1 required positional argument: 'file_size'
+2025-09-22 16:20:41 - app - INFO - 📋 Bulk upload completed: 0 successful, 2 failed
+2025-09-22 16:21:14 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:21:15 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:21:15 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:21:15 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:21:15 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:21:15 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:21:15 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:21:15 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 2, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:21:30 - app - INFO - 📁 Processing bulk upload: 2 files
+2025-09-22 16:21:30 - app - INFO - 📄 Processing file 1/2: test_resume1.txt
+2025-09-22 16:21:30 - app - INFO - 📊 File size: 1226 bytes
+2025-09-22 16:21:30 - src.resume_parser.utils.file_handler - ERROR - Error extracting text from file: 'str' object has no attribute 'name'
+2025-09-22 16:21:30 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'str' object has no attribute 'name'
+2025-09-22 16:21:30 - app - ERROR - ❌ Error processing file 1 (test_resume1.txt): Failed to parse resume: 'str' object has no attribute 'name'
+2025-09-22 16:21:30 - app - INFO - 📄 Processing file 2/2: test_resume2.txt
+2025-09-22 16:21:30 - app - INFO - 📊 File size: 1416 bytes
+2025-09-22 16:21:30 - src.resume_parser.utils.file_handler - ERROR - Error extracting text from file: 'str' object has no attribute 'name'
+2025-09-22 16:21:30 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'str' object has no attribute 'name'
+2025-09-22 16:21:30 - app - ERROR - ❌ Error processing file 2 (test_resume2.txt): Failed to parse resume: 'str' object has no attribute 'name'
+2025-09-22 16:21:30 - app - INFO - 📋 Bulk upload completed: 0 successful, 2 failed
+2025-09-22 16:22:03 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:22:04 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:22:04 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:22:04 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:22:04 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:22:04 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:22:04 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:22:04 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 2, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:22:11 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:22:12 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:22:12 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:22:12 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:22:12 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:22:12 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:22:12 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:22:12 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 2, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:22:19 - app - INFO - 📁 Processing bulk upload: 2 files
+2025-09-22 16:22:19 - app - INFO - 📄 Processing file 1/2: test_resume1.txt
+2025-09-22 16:22:19 - app - INFO - 📊 File size: 1226 bytes
+2025-09-22 16:22:19 - src.resume_parser.utils.file_handler - ERROR - Error extracting text from file: 'str' object has no attribute 'name'
+2025-09-22 16:22:19 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'str' object has no attribute 'name'
+2025-09-22 16:22:19 - app - ERROR - ❌ Error processing file 1 (test_resume1.txt): Failed to parse resume: 'str' object has no attribute 'name'
+2025-09-22 16:22:19 - app - INFO - 📄 Processing file 2/2: test_resume2.txt
+2025-09-22 16:22:19 - app - INFO - 📊 File size: 1416 bytes
+2025-09-22 16:22:19 - src.resume_parser.utils.file_handler - ERROR - Error extracting text from file: 'str' object has no attribute 'name'
+2025-09-22 16:22:19 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'str' object has no attribute 'name'
+2025-09-22 16:22:19 - app - ERROR - ❌ Error processing file 2 (test_resume2.txt): Failed to parse resume: 'str' object has no attribute 'name'
+2025-09-22 16:22:19 - app - INFO - 📋 Bulk upload completed: 0 successful, 2 failed
+2025-09-22 16:22:28 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:22:29 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:22:29 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:22:29 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:22:29 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:22:29 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:22:29 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:22:29 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 2, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:23:00 - app - INFO - 📁 Processing bulk upload: 1 files
+2025-09-22 16:23:00 - app - INFO - 📄 Processing file 1/1: test_resume1.txt
+2025-09-22 16:23:00 - app - INFO - 📊 File size: 1226 bytes
+2025-09-22 16:23:00 - src.resume_parser.utils.file_handler - ERROR - Error extracting text from file: 'str' object has no attribute 'name'
+2025-09-22 16:23:00 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'str' object has no attribute 'name'
+2025-09-22 16:23:00 - app - ERROR - ❌ Error processing file 1 (test_resume1.txt): Failed to parse resume: 'str' object has no attribute 'name'
+2025-09-22 16:23:00 - app - INFO - 📋 Bulk upload completed: 0 successful, 1 failed
+2025-09-22 16:23:40 - app - INFO - 📄 Processing resume upload: test_resume1.txt
+2025-09-22 16:23:40 - app - INFO - 📊 File size: 1226 bytes
+2025-09-22 16:23:40 - src.resume_parser.utils.file_handler - INFO - Extracting text from text/plain file: tmpse9kbulh.txt
+2025-09-22 16:23:40 - src.resume_parser.core.parser - INFO - Starting resume parsing for user: 3ebf4ba2-8ec0-4c66-a27f-b7cd6cb64f2c
+2025-09-22 16:23:52 - src.resume_parser.core.parser - ERROR - Error in experience calculation: 'description'
+2025-09-22 16:23:52 - src.resume_parser.core.parser - INFO - ✅ Resume parsing completed for user: 3ebf4ba2-8ec0-4c66-a27f-b7cd6cb64f2c
+2025-09-22 16:23:52 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 16:23:54 - src.resume_parser.database.qdrant_client - INFO - Successfully stored embedding for user: 3ebf4ba2-8ec0-4c66-a27f-b7cd6cb64f2c
+2025-09-22 16:23:54 - app - INFO - ✅ Stored in Qdrant with ID: 3ebf4ba2-8ec0-4c66-a27f-b7cd6cb64f2c
+2025-09-22 16:23:54 - app - INFO - ✅ Resume processing completed for user: 3ebf4ba2-8ec0-4c66-a27f-b7cd6cb64f2c
+2025-09-22 16:24:04 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:24:05 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:24:05 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:24:05 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:24:05 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:24:05 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:24:05 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:24:05 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 3, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:24:30 - app - INFO - 📁 Processing bulk upload: 1 files
+2025-09-22 16:24:30 - app - INFO - 📄 Processing file 1/1: test_resume1.txt
+2025-09-22 16:24:30 - app - INFO - 📊 File size: 1226 bytes
+2025-09-22 16:24:30 - src.resume_parser.utils.file_handler - ERROR - Error extracting text from file: 'str' object has no attribute 'name'
+2025-09-22 16:24:30 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'str' object has no attribute 'name'
+2025-09-22 16:24:30 - app - ERROR - ❌ Error processing file 1 (test_resume1.txt): Failed to parse resume: 'str' object has no attribute 'name'
+2025-09-22 16:24:30 - app - INFO - 📋 Bulk upload completed: 0 successful, 1 failed
+2025-09-22 16:25:25 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:25:26 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:25:26 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:25:26 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:25:26 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:25:26 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:25:26 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:25:26 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 3, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:26:30 - app - INFO - 📁 Processing bulk upload: 2 files
+2025-09-22 16:26:30 - app - INFO - 📄 Processing file 1/2: test_resume1.txt
+2025-09-22 16:26:30 - app - INFO - 📊 File size: 1226 bytes
+2025-09-22 16:26:30 - src.resume_parser.utils.file_handler - ERROR - Error extracting text from file: 'str' object has no attribute 'name'
+2025-09-22 16:26:30 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'str' object has no attribute 'name'
+2025-09-22 16:26:30 - app - ERROR - ❌ Error processing file 1 (test_resume1.txt): Failed to parse resume: 'str' object has no attribute 'name'
+2025-09-22 16:26:30 - app - INFO - 📄 Processing file 2/2: test_resume2.txt
+2025-09-22 16:26:30 - app - INFO - 📊 File size: 1416 bytes
+2025-09-22 16:26:30 - src.resume_parser.utils.file_handler - ERROR - Error extracting text from file: 'str' object has no attribute 'name'
+2025-09-22 16:26:30 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'str' object has no attribute 'name'
+2025-09-22 16:26:30 - app - ERROR - ❌ Error processing file 2 (test_resume2.txt): Failed to parse resume: 'str' object has no attribute 'name'
+2025-09-22 16:26:30 - app - INFO - 📋 Bulk upload completed: 0 successful, 2 failed
+2025-09-22 16:26:59 - app - INFO - 📄 Processing resume upload: test_resume1.txt
+2025-09-22 16:26:59 - app - INFO - 📊 File size: 1226 bytes
+2025-09-22 16:26:59 - src.resume_parser.utils.file_handler - INFO - Extracting text from text/plain file: tmp1c9g66dw.txt
+2025-09-22 16:26:59 - src.resume_parser.core.parser - INFO - Starting resume parsing for user: 3ba0806b-e3ce-43d3-a428-e67c62c1c339
+2025-09-22 16:27:11 - src.resume_parser.core.parser - ERROR - Error in experience calculation: 'description'
+2025-09-22 16:27:11 - src.resume_parser.core.parser - INFO - ✅ Resume parsing completed for user: 3ba0806b-e3ce-43d3-a428-e67c62c1c339
+2025-09-22 16:27:11 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 16:27:13 - src.resume_parser.database.qdrant_client - INFO - Successfully stored embedding for user: 3ba0806b-e3ce-43d3-a428-e67c62c1c339
+2025-09-22 16:27:13 - app - INFO - ✅ Stored in Qdrant with ID: 3ba0806b-e3ce-43d3-a428-e67c62c1c339
+2025-09-22 16:27:13 - app - INFO - ✅ Resume processing completed for user: 3ba0806b-e3ce-43d3-a428-e67c62c1c339
+2025-09-22 16:27:50 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:27:51 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:27:51 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:27:51 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:27:51 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:27:51 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:27:51 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:27:51 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 4, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:28:13 - app - INFO - 🔍 Advanced search query: i need senior developers 
+2025-09-22 16:28:13 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need senior developers 
+2025-09-22 16:28:13 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer', 'product_manager'], Skills: [], Seniority: senior
+2025-09-22 16:28:13 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 16:28:15 - src.resume_parser.database.qdrant_client - INFO - Found 4 similar resumes
+2025-09-22 16:28:41 - app - INFO - 📁 Processing bulk upload: 2 files
+2025-09-22 16:28:41 - app - INFO - 📄 Processing file 1/2: test_resume1.txt
+2025-09-22 16:28:41 - app - INFO - 📊 File size: 1226 bytes
+2025-09-22 16:28:41 - src.resume_parser.utils.file_handler - ERROR - Error extracting text from file: 'str' object has no attribute 'name'
+2025-09-22 16:28:41 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'str' object has no attribute 'name'
+2025-09-22 16:28:41 - app - ERROR - ❌ Error processing file 1 (test_resume1.txt): Failed to parse resume: 'str' object has no attribute 'name'
+2025-09-22 16:28:41 - app - INFO - 📄 Processing file 2/2: test_resume2.txt
+2025-09-22 16:28:41 - app - INFO - 📊 File size: 1416 bytes
+2025-09-22 16:28:41 - src.resume_parser.utils.file_handler - ERROR - Error extracting text from file: 'str' object has no attribute 'name'
+2025-09-22 16:28:41 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'str' object has no attribute 'name'
+2025-09-22 16:28:41 - app - ERROR - ❌ Error processing file 2 (test_resume2.txt): Failed to parse resume: 'str' object has no attribute 'name'
+2025-09-22 16:28:41 - app - INFO - 📋 Bulk upload completed: 0 successful, 2 failed
+2025-09-22 16:28:59 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:29:03 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:29:03 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:29:03 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:29:03 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:29:03 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:29:03 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:29:03 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 4, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:29:59 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:30:00 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:30:00 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:30:00 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:30:00 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:30:00 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:30:00 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:30:00 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 4, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:30:13 - app - INFO - 📁 Processing bulk upload: 2 files
+2025-09-22 16:30:13 - app - INFO - 📄 Processing file 1/2: test_resume1.txt
+2025-09-22 16:30:13 - app - INFO - 📊 File size: 1226 bytes
+2025-09-22 16:30:13 - src.resume_parser.utils.file_handler - ERROR - Error extracting text from file: 'str' object has no attribute 'name'
+2025-09-22 16:30:13 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'str' object has no attribute 'name'
+2025-09-22 16:30:13 - app - ERROR - ❌ Error processing file 1 (test_resume1.txt): Failed to parse resume: 'str' object has no attribute 'name'
+2025-09-22 16:30:13 - app - INFO - 📄 Processing file 2/2: test_resume2.txt
+2025-09-22 16:30:13 - app - INFO - 📊 File size: 1416 bytes
+2025-09-22 16:30:13 - src.resume_parser.utils.file_handler - ERROR - Error extracting text from file: 'str' object has no attribute 'name'
+2025-09-22 16:30:13 - src.resume_parser.core.parser - ERROR - Error processing resume file: 'str' object has no attribute 'name'
+2025-09-22 16:30:13 - app - ERROR - ❌ Error processing file 2 (test_resume2.txt): Failed to parse resume: 'str' object has no attribute 'name'
+2025-09-22 16:30:13 - app - INFO - 📋 Bulk upload completed: 0 successful, 2 failed
+2025-09-22 16:30:42 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:30:43 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:30:43 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:30:43 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:30:43 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:30:43 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:30:43 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:30:43 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 4, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:30:59 - app - INFO - 📁 Processing bulk upload: 2 files
+2025-09-22 16:30:59 - app - INFO - 📄 Processing file 1/2: test_resume1.txt
+2025-09-22 16:30:59 - app - INFO - 📊 File size: 1226 bytes
+2025-09-22 16:30:59 - src.resume_parser.utils.file_handler - INFO - Extracting text from text/plain file: tmp_2lrt58p.txt
+2025-09-22 16:30:59 - src.resume_parser.core.parser - INFO - Starting resume parsing for user: 4aa66d98-5aff-4311-9324-dc6012d57567
+2025-09-22 16:31:12 - src.resume_parser.core.parser - ERROR - Error in experience calculation: 'description'
+2025-09-22 16:31:12 - src.resume_parser.core.parser - INFO - ✅ Resume parsing completed for user: 4aa66d98-5aff-4311-9324-dc6012d57567
+2025-09-22 16:31:12 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 16:31:14 - src.resume_parser.database.qdrant_client - INFO - Successfully stored embedding for user: 4aa66d98-5aff-4311-9324-dc6012d57567
+2025-09-22 16:31:14 - app - INFO - ✅ Stored resume 1 in Qdrant with ID: 4aa66d98-5aff-4311-9324-dc6012d57567
+2025-09-22 16:31:14 - app - INFO - ✅ Successfully processed file 1: test_resume1.txt
+2025-09-22 16:31:14 - app - INFO - 📄 Processing file 2/2: test_resume2.txt
+2025-09-22 16:31:14 - app - INFO - 📊 File size: 1416 bytes
+2025-09-22 16:31:14 - src.resume_parser.utils.file_handler - INFO - Extracting text from text/plain file: tmph3w0jdd_.txt
+2025-09-22 16:31:14 - src.resume_parser.core.parser - INFO - Starting resume parsing for user: 086668a9-542e-422d-a5f3-cc611427d51a
+2025-09-22 16:31:26 - src.resume_parser.core.parser - ERROR - Error in experience calculation: 'description'
+2025-09-22 16:31:26 - src.resume_parser.core.parser - INFO - ✅ Resume parsing completed for user: 086668a9-542e-422d-a5f3-cc611427d51a
+2025-09-22 16:31:28 - src.resume_parser.database.qdrant_client - INFO - Successfully stored embedding for user: 086668a9-542e-422d-a5f3-cc611427d51a
+2025-09-22 16:31:28 - app - INFO - ✅ Stored resume 2 in Qdrant with ID: 086668a9-542e-422d-a5f3-cc611427d51a
+2025-09-22 16:31:28 - app - INFO - ✅ Successfully processed file 2: test_resume2.txt
+2025-09-22 16:31:28 - app - INFO - 📋 Bulk upload completed: 2 successful, 0 failed
+2025-09-22 16:32:10 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:32:14 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:32:14 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:32:14 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:32:14 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:32:14 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:32:14 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:32:14 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 6, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:32:41 - app - INFO - 📁 Processing bulk upload: 3 files
+2025-09-22 16:32:41 - app - INFO - 📄 Processing file 1/3: Parth Limbadia_Resume_ (1).pdf
+2025-09-22 16:32:41 - app - INFO - 📊 File size: 278127 bytes
+2025-09-22 16:32:41 - src.resume_parser.utils.file_handler - INFO - Extracting text from application/pdf file: tmpfwdpumrp.pdf
+2025-09-22 16:32:41 - src.resume_parser.core.parser - INFO - Starting resume parsing for user: 1c71ab32-0536-4e47-af66-e9d7143a47cc
+2025-09-22 16:32:49 - src.resume_parser.core.parser - ERROR - Error in experience calculation: 'description'
+2025-09-22 16:32:49 - src.resume_parser.core.parser - INFO - ✅ Resume parsing completed for user: 1c71ab32-0536-4e47-af66-e9d7143a47cc
+2025-09-22 16:32:49 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 16:32:51 - src.resume_parser.database.qdrant_client - INFO - Successfully stored embedding for user: 1c71ab32-0536-4e47-af66-e9d7143a47cc
+2025-09-22 16:32:51 - app - INFO - ✅ Stored resume 1 in Qdrant with ID: 1c71ab32-0536-4e47-af66-e9d7143a47cc
+2025-09-22 16:32:51 - app - INFO - ✅ Successfully processed file 1: Parth Limbadia_Resume_ (1).pdf
+2025-09-22 16:32:51 - app - INFO - 📄 Processing file 2/3: Kiran Jaybhaye.pdf
+2025-09-22 16:32:51 - app - INFO - 📊 File size: 207330 bytes
+2025-09-22 16:32:51 - src.resume_parser.utils.file_handler - INFO - Extracting text from application/pdf file: tmpoza9hy6m.pdf
+2025-09-22 16:32:51 - src.resume_parser.core.parser - INFO - Starting resume parsing for user: 325e9361-3222-4c44-9244-34433d9d16e8
+2025-09-22 16:33:04 - src.resume_parser.core.parser - ERROR - Error in experience calculation: 'description'
+2025-09-22 16:33:04 - src.resume_parser.core.parser - INFO - ✅ Resume parsing completed for user: 325e9361-3222-4c44-9244-34433d9d16e8
+2025-09-22 16:33:06 - src.resume_parser.database.qdrant_client - INFO - Successfully stored embedding for user: 325e9361-3222-4c44-9244-34433d9d16e8
+2025-09-22 16:33:06 - app - INFO - ✅ Stored resume 2 in Qdrant with ID: 325e9361-3222-4c44-9244-34433d9d16e8
+2025-09-22 16:33:06 - app - INFO - ✅ Successfully processed file 2: Kiran Jaybhaye.pdf
+2025-09-22 16:33:06 - app - INFO - 📄 Processing file 3/3: RadhikaAshokChavan[7y_0m].pdf
+2025-09-22 16:33:06 - app - INFO - 📊 File size: 163341 bytes
+2025-09-22 16:33:06 - src.resume_parser.utils.file_handler - INFO - Extracting text from application/pdf file: tmpw5a8n6et.pdf
+2025-09-22 16:33:06 - src.resume_parser.core.parser - INFO - Starting resume parsing for user: e19ffbca-2549-40b6-b87e-c534c9eeb6e4
+2025-09-22 16:33:21 - src.resume_parser.core.parser - ERROR - Error in experience calculation: 'description'
+2025-09-22 16:33:21 - src.resume_parser.core.parser - INFO - ✅ Resume parsing completed for user: e19ffbca-2549-40b6-b87e-c534c9eeb6e4
+2025-09-22 16:33:23 - src.resume_parser.database.qdrant_client - INFO - Successfully stored embedding for user: e19ffbca-2549-40b6-b87e-c534c9eeb6e4
+2025-09-22 16:33:23 - app - INFO - ✅ Stored resume 3 in Qdrant with ID: e19ffbca-2549-40b6-b87e-c534c9eeb6e4
+2025-09-22 16:33:23 - app - INFO - ✅ Successfully processed file 3: RadhikaAshokChavan[7y_0m].pdf
+2025-09-22 16:33:23 - app - INFO - 📋 Bulk upload completed: 3 successful, 0 failed
+2025-09-22 16:33:42 - app - INFO - 📄 Processing resume upload: Parth Limbadia_Resume_ (1).pdf
+2025-09-22 16:33:42 - app - INFO - 📊 File size: 278127 bytes
+2025-09-22 16:33:42 - src.resume_parser.utils.file_handler - INFO - Extracting text from application/pdf file: tmprd8_958t.pdf
+2025-09-22 16:33:42 - src.resume_parser.core.parser - INFO - Starting resume parsing for user: 8664cca9-1b4a-4e6e-a8c8-e3e4289dc4d0
+2025-09-22 16:33:54 - src.resume_parser.core.parser - ERROR - Error in experience calculation: 'description'
+2025-09-22 16:33:54 - src.resume_parser.core.parser - INFO - ✅ Resume parsing completed for user: 8664cca9-1b4a-4e6e-a8c8-e3e4289dc4d0
+2025-09-22 16:33:56 - src.resume_parser.database.qdrant_client - INFO - Successfully stored embedding for user: 8664cca9-1b4a-4e6e-a8c8-e3e4289dc4d0
+2025-09-22 16:33:56 - app - INFO - ✅ Stored in Qdrant with ID: 8664cca9-1b4a-4e6e-a8c8-e3e4289dc4d0
+2025-09-22 16:33:56 - app - INFO - ✅ Resume processing completed for user: 8664cca9-1b4a-4e6e-a8c8-e3e4289dc4d0
+2025-09-22 16:35:15 - app - INFO - 🔍 Advanced search query: i need Senior Business Analyst
+2025-09-22 16:35:15 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need Senior Business Analyst
+2025-09-22 16:35:15 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['data_scientist', 'hr_manager', 'product_manager', 'sales_manager'], Skills: ['r'], Seniority: senior
+2025-09-22 16:35:17 - src.resume_parser.database.qdrant_client - INFO - Found 10 similar resumes
+2025-09-22 16:36:17 - app - INFO - 🔍 Processing search query: i need Data Scientist
+2025-09-22 16:36:17 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need Data Scientist
+2025-09-22 16:36:17 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['data_scientist'], Skills: [], Seniority: None
+2025-09-22 16:36:20 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['Data Scientist', 'Data Analyst', 'ML Engineer', 'Machine Learning Engineer', 'AI Engineer']}}
+2025-09-22 16:36:20 - app - INFO - 📊 Detected roles: ['data_scientist']
+2025-09-22 16:36:20 - app - INFO - 🔧 Detected skills: []
+2025-09-22 16:36:20 - src.resume_parser.database.qdrant_client - INFO - Found 1 similar resumes
+2025-09-22 16:36:57 - app - INFO - 🔍 Processing search query: i need candidates from ahmedabad
+2025-09-22 16:36:57 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need candidates from ahmedabad
+2025-09-22 16:36:57 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: [], Skills: [], Seniority: None
+2025-09-22 16:36:59 - app - INFO - 🎯 Search filters: {}
+2025-09-22 16:36:59 - app - INFO - 📊 Detected roles: []
+2025-09-22 16:36:59 - app - INFO - 🔧 Detected skills: []
+2025-09-22 16:36:59 - src.resume_parser.database.qdrant_client - INFO - Found 10 similar resumes
+2025-09-22 16:38:16 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:38:17 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:38:17 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:38:17 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:38:17 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:38:17 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:38:17 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:38:17 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 10, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:38:26 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:38:27 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:38:27 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:38:27 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:38:27 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:38:27 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:38:27 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:38:27 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 10, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:39:04 - app - INFO - 🔍 Processing search query: full stack developer with react skills
+2025-09-22 16:39:04 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: full stack developer with react skills
+2025-09-22 16:39:04 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer'], Skills: ['react'], Seniority: None
+2025-09-22 16:39:04 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 16:39:05 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Web Developer', 'Mobile Developer']}}
+2025-09-22 16:39:05 - app - INFO - 📊 Detected roles: ['software_engineer']
+2025-09-22 16:39:05 - app - INFO - 🔧 Detected skills: ['react']
+2025-09-22 16:39:05 - src.resume_parser.database.qdrant_client - INFO - Found 4 similar resumes
+2025-09-22 16:39:21 - app - INFO - 🔍 Processing search query: i need candidates from ahmedabad
+2025-09-22 16:39:21 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need candidates from ahmedabad
+2025-09-22 16:39:21 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: [], Skills: [], Seniority: None
+2025-09-22 16:39:24 - app - INFO - 🎯 Search filters: {}
+2025-09-22 16:39:24 - app - INFO - 📊 Detected roles: []
+2025-09-22 16:39:24 - app - INFO - 🔧 Detected skills: []
+2025-09-22 16:39:24 - src.resume_parser.database.qdrant_client - INFO - Found 10 similar resumes
+2025-09-22 16:40:03 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:40:04 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:40:04 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:40:04 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:40:04 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:40:04 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:40:04 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:40:04 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 10, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:40:21 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:40:22 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:40:22 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:40:22 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:40:22 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:40:22 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:40:22 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:40:22 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 10, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:40:35 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:40:36 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:40:36 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:40:36 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:40:36 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:40:36 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:40:36 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:40:36 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 10, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:40:51 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:40:52 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:40:52 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:40:52 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:40:52 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:40:52 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:40:52 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:40:52 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 10, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:41:04 - app - INFO - 🔍 Processing search query: i need candidates from ahmedabad
+2025-09-22 16:41:04 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need candidates from ahmedabad
+2025-09-22 16:41:04 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: [], Skills: [], Seniority: None
+2025-09-22 16:41:04 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 16:41:06 - app - INFO - 🎯 Search filters: {'location': 'ahmedabad'}
+2025-09-22 16:41:06 - app - INFO - 📊 Detected roles: []
+2025-09-22 16:41:06 - app - INFO - 🔧 Detected skills: []
+2025-09-22 16:41:06 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-22 16:41:15 - app - INFO - 🔍 Processing search query: software engineer
+2025-09-22 16:41:15 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: software engineer
+2025-09-22 16:41:15 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer', 'data_scientist'], Skills: ['r'], Seniority: None
+2025-09-22 16:41:16 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Web Developer', 'Mobile Developer', 'Data Scientist', 'Data Analyst', 'ML Engineer', 'Machine Learning Engineer', 'AI Engineer']}}
+2025-09-22 16:41:16 - app - INFO - 📊 Detected roles: ['software_engineer', 'data_scientist']
+2025-09-22 16:41:16 - app - INFO - 🔧 Detected skills: ['r']
+2025-09-22 16:41:16 - src.resume_parser.database.qdrant_client - INFO - Found 5 similar resumes
+2025-09-22 16:41:26 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:41:27 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:41:27 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:41:27 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:41:27 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:41:27 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:41:27 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:41:27 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 10, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:41:39 - app - INFO - 🔍 Processing search query: software engineer
+2025-09-22 16:41:39 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: software engineer
+2025-09-22 16:41:39 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer', 'data_scientist'], Skills: ['r'], Seniority: None
+2025-09-22 16:41:39 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 16:41:41 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Web Developer', 'Mobile Developer', 'Data Scientist', 'Data Analyst', 'ML Engineer', 'Machine Learning Engineer', 'AI Engineer']}}
+2025-09-22 16:41:41 - app - INFO - 📊 Detected roles: ['software_engineer', 'data_scientist']
+2025-09-22 16:41:41 - app - INFO - 🔧 Detected skills: ['r']
+2025-09-22 16:41:41 - src.resume_parser.database.qdrant_client - INFO - Found 5 similar resumes
+2025-09-22 16:41:51 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:41:52 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:41:52 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:41:52 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:41:52 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:41:52 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:41:52 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:41:52 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 10, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:41:59 - app - INFO - 🔍 Processing search query: software engineer
+2025-09-22 16:41:59 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: software engineer
+2025-09-22 16:41:59 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer', 'data_scientist'], Skills: ['r'], Seniority: None
+2025-09-22 16:41:59 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 16:42:01 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Web Developer', 'Mobile Developer', 'Data Scientist', 'Data Analyst', 'ML Engineer', 'Machine Learning Engineer', 'AI Engineer']}}
+2025-09-22 16:42:01 - app - INFO - 📊 Detected roles: ['software_engineer', 'data_scientist']
+2025-09-22 16:42:01 - app - INFO - 🔧 Detected skills: ['r']
+2025-09-22 16:42:01 - src.resume_parser.database.qdrant_client - INFO - Found 5 similar resumes
+2025-09-22 16:42:11 - app - INFO - 🔍 Processing search query: candidates from san francisco
+2025-09-22 16:42:11 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: candidates from san francisco
+2025-09-22 16:42:11 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: [], Skills: [], Seniority: None
+2025-09-22 16:42:13 - app - INFO - 🎯 Search filters: {'location': 'san'}
+2025-09-22 16:42:13 - app - INFO - 📊 Detected roles: []
+2025-09-22 16:42:13 - app - INFO - 🔧 Detected skills: []
+2025-09-22 16:42:13 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-22 16:42:43 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:42:44 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:42:44 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:42:44 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:42:44 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:42:44 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:42:44 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:42:44 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 10, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:42:54 - app - INFO - 🔍 Processing search query: candidates from san francisco
+2025-09-22 16:42:54 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: candidates from san francisco
+2025-09-22 16:42:54 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: [], Skills: [], Seniority: None
+2025-09-22 16:42:54 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 16:42:56 - app - INFO - 🎯 Search filters: {'location': 'san francisco'}
+2025-09-22 16:42:56 - app - INFO - 📊 Detected roles: []
+2025-09-22 16:42:56 - app - INFO - 🔧 Detected skills: []
+2025-09-22 16:42:56 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-22 16:43:04 - app - INFO - 🔍 Processing search query: python developer with react experience
+2025-09-22 16:43:04 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: python developer with react experience
+2025-09-22 16:43:04 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer'], Skills: ['react', 'python'], Seniority: None
+2025-09-22 16:43:06 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Web Developer', 'Mobile Developer']}}
+2025-09-22 16:43:06 - app - INFO - 📊 Detected roles: ['software_engineer']
+2025-09-22 16:43:06 - app - INFO - 🔧 Detected skills: ['react', 'python']
+2025-09-22 16:43:06 - src.resume_parser.database.qdrant_client - INFO - Found 4 similar resumes
+2025-09-22 16:43:27 - app - INFO - 🔍 Processing search query: i need candidates from ahmedabad
+2025-09-22 16:43:27 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need candidates from ahmedabad
+2025-09-22 16:43:27 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: [], Skills: [], Seniority: None
+2025-09-22 16:43:29 - app - INFO - 🎯 Search filters: {'location': 'ahmedabad'}
+2025-09-22 16:43:29 - app - INFO - 📊 Detected roles: []
+2025-09-22 16:43:29 - app - INFO - 🔧 Detected skills: []
+2025-09-22 16:43:29 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-22 16:43:43 - app - INFO - 🔍 Processing search query: i need candidates from ahmedabad,gujarat
+2025-09-22 16:43:43 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need candidates from ahmedabad,gujarat
+2025-09-22 16:43:43 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: [], Skills: [], Seniority: None
+2025-09-22 16:43:45 - app - INFO - 🎯 Search filters: {'location': 'ahmedabad,gujarat'}
+2025-09-22 16:43:45 - app - INFO - 📊 Detected roles: []
+2025-09-22 16:43:45 - app - INFO - 🔧 Detected skills: []
+2025-09-22 16:43:45 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-22 16:44:08 - app - INFO - 🔍 Processing search query: i need full stack developer
+2025-09-22 16:44:08 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need full stack developer
+2025-09-22 16:44:08 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer'], Skills: [], Seniority: None
+2025-09-22 16:44:09 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Web Developer', 'Mobile Developer']}}
+2025-09-22 16:44:09 - app - INFO - 📊 Detected roles: ['software_engineer']
+2025-09-22 16:44:09 - app - INFO - 🔧 Detected skills: []
+2025-09-22 16:44:09 - src.resume_parser.database.qdrant_client - INFO - Found 4 similar resumes
+2025-09-22 16:44:53 - app - INFO - 🔍 Processing search query: i need candidates from  Ahmedabad, Gujarat
+2025-09-22 16:44:53 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need candidates from  Ahmedabad, Gujarat
+2025-09-22 16:44:53 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: [], Skills: [], Seniority: None
+2025-09-22 16:44:55 - app - INFO - 🎯 Search filters: {'location': 'Ahmedabad, Gujarat'}
+2025-09-22 16:44:55 - app - INFO - 📊 Detected roles: []
+2025-09-22 16:44:55 - app - INFO - 🔧 Detected skills: []
+2025-09-22 16:44:55 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-22 16:45:51 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:45:52 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:45:52 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:45:52 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:45:52 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:45:52 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:45:52 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:45:52 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 10, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:45:57 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:45:58 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:45:58 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:45:58 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:45:58 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:45:58 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:45:58 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:45:58 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 10, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:46:03 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:46:04 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:46:04 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:46:04 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:46:04 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:46:04 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:46:04 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:46:04 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 10, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:46:10 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:46:10 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:46:10 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:46:10 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:46:10 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:46:10 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:46:10 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:46:10 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 10, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:46:17 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:46:18 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:46:18 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:46:18 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:46:18 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:46:18 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:46:18 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:46:18 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 10, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:46:23 - app - INFO - 🔍 Processing search query: i need candidates from  Ahmedabad, Gujarat
+2025-09-22 16:46:23 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need candidates from  Ahmedabad, Gujarat
+2025-09-22 16:46:23 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: [], Skills: [], Seniority: None, Location: Ahmedabad, Gujarat
+2025-09-22 16:46:23 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 16:46:25 - src.resume_parser.utils.search_intelligence - INFO - 🗺️ Adding location filter: Ahmedabad, Gujarat
+2025-09-22 16:46:25 - app - INFO - 🎯 Search filters: {'location': 'Ahmedabad, Gujarat'}
+2025-09-22 16:46:25 - app - INFO - 📊 Detected roles: []
+2025-09-22 16:46:25 - app - INFO - 🔧 Detected skills: []
+2025-09-22 16:46:25 - app - INFO - 🗺️ Detected location: Ahmedabad, Gujarat
+2025-09-22 16:46:25 - src.resume_parser.database.qdrant_client - INFO - 🔍 Qdrant search called with filter_conditions: {'location': 'Ahmedabad, Gujarat'}
+2025-09-22 16:46:25 - src.resume_parser.database.qdrant_client - INFO - 🔍 Filter conditions type: <class 'dict'>
+2025-09-22 16:46:25 - src.resume_parser.database.qdrant_client - INFO - 🗺️ Processing location filter: field=location, condition=Ahmedabad, Gujarat
+2025-09-22 16:46:25 - src.resume_parser.database.qdrant_client - INFO - 🗺️ Added location FieldCondition with MatchText: ahmedabad, gujarat
+2025-09-22 16:46:25 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-22 16:46:25 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 16:46:26 - root - INFO - Logging configured with level: INFO
+2025-09-22 16:46:26 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 16:46:26 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 16:46:26 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 16:46:26 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 16:46:26 - app - INFO - 🔧 Debug mode: False
+2025-09-22 16:46:26 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 10, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 16:46:31 - app - INFO - 🔍 Processing search query: i need candidates from  Ahmedabad, Gujarat
+2025-09-22 16:46:31 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need candidates from  Ahmedabad, Gujarat
+2025-09-22 16:46:31 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: [], Skills: [], Seniority: None, Location: Ahmedabad, Gujarat
+2025-09-22 16:46:31 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 16:46:33 - src.resume_parser.utils.search_intelligence - INFO - 🗺️ Adding location filter: Ahmedabad, Gujarat
+2025-09-22 16:46:33 - app - INFO - 🎯 Search filters: {'location': 'Ahmedabad, Gujarat'}
+2025-09-22 16:46:33 - app - INFO - 📊 Detected roles: []
+2025-09-22 16:46:33 - app - INFO - 🔧 Detected skills: []
+2025-09-22 16:46:33 - app - INFO - 🗺️ Detected location: Ahmedabad, Gujarat
+2025-09-22 16:46:33 - src.resume_parser.database.qdrant_client - INFO - 🔍 Qdrant search called with filter_conditions: {'location': 'Ahmedabad, Gujarat'}
+2025-09-22 16:46:33 - src.resume_parser.database.qdrant_client - INFO - 🔍 Filter conditions type: <class 'dict'>
+2025-09-22 16:46:33 - src.resume_parser.database.qdrant_client - INFO - 🗺️ Processing location filter: field=location, condition=Ahmedabad, Gujarat
+2025-09-22 16:46:33 - src.resume_parser.database.qdrant_client - INFO - 🗺️ Added location FieldCondition with MatchText: ahmedabad, gujarat
+2025-09-22 16:46:33 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-22 16:46:34 - app - INFO - 🔍 Processing search query: candidates from ahmedabad
+2025-09-22 16:46:34 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: candidates from ahmedabad
+2025-09-22 16:46:34 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: [], Skills: [], Seniority: None, Location: ahmedabad
+2025-09-22 16:46:35 - src.resume_parser.utils.search_intelligence - INFO - 🗺️ Adding location filter: ahmedabad
+2025-09-22 16:46:35 - app - INFO - 🎯 Search filters: {'location': 'ahmedabad'}
+2025-09-22 16:46:35 - app - INFO - 📊 Detected roles: []
+2025-09-22 16:46:35 - app - INFO - 🔧 Detected skills: []
+2025-09-22 16:46:35 - app - INFO - 🗺️ Detected location: ahmedabad
+2025-09-22 16:46:35 - src.resume_parser.database.qdrant_client - INFO - 🔍 Qdrant search called with filter_conditions: {'location': 'ahmedabad'}
+2025-09-22 16:46:35 - src.resume_parser.database.qdrant_client - INFO - 🔍 Filter conditions type: <class 'dict'>
+2025-09-22 16:46:35 - src.resume_parser.database.qdrant_client - INFO - 🗺️ Processing location filter: field=location, condition=ahmedabad
+2025-09-22 16:46:35 - src.resume_parser.database.qdrant_client - INFO - 🗺️ Added location FieldCondition with MatchText: ahmedabad
+2025-09-22 16:46:35 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-22 17:08:02 - app - INFO - 🔍 Processing search query: candidates from ahmedabad
+2025-09-22 17:08:02 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: candidates from ahmedabad
+2025-09-22 17:08:02 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: [], Skills: [], Seniority: None, Location: ahmedabad
+2025-09-22 17:08:04 - app - ERROR - Error in resume search: Connection error.
+2025-09-22 17:08:27 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 17:08:33 - root - INFO - Logging configured with level: INFO
+2025-09-22 17:08:33 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 17:08:33 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 17:08:33 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 17:08:33 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 17:08:33 - app - INFO - 🔧 Debug mode: False
+2025-09-22 17:08:33 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 10, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 17:08:48 - app - INFO - 🔍 Processing search query: candidates from ahmedabad
+2025-09-22 17:08:48 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: candidates from ahmedabad
+2025-09-22 17:08:48 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: [], Skills: [], Seniority: None, Location: ahmedabad
+2025-09-22 17:08:48 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 17:08:50 - src.resume_parser.utils.search_intelligence - INFO - 🗺️ Adding location filter: ahmedabad
+2025-09-22 17:08:50 - app - INFO - 🎯 Search filters: {'location': 'ahmedabad'}
+2025-09-22 17:08:50 - app - INFO - 📊 Detected roles: []
+2025-09-22 17:08:50 - app - INFO - 🔧 Detected skills: []
+2025-09-22 17:08:50 - app - INFO - 🗺️ Detected location: ahmedabad
+2025-09-22 17:08:50 - src.resume_parser.database.qdrant_client - INFO - 🔍 Qdrant search called with filter_conditions: {'location': 'ahmedabad'}
+2025-09-22 17:08:50 - src.resume_parser.database.qdrant_client - INFO - 🔍 Filter conditions type: <class 'dict'>
+2025-09-22 17:08:50 - src.resume_parser.database.qdrant_client - INFO - 🗺️ Processing location filter: field=location, condition=ahmedabad
+2025-09-22 17:08:50 - src.resume_parser.database.qdrant_client - INFO - 🗺️ Added location FieldCondition with MatchText: ahmedabad
+2025-09-22 17:08:50 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-22 17:09:28 - app - INFO - 🔍 Processing search query: software engineer
+2025-09-22 17:09:28 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: software engineer
+2025-09-22 17:09:28 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer', 'data_scientist'], Skills: ['r'], Seniority: None, Location: None
+2025-09-22 17:09:30 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Web Developer', 'Mobile Developer', 'Data Scientist', 'Data Analyst', 'ML Engineer', 'Machine Learning Engineer', 'AI Engineer']}}
+2025-09-22 17:09:30 - app - INFO - 📊 Detected roles: ['software_engineer', 'data_scientist']
+2025-09-22 17:09:30 - app - INFO - 🔧 Detected skills: ['r']
+2025-09-22 17:09:30 - app - INFO - 🗺️ Detected location: None
+2025-09-22 17:09:30 - src.resume_parser.database.qdrant_client - INFO - 🔍 Qdrant search called with filter_conditions: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Web Developer', 'Mobile Developer', 'Data Scientist', 'Data Analyst', 'ML Engineer', 'Machine Learning Engineer', 'AI Engineer']}}
+2025-09-22 17:09:30 - src.resume_parser.database.qdrant_client - INFO - 🔍 Filter conditions type: <class 'dict'>
+2025-09-22 17:09:30 - src.resume_parser.database.qdrant_client - INFO - 📍 Sample location data from results:
+2025-09-22 17:09:30 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 1: John Smith -> location: 'San Francisco, CA'
+2025-09-22 17:09:30 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 2: John Smith -> location: 'San Francisco, CA'
+2025-09-22 17:09:30 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 3: John Smith -> location: 'San Francisco, CA'
+2025-09-22 17:09:30 - src.resume_parser.database.qdrant_client - INFO - Found 5 similar resumes
+2025-09-22 17:09:46 - app - INFO - 🔍 Processing search query: candidates from san francisco
+2025-09-22 17:09:46 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: candidates from san francisco
+2025-09-22 17:09:46 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: [], Skills: [], Seniority: None, Location: san francisco
+2025-09-22 17:09:49 - src.resume_parser.utils.search_intelligence - INFO - 🗺️ Adding location filter: san francisco
+2025-09-22 17:09:49 - app - INFO - 🎯 Search filters: {'location': 'san francisco'}
+2025-09-22 17:09:49 - app - INFO - 📊 Detected roles: []
+2025-09-22 17:09:49 - app - INFO - 🔧 Detected skills: []
+2025-09-22 17:09:49 - app - INFO - 🗺️ Detected location: san francisco
+2025-09-22 17:09:49 - src.resume_parser.database.qdrant_client - INFO - 🔍 Qdrant search called with filter_conditions: {'location': 'san francisco'}
+2025-09-22 17:09:49 - src.resume_parser.database.qdrant_client - INFO - 🔍 Filter conditions type: <class 'dict'>
+2025-09-22 17:09:49 - src.resume_parser.database.qdrant_client - INFO - 🗺️ Processing location filter: field=location, condition=san francisco
+2025-09-22 17:09:49 - src.resume_parser.database.qdrant_client - INFO - 🗺️ Added location FieldCondition with MatchText: san francisco
+2025-09-22 17:09:49 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-22 17:10:02 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 17:10:03 - root - INFO - Logging configured with level: INFO
+2025-09-22 17:10:03 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 17:10:03 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 17:10:03 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 17:10:03 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 17:10:03 - app - INFO - 🔧 Debug mode: False
+2025-09-22 17:10:03 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 10, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 17:10:15 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 17:10:16 - root - INFO - Logging configured with level: INFO
+2025-09-22 17:10:16 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 17:10:16 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 17:10:16 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 17:10:16 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 17:10:16 - app - INFO - 🔧 Debug mode: False
+2025-09-22 17:10:16 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 10, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 17:10:22 - app - INFO - 🔍 Processing search query: candidates from san francisco
+2025-09-22 17:10:22 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: candidates from san francisco
+2025-09-22 17:10:22 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: [], Skills: [], Seniority: None, Location: san francisco
+2025-09-22 17:10:22 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 17:10:24 - src.resume_parser.utils.search_intelligence - INFO - 🗺️ Adding location filter: san francisco
+2025-09-22 17:10:24 - app - INFO - 🎯 Search filters: {'location': 'san francisco'}
+2025-09-22 17:10:24 - app - INFO - 📊 Detected roles: []
+2025-09-22 17:10:24 - app - INFO - 🔧 Detected skills: []
+2025-09-22 17:10:24 - app - INFO - 🗺️ Detected location: san francisco
+2025-09-22 17:10:24 - src.resume_parser.database.qdrant_client - INFO - 🔍 Qdrant search called with filter_conditions: {'location': 'san francisco'}
+2025-09-22 17:10:24 - src.resume_parser.database.qdrant_client - INFO - 🔍 Filter conditions type: <class 'dict'>
+2025-09-22 17:10:24 - src.resume_parser.database.qdrant_client - INFO - 🗺️ Processing location filter: field=location, condition=san francisco
+2025-09-22 17:10:24 - src.resume_parser.database.qdrant_client - INFO - 🗺️ Location filter will be applied in post-processing: san francisco
+2025-09-22 17:10:24 - src.resume_parser.database.qdrant_client - INFO - 📍 Sample location data from results:
+2025-09-22 17:10:24 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 1: Sarah Johnson -> location: 'New York, NY'
+2025-09-22 17:10:24 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 2: John Smith -> location: 'San Francisco, CA'
+2025-09-22 17:10:24 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 3: John Smith -> location: 'San Francisco, CA'
+2025-09-22 17:10:24 - src.resume_parser.database.qdrant_client - INFO - Found 10 similar resumes
+2025-09-22 17:10:24 - app - INFO - 🗺️ Applying Python location filter for: san francisco
+2025-09-22 17:10:24 - app - INFO - 🗺️ Location match: 'san francisco' in 'san francisco, ca'
+2025-09-22 17:10:24 - app - INFO - 🗺️ Location match: 'san francisco' in 'san francisco, ca'
+2025-09-22 17:10:24 - app - INFO - 🗺️ Location match: 'san francisco' in 'san francisco, ca'
+2025-09-22 17:10:24 - app - INFO - 🗺️ Location filtering: 10 -> 3 results
+2025-09-22 17:10:48 - app - INFO - 🔍 Processing search query: i need candidates from  Ahmedabad, Gujarat
+2025-09-22 17:10:48 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need candidates from  Ahmedabad, Gujarat
+2025-09-22 17:10:48 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: [], Skills: [], Seniority: None, Location: Ahmedabad, Gujarat
+2025-09-22 17:10:50 - src.resume_parser.utils.search_intelligence - INFO - 🗺️ Adding location filter: Ahmedabad, Gujarat
+2025-09-22 17:10:50 - app - INFO - 🎯 Search filters: {'location': 'Ahmedabad, Gujarat'}
+2025-09-22 17:10:50 - app - INFO - 📊 Detected roles: []
+2025-09-22 17:10:50 - app - INFO - 🔧 Detected skills: []
+2025-09-22 17:10:50 - app - INFO - 🗺️ Detected location: Ahmedabad, Gujarat
+2025-09-22 17:10:50 - src.resume_parser.database.qdrant_client - INFO - 🔍 Qdrant search called with filter_conditions: {'location': 'Ahmedabad, Gujarat'}
+2025-09-22 17:10:50 - src.resume_parser.database.qdrant_client - INFO - 🔍 Filter conditions type: <class 'dict'>
+2025-09-22 17:10:50 - src.resume_parser.database.qdrant_client - INFO - 🗺️ Processing location filter: field=location, condition=Ahmedabad, Gujarat
+2025-09-22 17:10:50 - src.resume_parser.database.qdrant_client - INFO - 🗺️ Location filter will be applied in post-processing: ahmedabad, gujarat
+2025-09-22 17:10:50 - src.resume_parser.database.qdrant_client - INFO - 📍 Sample location data from results:
+2025-09-22 17:10:50 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 1: Parth Limbadia -> location: 'Gandhinagar, Gujarat'
+2025-09-22 17:10:50 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 2: Parth Limbadia -> location: 'Gandhinagar, Gujarat'
+2025-09-22 17:10:50 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 3: Lucky Patel -> location: 'Ahmedabad, Gujarat'
+2025-09-22 17:10:50 - src.resume_parser.database.qdrant_client - INFO - Found 10 similar resumes
+2025-09-22 17:10:50 - app - INFO - 🗺️ Applying Python location filter for: ahmedabad, gujarat
+2025-09-22 17:10:50 - app - INFO - 🗺️ Location match: 'ahmedabad, gujarat' in 'ahmedabad, gujarat'
+2025-09-22 17:10:50 - app - INFO - 🗺️ Location match: 'ahmedabad, gujarat' in 'ahmedabad, gujarat'
+2025-09-22 17:10:50 - app - INFO - 🗺️ Location filtering: 10 -> 2 results
+2025-09-22 17:11:10 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-22 17:12:30 - root - INFO - Logging configured with level: INFO
+2025-09-22 17:12:30 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-22 17:12:30 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-22 17:12:30 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-22 17:12:30 - app - INFO - 📁 Upload directory: uploads
+2025-09-22 17:12:30 - app - INFO - 🔧 Debug mode: False
+2025-09-22 17:12:30 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 10, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-22 17:12:32 - app - INFO - 🔍 Processing search query: i need candidates from  ahmedabad
+2025-09-22 17:12:32 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need candidates from  ahmedabad
+2025-09-22 17:12:32 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: [], Skills: [], Seniority: None, Location: ahmedabad
+2025-09-22 17:12:32 - src.resume_parser.clients.azure_openai - INFO - Asynchronous Azure OpenAI client created successfully
+2025-09-22 17:12:34 - src.resume_parser.utils.search_intelligence - INFO - 🗺️ Adding location filter: ahmedabad
+2025-09-22 17:12:34 - app - INFO - 🎯 Search filters: {'location': 'ahmedabad'}
+2025-09-22 17:12:34 - app - INFO - 📊 Detected roles: []
+2025-09-22 17:12:34 - app - INFO - 🔧 Detected skills: []
+2025-09-22 17:12:34 - app - INFO - 🗺️ Detected location: ahmedabad
+2025-09-22 17:12:34 - src.resume_parser.database.qdrant_client - INFO - 🔍 Qdrant search called with filter_conditions: {'location': 'ahmedabad'}
+2025-09-22 17:12:34 - src.resume_parser.database.qdrant_client - INFO - 🔍 Filter conditions type: <class 'dict'>
+2025-09-22 17:12:34 - src.resume_parser.database.qdrant_client - INFO - 🗺️ Processing location filter: field=location, condition=ahmedabad
+2025-09-22 17:12:34 - src.resume_parser.database.qdrant_client - INFO - 🗺️ Location filter will be applied in post-processing: ahmedabad
+2025-09-22 17:12:34 - src.resume_parser.database.qdrant_client - INFO - 📍 Sample location data from results:
+2025-09-22 17:12:34 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 1: Parth Limbadia -> location: 'Gandhinagar, Gujarat'
+2025-09-22 17:12:34 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 2: Parth Limbadia -> location: 'Gandhinagar, Gujarat'
+2025-09-22 17:12:34 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 3: Lucky Patel -> location: 'Ahmedabad, Gujarat'
+2025-09-22 17:12:34 - src.resume_parser.database.qdrant_client - INFO - Found 10 similar resumes
+2025-09-22 17:12:34 - app - INFO - 🗺️ Applying Python location filter for: ahmedabad
+2025-09-22 17:12:34 - app - INFO - 🗺️ Location match: 'ahmedabad' in 'ahmedabad, gujarat'
+2025-09-22 17:12:34 - app - INFO - 🗺️ Location match: 'ahmedabad' in 'ahmedabad, gujarat'
+2025-09-22 17:12:34 - app - INFO - 🗺️ Location filtering: 10 -> 2 results
+2025-09-22 17:15:40 - app - INFO - 🔍 Processing search query: i need candidates from  ny
+2025-09-22 17:15:40 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need candidates from  ny
+2025-09-22 17:15:40 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: [], Skills: [], Seniority: None, Location: None
+2025-09-22 17:15:42 - app - INFO - 🎯 Search filters: {}
+2025-09-22 17:15:42 - app - INFO - 📊 Detected roles: []
+2025-09-22 17:15:42 - app - INFO - 🔧 Detected skills: []
+2025-09-22 17:15:42 - app - INFO - 🗺️ Detected location: None
+2025-09-22 17:15:43 - src.resume_parser.database.qdrant_client - INFO - 📍 Sample location data from results:
+2025-09-22 17:15:43 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 1: Lucky Patel -> location: 'Ahmedabad, Gujarat'
+2025-09-22 17:15:43 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 2: Parth Limbadia -> location: 'Gandhinagar, Gujarat'
+2025-09-22 17:15:43 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 3: John Smith -> location: 'San Francisco, CA'
+2025-09-22 17:15:43 - src.resume_parser.database.qdrant_client - INFO - Found 10 similar resumes
+2025-09-22 17:16:02 - app - INFO - 🔍 Processing search query: i need candidates from  ny,usa
+2025-09-22 17:16:02 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need candidates from  ny,usa
+2025-09-22 17:16:02 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: [], Skills: [], Seniority: None, Location: ny,usa
+2025-09-22 17:16:04 - src.resume_parser.utils.search_intelligence - INFO - 🗺️ Adding location filter: ny,usa
+2025-09-22 17:16:04 - app - INFO - 🎯 Search filters: {'location': 'ny,usa'}
+2025-09-22 17:16:04 - app - INFO - 📊 Detected roles: []
+2025-09-22 17:16:04 - app - INFO - 🔧 Detected skills: []
+2025-09-22 17:16:04 - app - INFO - 🗺️ Detected location: ny,usa
+2025-09-22 17:16:04 - src.resume_parser.database.qdrant_client - INFO - 🔍 Qdrant search called with filter_conditions: {'location': 'ny,usa'}
+2025-09-22 17:16:04 - src.resume_parser.database.qdrant_client - INFO - 🔍 Filter conditions type: <class 'dict'>
+2025-09-22 17:16:04 - src.resume_parser.database.qdrant_client - INFO - 🗺️ Processing location filter: field=location, condition=ny,usa
+2025-09-22 17:16:04 - src.resume_parser.database.qdrant_client - INFO - 🗺️ Location filter will be applied in post-processing: ny,usa
+2025-09-22 17:16:04 - src.resume_parser.database.qdrant_client - INFO - 📍 Sample location data from results:
+2025-09-22 17:16:04 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 1: Lucky Patel -> location: 'Ahmedabad, Gujarat'
+2025-09-22 17:16:04 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 2: Parth Limbadia -> location: 'Gandhinagar, Gujarat'
+2025-09-22 17:16:04 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 3: Radhika A Chavan -> location: 'Unknown'
+2025-09-22 17:16:04 - src.resume_parser.database.qdrant_client - INFO - Found 10 similar resumes
+2025-09-22 17:16:04 - app - INFO - 🗺️ Applying Python location filter for: ny,usa
+2025-09-22 17:16:04 - app - INFO - 🗺️ Location filtering: 10 -> 0 results
+2025-09-22 17:16:18 - app - INFO - 🔍 Processing search query: i need candidates from  new york
+2025-09-22 17:16:18 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need candidates from  new york
+2025-09-22 17:16:18 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: [], Skills: [], Seniority: None, Location: new york
+2025-09-22 17:16:20 - src.resume_parser.utils.search_intelligence - INFO - 🗺️ Adding location filter: new york
+2025-09-22 17:16:20 - app - INFO - 🎯 Search filters: {'location': 'new york'}
+2025-09-22 17:16:20 - app - INFO - 📊 Detected roles: []
+2025-09-22 17:16:20 - app - INFO - 🔧 Detected skills: []
+2025-09-22 17:16:20 - app - INFO - 🗺️ Detected location: new york
+2025-09-22 17:16:20 - src.resume_parser.database.qdrant_client - INFO - 🔍 Qdrant search called with filter_conditions: {'location': 'new york'}
+2025-09-22 17:16:20 - src.resume_parser.database.qdrant_client - INFO - 🔍 Filter conditions type: <class 'dict'>
+2025-09-22 17:16:20 - src.resume_parser.database.qdrant_client - INFO - 🗺️ Processing location filter: field=location, condition=new york
+2025-09-22 17:16:20 - src.resume_parser.database.qdrant_client - INFO - 🗺️ Location filter will be applied in post-processing: new york
+2025-09-22 17:16:20 - src.resume_parser.database.qdrant_client - INFO - 📍 Sample location data from results:
+2025-09-22 17:16:20 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 1: Lucky Patel -> location: 'Ahmedabad, Gujarat'
+2025-09-22 17:16:20 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 2: John Smith -> location: 'San Francisco, CA'
+2025-09-22 17:16:20 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 3: John Smith -> location: 'San Francisco, CA'
+2025-09-22 17:16:20 - src.resume_parser.database.qdrant_client - INFO - Found 10 similar resumes
+2025-09-22 17:16:20 - app - INFO - 🗺️ Applying Python location filter for: new york
+2025-09-22 17:16:20 - app - INFO - 🗺️ Location match: 'new york' in 'new york, ny'
+2025-09-22 17:16:20 - app - INFO - 🗺️ Location filtering: 10 -> 1 results
+2025-09-22 17:16:50 - app - INFO - 🔍 Processing search query: i need candidate who knows Jupyter
+2025-09-22 17:16:50 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need candidate who knows Jupyter
+2025-09-22 17:16:50 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: [], Skills: [], Seniority: None, Location: None
+2025-09-22 17:16:53 - app - INFO - 🎯 Search filters: {}
+2025-09-22 17:16:53 - app - INFO - 📊 Detected roles: []
+2025-09-22 17:16:53 - app - INFO - 🔧 Detected skills: []
+2025-09-22 17:16:53 - app - INFO - 🗺️ Detected location: None
+2025-09-22 17:16:53 - src.resume_parser.database.qdrant_client - INFO - 📍 Sample location data from results:
+2025-09-22 17:16:53 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 1: Sarah Johnson -> location: 'New York, NY'
+2025-09-22 17:16:53 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 2: Lucky Patel -> location: 'Ahmedabad, Gujarat'
+2025-09-22 17:16:53 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 3: John Smith -> location: 'San Francisco, CA'
+2025-09-22 17:16:53 - src.resume_parser.database.qdrant_client - INFO - Found 10 similar resumes
+2025-09-22 17:17:45 - app - INFO - 🔍 Processing search query: i need candidate who knows react and javascript
+2025-09-22 17:17:45 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need candidate who knows react and javascript
+2025-09-22 17:17:45 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: [], Skills: ['javascript', 'react'], Seniority: None, Location: None
+2025-09-22 17:17:47 - app - INFO - 🎯 Search filters: {}
+2025-09-22 17:17:47 - app - INFO - 📊 Detected roles: []
+2025-09-22 17:17:47 - app - INFO - 🔧 Detected skills: ['javascript', 'react']
+2025-09-22 17:17:47 - app - INFO - 🗺️ Detected location: None
+2025-09-22 17:17:47 - src.resume_parser.database.qdrant_client - INFO - 📍 Sample location data from results:
+2025-09-22 17:17:47 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 1: John Smith -> location: 'San Francisco, CA'
+2025-09-22 17:17:47 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 2: John Smith -> location: 'San Francisco, CA'
+2025-09-22 17:17:47 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 3: John Smith -> location: 'San Francisco, CA'
+2025-09-22 17:17:47 - src.resume_parser.database.qdrant_client - INFO - Found 10 similar resumes
+2025-09-22 17:18:15 - app - INFO - 🔍 Processing search query: i need full stack developer
+2025-09-22 17:18:15 - src.resume_parser.utils.search_intelligence - INFO - Parsing search query: i need full stack developer
+2025-09-22 17:18:15 - src.resume_parser.utils.search_intelligence - INFO - Parsed query - Roles: ['software_engineer'], Skills: [], Seniority: None, Location: None
+2025-09-22 17:18:17 - app - INFO - 🎯 Search filters: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Web Developer', 'Mobile Developer']}}
+2025-09-22 17:18:17 - app - INFO - 📊 Detected roles: ['software_engineer']
+2025-09-22 17:18:17 - app - INFO - 🔧 Detected skills: []
+2025-09-22 17:18:17 - app - INFO - 🗺️ Detected location: None
+2025-09-22 17:18:17 - src.resume_parser.database.qdrant_client - INFO - 🔍 Qdrant search called with filter_conditions: {'role_category': {'$in': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Web Developer', 'Mobile Developer']}}
+2025-09-22 17:18:17 - src.resume_parser.database.qdrant_client - INFO - 🔍 Filter conditions type: <class 'dict'>
+2025-09-22 17:18:17 - src.resume_parser.database.qdrant_client - INFO - 📍 Sample location data from results:
+2025-09-22 17:18:17 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 1: John Smith -> location: 'San Francisco, CA'
+2025-09-22 17:18:17 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 2: John Smith -> location: 'San Francisco, CA'
+2025-09-22 17:18:17 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 3: John Smith -> location: 'San Francisco, CA'
+2025-09-22 17:18:17 - src.resume_parser.database.qdrant_client - INFO - Found 4 similar resumes

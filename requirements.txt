@@ -1,0 +1,30 @@
+# Core API Framework
+fastapi==0.115.12
+uvicorn==0.34.3
+pydantic==2.11.5
+pydantic-settings==2.6.1
+python-multipart==0.0.20       # For file uploads
+
+# Database Dependencies
+asyncpg==0.30.0                # PostgreSQL async driver
+qdrant-client==1.15.1          # Qdrant vector database
+
+# Resume Parsing
+PyMuPDF==1.23.8               # PDF parsing (fitz)
+python-docx==0.8.11           # DOC/DOCX parsing
+python-magic==0.4.27          # File type detection
+
+# AI & Embeddings (Azure OpenAI)
+openai==1.51.2                # OpenAI API for embeddings and parsing
+
+# Basic utilities
+python-dotenv==1.1.0           # Environment variables
+aiofiles==24.1.0               # Async file operations
+
+# Data processing
+numpy==2.2.6                   # For vector operations
+pandas==2.3.0                  # Data manipulation
+regex==2023.10.3              # Enhanced regex for text processing
+
+# HTTP client (for external APIs)
+httpx==0.28.1                  # HTTP requests
