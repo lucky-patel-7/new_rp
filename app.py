@@ -237,6 +237,67 @@ def _extract_candidate_companies(payload: Dict[str, Any]) -> List[str]:
     return unique_companies
 
 
+def _extract_education_info(payload: Dict[str, Any]) -> Dict[str, str]:
+    """Extract education information from the education field."""
+    education_data = payload.get('education', [])
+
+    # Initialize default values
+    education_info = {
+        'education_level': 'N/A',
+        'education_field': 'N/A',
+        'university': 'N/A'
+    }
+
+    # If education is a list, extract from the most recent/relevant entry
+    if isinstance(education_data, list) and education_data:
+        # Get the first education entry (usually the most recent/highest)
+        education_entry = education_data[0] if education_data else {}
+
+        if isinstance(education_entry, dict):
+            # Extract degree/level
+            degree = education_entry.get('degree') or education_entry.get('level') or education_entry.get('qualification')
+            if degree:
+                education_info['education_level'] = str(degree)
+
+            # Extract field of study
+            field = (education_entry.get('field_of_study') or
+                    education_entry.get('major') or
+                    education_entry.get('subject') or
+                    education_entry.get('specialization'))
+            if field:
+                education_info['education_field'] = str(field)
+
+            # Extract institution/university
+            institution = (education_entry.get('institution') or
+                          education_entry.get('university') or
+                          education_entry.get('school') or
+                          education_entry.get('college'))
+            if institution:
+                education_info['university'] = str(institution)
+
+    elif isinstance(education_data, dict):
+        # If education is a dict directly
+        degree = education_data.get('degree') or education_data.get('level') or education_data.get('qualification')
+        if degree:
+            education_info['education_level'] = str(degree)
+
+        field = (education_data.get('field_of_study') or
+                education_data.get('major') or
+                education_data.get('subject') or
+                education_data.get('specialization'))
+        if field:
+            education_info['education_field'] = str(field)
+
+        institution = (education_data.get('institution') or
+                      education_data.get('university') or
+                      education_data.get('school') or
+                      education_data.get('college'))
+        if institution:
+            education_info['university'] = str(institution)
+
+    return education_info
+
+
 def _find_company_match(
     payload: Dict[str, Any],
     query_companies: List[str]
@@ -3010,22 +3071,18 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
         filter_conditions = {}
 
         # Map final_requirements fields to Qdrant collection fields
+        # Use minimal Qdrant filtering to avoid too restrictive searches
         field_mapping = {
-            "degree_level": "education_level",
-            "field_of_study": "education_field",
-            "institution": "university",
-            "job_title": "current_role",
-            "seniority_level": "seniority",
-            "role_category": "role_category",
-            "skills": "skills",
-            "skill_category": "skill_categories",
-            "company": "companies",
-            "company_type": "company_type",
-            "industry": "industry",
-            "min_experience": "experience_years",
-            "location": "location",
-            "certifications": "certifications",
-            "languages": "languages"
+            # Only use filters that are very likely to have matches:
+            "skills": "skills"
+            # Note: job_title, seniority, role_category, location, experience will be handled
+            # via post-retrieval filtering for more flexible matching
+        }
+
+        # Fields that need post-retrieval filtering (not available in Qdrant or need flexible matching)
+        post_retrieval_fields = {
+            "min_experience", "max_experience", "location", "company", "education_level",
+            "field_of_study", "institution", "certifications", "job_title", "seniority_level", "role_category"
         }
 
         # Apply filters based on final requirements
@@ -3034,24 +3091,29 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
                 qdrant_field = field_mapping[req_field]
 
                 # Handle different filter types
-                if req_field == "min_experience":
-                    # For experience, use range filter
-                    filter_conditions[qdrant_field] = {"gte": req_values}
-                elif isinstance(req_values, list):
+                if isinstance(req_values, list):
                     # For list values, use match any filter
                     filter_conditions[qdrant_field] = req_values
                 else:
                     # For single values
                     filter_conditions[qdrant_field] = [req_values] if not isinstance(req_values, list) else req_values
+            elif req_field in post_retrieval_fields:
+                # Skip Qdrant filtering for post-retrieval fields
+                logger.info(f"📤 Skipping {req_field} for post-retrieval filtering")
+            else:
+                logger.warning(f"⚠️ Unknown field in qdrant_filters: {req_field} (not in field_mapping)")
 
         logger.info(f"🔍 Qdrant filter conditions: {filter_conditions}")
 
         # Step 4: Search Qdrant with filters
         from src.resume_parser.database.qdrant_client import qdrant_client
 
-        # First try with strict filters
+        # Check if we have post-retrieval filtering requirements
+        has_post_retrieval_filters = any(field in qdrant_filters for field in post_retrieval_fields)
+
         results = []
-        if filter_conditions:
+        if filter_conditions and not has_post_retrieval_filters:
+            # Only use strict Qdrant filters if we don't need post-retrieval filtering
             logger.info("🎯 Searching with strict filters based on final requirements")
             results = await qdrant_client.search_similar(
                 query_vector=query_vector,
@@ -3059,16 +3121,121 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
                 filter_conditions=filter_conditions
             )
             logger.info(f"Found {len(results)} results with strict filtering")
+        else:
+            # Get broader results for post-retrieval filtering
+            if has_post_retrieval_filters:
+                logger.info("🌐 Getting broader results for post-retrieval filtering (location, experience, etc.)")
+                search_limit = limit * 10  # Get many more candidates for filtering
+            else:
+                logger.info("🔄 No Qdrant filters, using semantic search")
+                search_limit = limit * 2
 
-        # If no results with strict filters, try semantic search only
-        if len(results) == 0:
-            logger.info("🔄 No results with filters, trying semantic search")
             results = await qdrant_client.search_similar(
                 query_vector=query_vector,
-                limit=limit * 2,
-                filter_conditions=None  # No filters, pure semantic matching
+                limit=search_limit,
+                filter_conditions=filter_conditions if filter_conditions else None
             )
-            logger.info(f"Found {len(results)} results with semantic search")
+            logger.info(f"Found {len(results)} results for post-filtering")
+
+        # Step 4.5: Apply post-retrieval filtering for fields not available in Qdrant
+        if results:
+            filtered_results = []
+
+            for result in results:
+                payload = result.get('payload', {})
+                should_include = True
+
+                # Experience filtering
+                min_experience = qdrant_filters.get('min_experience')
+                max_experience = qdrant_filters.get('max_experience')
+
+                if min_experience is not None or max_experience is not None:
+                    candidate_exp_str = payload.get('total_experience', '0')
+
+                    # Parse experience from strings like "2 years 8 months"
+                    import re
+                    years_match = re.search(r'(\d+)\s*years?', candidate_exp_str)
+                    months_match = re.search(r'(\d+)\s*months?', candidate_exp_str)
+
+                    total_years = 0.0
+                    if years_match:
+                        total_years += float(years_match.group(1))
+                    if months_match:
+                        total_years += float(months_match.group(1)) / 12.0
+
+                    # Check min experience
+                    if min_experience is not None and total_years < min_experience:
+                        should_include = False
+                        logger.info(f"🚫 Excluding {payload.get('name', 'Unknown')} - {total_years:.1f} years < {min_experience} years min")
+
+                    # Check max experience
+                    if max_experience is not None and total_years > max_experience:
+                        should_include = False
+                        logger.info(f"🚫 Excluding {payload.get('name', 'Unknown')} - {total_years:.1f} years > {max_experience} years max")
+
+                # Location filtering (flexible matching)
+                location_requirements = qdrant_filters.get('location')
+                if location_requirements and should_include:
+                    candidate_location = payload.get('location', '').lower()
+                    location_match = False
+
+                    if isinstance(location_requirements, list):
+                        for req_location in location_requirements:
+                            if req_location.lower() in candidate_location or candidate_location in req_location.lower():
+                                location_match = True
+                                break
+                    else:
+                        req_location = str(location_requirements).lower()
+                        if req_location in candidate_location or candidate_location in req_location:
+                            location_match = True
+
+                    if not location_match:
+                        should_include = False
+                        logger.info(f"🚫 Excluding {payload.get('name', 'Unknown')} - location '{candidate_location}' doesn't match '{location_requirements}'")
+
+                # Job title filtering (flexible matching)
+                job_title_requirements = qdrant_filters.get('job_title')
+                if job_title_requirements and should_include:
+                    candidate_position = payload.get('current_position', '').lower()
+                    title_match = False
+
+                    if isinstance(job_title_requirements, list):
+                        for req_title in job_title_requirements:
+                            if req_title.lower() in candidate_position or any(word in candidate_position for word in req_title.lower().split()):
+                                title_match = True
+                                break
+                    else:
+                        req_title = str(job_title_requirements).lower()
+                        if req_title in candidate_position or any(word in candidate_position for word in req_title.split()):
+                            title_match = True
+
+                    if not title_match:
+                        should_include = False
+
+                # Role category filtering (flexible matching)
+                role_category_requirements = qdrant_filters.get('role_category')
+                if role_category_requirements and should_include:
+                    candidate_role_category = payload.get('role_category', '').lower()
+                    category_match = False
+
+                    if isinstance(role_category_requirements, list):
+                        for req_category in role_category_requirements:
+                            if req_category.lower() in candidate_role_category or candidate_role_category in req_category.lower():
+                                category_match = True
+                                break
+                    else:
+                        req_category = str(role_category_requirements).lower()
+                        if req_category in candidate_role_category or candidate_role_category in req_category:
+                            category_match = True
+
+                    if not category_match:
+                        should_include = False
+
+                if should_include:
+                    filtered_results.append(result)
+
+            logger.info(f"🎯 Post-retrieval filtering: {len(results)} → {len(filtered_results)} candidates")
+            results = filtered_results
 
         # Step 5: Enhanced ranking based on final requirements
         def calculate_intent_score(result: Dict[str, Any]) -> float:
@@ -3206,6 +3373,7 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
         formatted_results = []
         for result in results:
             payload = result.get('payload', {})
+            education_info = _extract_education_info(payload)
             formatted_result = {
                 'id': result.get('id'),
                 'score': result.get('score', 0),
@@ -3214,14 +3382,14 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
                     'name': payload.get('name', 'N/A'),
                     'email': payload.get('email', 'N/A'),
                     'phone': payload.get('phone', 'N/A'),
-                    'current_role': payload.get('current_role', 'N/A'),
+                    'current_role': payload.get('current_position', 'N/A'),
                     'seniority': payload.get('seniority', 'N/A'),
                     'total_experience': payload.get('total_experience', 'N/A'),
-                    'education_level': payload.get('education_level', 'N/A'),
-                    'education_field': payload.get('education_field', 'N/A'),
-                    'university': payload.get('university', 'N/A'),
+                    'education_level': education_info['education_level'],
+                    'education_field': education_info['education_field'],
+                    'university': education_info['university'],
                     'skills': payload.get('skills', []),
-                    'companies': payload.get('companies', []),
+                    'companies': _extract_candidate_companies(payload),
                     'location': payload.get('location', 'N/A')
                 },
                 'match_analysis': {
