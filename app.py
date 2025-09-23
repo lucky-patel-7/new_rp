@@ -3054,7 +3054,11 @@ def _advanced_rank_results(results: List[Dict], parsed_query, preferred_skills: 
 
 
 @app.post("/search-resumes-intent-based")
-async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(10)):
+async def search_resumes_intent_based(
+    query: str = Form(...),
+    limit: int = Form(10),
+    strict_matching: bool = Form(False)
+):
     """
     Enhanced resume search using analyze-query-intent to find exact candidates based on final requirements.
 
@@ -3064,6 +3068,9 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
     Args:
         query: Natural language query describing the ideal candidate
         limit: Maximum number of results to return
+        strict_matching: If True, candidates must match ALL specified criteria exactly.
+                        If False, candidates can match partially (more lenient matching).
+                        Default: False
 
     Returns:
         Dict containing search results with detailed matching analysis
@@ -3187,9 +3194,40 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
         if results:
             filtered_results = []
 
+            # Helper function to check strict vs non-strict matching
+            def should_exclude_candidate(criteria_matches: list, strict_mode: bool = False) -> bool:
+                """
+                Determine if candidate should be excluded based on matching criteria.
+
+                Args:
+                    criteria_matches: List of tuples [(criteria_name, has_match, is_required), ...]
+                    strict_mode: If True, ALL required criteria must match. If False, partial matches OK.
+
+                Returns:
+                    True if candidate should be excluded, False otherwise.
+                """
+                if not criteria_matches:
+                    return False
+
+                required_criteria = [match for match in criteria_matches if match[2]]  # is_required = True
+
+                if not required_criteria:
+                    return False
+
+                if strict_mode:
+                    # In strict mode, ALL required criteria must match
+                    failed_criteria = [match for match in required_criteria if not match[1]]  # has_match = False
+                    return len(failed_criteria) > 0
+                else:
+                    # In non-strict mode, allow partial matches - at least 50% of criteria should match
+                    matched_criteria = [match for match in required_criteria if match[1]]  # has_match = True
+                    match_ratio = len(matched_criteria) / len(required_criteria) if required_criteria else 1.0
+                    return match_ratio < 0.5  # Exclude if less than 50% criteria match
+
             for result in results:
                 payload = result.get('payload', {})
                 should_include = True
+                criteria_matches = []
 
                 # Experience filtering
                 min_experience = qdrant_filters.get('min_experience')
@@ -3209,19 +3247,21 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
                     if months_match:
                         total_years += float(months_match.group(1)) / 12.0
 
-                    # Check min experience
+                    # Check experience requirements
+                    experience_match = True
                     if min_experience is not None and total_years < min_experience:
-                        should_include = False
-                        logger.info(f"🚫 Excluding {payload.get('name', 'Unknown')} - {total_years:.1f} years < {min_experience} years min")
-
-                    # Check max experience
+                        experience_match = False
                     if max_experience is not None and total_years > max_experience:
-                        should_include = False
-                        logger.info(f"🚫 Excluding {payload.get('name', 'Unknown')} - {total_years:.1f} years > {max_experience} years max")
+                        experience_match = False
+
+                    criteria_matches.append(("experience", experience_match, True))
+
+                    if not experience_match:
+                        logger.info(f"🚫 Experience mismatch for {payload.get('name', 'Unknown')} - {total_years:.1f} years (required: {min_experience}-{max_experience} years)")
 
                 # Location filtering (flexible matching)
                 location_requirements = qdrant_filters.get('location')
-                if location_requirements and should_include:
+                if location_requirements:
                     candidate_location = payload.get('location', '').lower()
                     location_match = False
 
@@ -3235,13 +3275,14 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
                         if req_location in candidate_location or candidate_location in req_location:
                             location_match = True
 
+                    criteria_matches.append(("location", location_match, True))
+
                     if not location_match:
-                        should_include = False
-                        logger.info(f"🚫 Excluding {payload.get('name', 'Unknown')} - location '{candidate_location}' doesn't match '{location_requirements}'")
+                        logger.info(f"🚫 Location mismatch for {payload.get('name', 'Unknown')} - location '{candidate_location}' doesn't match '{location_requirements}'")
 
                 # Job title filtering (flexible matching)
                 job_title_requirements = qdrant_filters.get('job_title')
-                if job_title_requirements and should_include:
+                if job_title_requirements:
                     candidate_position = payload.get('current_position', '').lower()
                     title_match = False
 
@@ -3255,12 +3296,14 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
                         if req_title in candidate_position or any(word in candidate_position for word in req_title.split()):
                             title_match = True
 
+                    criteria_matches.append(("job_title", title_match, True))
+
                     if not title_match:
-                        should_include = False
+                        logger.info(f"🚫 Job title mismatch for {payload.get('name', 'Unknown')} - '{candidate_position}' doesn't match '{job_title_requirements}'")
 
                 # Role category filtering (flexible matching with LLM semantic similarity)
                 role_category_requirements = qdrant_filters.get('role_category')
-                if role_category_requirements and should_include:
+                if role_category_requirements:
                     candidate_role_category = payload.get('role_category', '').lower()
                     category_match = False
 
@@ -3292,31 +3335,48 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
                                 # Fallback if LLM fails
                                 pass
 
+                    criteria_matches.append(("role_category", category_match, True))
+
                     if not category_match:
-                        should_include = False
+                        logger.info(f"🚫 Role category mismatch for {payload.get('name', 'Unknown')} - '{candidate_role_category}' doesn't match '{role_category_requirements}'")
 
                 # Skills filtering (flexible matching)
                 skills_requirements = qdrant_filters.get('skills')
-                if skills_requirements and should_include:
+                if skills_requirements:
                     candidate_skills = [s.lower() for s in payload.get('skills', [])]
-                    skills_match = False
 
                     if isinstance(skills_requirements, list):
                         required_skills = [skill.lower() for skill in skills_requirements]
-                        # Check if candidate has at least 50% of required skills
-                        matched_skills = sum(1 for req_skill in required_skills
-                                           if any(req_skill in cand_skill for cand_skill in candidate_skills))
-                        skills_match = matched_skills >= len(required_skills) * 0.5
+                        matched_skills = []
+
+                        # Check each required skill
+                        for req_skill in required_skills:
+                            skill_found = any(req_skill in cand_skill for cand_skill in candidate_skills)
+                            matched_skills.append(skill_found)
+
+                        # For skills, we track individual skill matches
+                        for i, req_skill in enumerate(required_skills):
+                            criteria_matches.append((f"skill_{req_skill}", matched_skills[i], True))
+
+                        # Overall skills match logic
+                        total_matched = sum(matched_skills)
+                        skills_match = total_matched == len(required_skills)  # Default: ALL skills required
+
+                        if not skills_match:
+                            missing_skills = [req_skill for i, req_skill in enumerate(required_skills) if not matched_skills[i]]
+                            logger.info(f"🚫 Skills mismatch for {payload.get('name', 'Unknown')} - missing: {', '.join(missing_skills)}")
+
                     else:
                         req_skill = str(skills_requirements).lower()
                         skills_match = any(req_skill in cand_skill for cand_skill in candidate_skills)
+                        criteria_matches.append((f"skill_{req_skill}", skills_match, True))
 
-                    if not skills_match:
-                        should_include = False
+                        if not skills_match:
+                            logger.info(f"🚫 Skills mismatch for {payload.get('name', 'Unknown')} - missing: {req_skill}")
 
                 # Company filtering (flexible matching)
                 company_requirements = qdrant_filters.get('company')
-                if company_requirements and should_include:
+                if company_requirements:
                     candidate_companies = [c.lower() for c in _extract_candidate_companies(payload)]
                     company_match = False
 
@@ -3331,12 +3391,14 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
                         company_match = any(req_company in cand_company or cand_company in req_company
                                           for cand_company in candidate_companies)
 
+                    criteria_matches.append(("company", company_match, True))
+
                     if not company_match:
-                        should_include = False
+                        logger.info(f"🚫 Company mismatch for {payload.get('name', 'Unknown')} - companies: {candidate_companies}, required: {company_requirements}")
 
                 # Education filtering (flexible matching)
                 education_requirements = qdrant_filters.get('education_level') or qdrant_filters.get('field_of_study') or qdrant_filters.get('institution')
-                if education_requirements and should_include:
+                if education_requirements:
                     education_info = _extract_education_info(payload)
                     education_match = False
 
@@ -3367,11 +3429,21 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
                         else:
                             education_match = str(institution_req).lower() in candidate_institution
 
-                    if not education_match:
-                        should_include = False
+                    criteria_matches.append(("education", education_match, True))
 
-                if should_include:
+                    if not education_match:
+                        logger.info(f"🚫 Education mismatch for {payload.get('name', 'Unknown')} - education: {education_info}, required: {education_requirements}")
+
+                # Final decision: Apply strict vs non-strict matching logic
+                should_exclude = should_exclude_candidate(criteria_matches, strict_matching)
+
+                if not should_exclude:
                     filtered_results.append(result)
+                else:
+                    # Log exclusion reason
+                    failed_criteria = [match[0] for match in criteria_matches if not match[1]]
+                    matching_mode = "strict" if strict_matching else "non-strict"
+                    logger.info(f"🚫 Excluding {payload.get('name', 'Unknown')} ({matching_mode} mode) - failed criteria: {', '.join(failed_criteria)}")
 
             logger.info(f"🎯 Post-retrieval filtering: {len(results)} → {len(filtered_results)} candidates")
             results = filtered_results
@@ -3707,6 +3779,8 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
                 "filters_used": len(filter_conditions) > 0,
                 "post_retrieval_filtering_applied": has_post_retrieval_filters,
                 "semantic_fallback": len(filter_conditions) == 0,
+                "strict_matching_enabled": strict_matching,
+                "matching_mode": "strict" if strict_matching else "partial",
                 "candidates_before_filtering": len(results) if 'results' in locals() else 0,
                 "candidates_after_filtering": len(formatted_results),
                 "filter_types_applied": list(qdrant_filters.keys()),
