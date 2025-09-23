@@ -57,6 +57,93 @@ upload_dir = Path(settings.app.upload_dir)
 upload_dir.mkdir(exist_ok=True)
 
 
+async def _generate_embedding(text: str) -> List[float]:
+    """Create an embedding vector for arbitrary search text."""
+    if not text or not text.strip():
+        return []
+
+    if not resume_parser.azure_client:
+        raise HTTPException(
+            status_code=503,
+            detail="Search functionality requires Azure OpenAI configuration"
+        )
+
+    try:
+        from src.resume_parser.clients.azure_openai import azure_client
+
+        async_client = azure_client.get_async_client()
+        response = await async_client.embeddings.create(
+            model=azure_client.get_embedding_deployment(),
+            input=text
+        )
+        embedding_vector = response.data[0].embedding
+        logger.debug(
+            "🔮 Generated embedding of length %s for text snippet: '%s'",
+            len(embedding_vector),
+            text[:60].replace("\n", " ")
+        )
+        return embedding_vector
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error(f"Failed to generate embedding: {exc}")
+        raise HTTPException(status_code=503, detail="Embedding service unavailable")
+
+
+def _extract_experience_years(payload: Dict[str, Any]) -> Optional[float]:
+    """Extract total experience in years from stored payload."""
+    stats = payload.get('extraction_statistics') or {}
+
+    try:
+        years = stats.get('total_experience_years')
+        months = stats.get('total_experience_months')
+        if years is not None:
+            years_total = float(years)
+            if months:
+                years_total += float(months) / 12.0
+            return years_total
+    except (TypeError, ValueError):
+        pass
+
+    total_experience = payload.get('total_experience')
+    if not isinstance(total_experience, str):
+        return None
+
+    years_match = re.search(r'(\d+(?:\.\d+)?)\s*years?', total_experience, re.IGNORECASE)
+    months_match = re.search(r'(\d+(?:\.\d+)?)\s*months?', total_experience, re.IGNORECASE)
+
+    years_total = 0.0
+    found_value = False
+
+    if years_match:
+        try:
+            years_total += float(years_match.group(1))
+            found_value = True
+        except ValueError:
+            pass
+
+    if months_match:
+        try:
+            years_total += float(months_match.group(1)) / 12.0
+            found_value = True
+        except ValueError:
+            pass
+
+    return years_total if found_value else None
+
+
+def _candidate_meets_experience_requirement(payload: Dict[str, Any], minimum_years: int) -> bool:
+    """Determine if a candidate satisfies the minimum experience requirement."""
+    experience_years = _extract_experience_years(payload)
+    if experience_years is None:
+        return False
+
+    try:
+        return experience_years >= float(minimum_years)
+    except (TypeError, ValueError):
+        return False
+
+
 @app.on_event("startup")
 async def startup_event():
     """Initialize application on startup."""
@@ -480,12 +567,9 @@ async def search_resumes(
         # Parse the query intelligently
         parsed_query = search_processor.parse_query(query)
 
-        # Create embedding for the expanded query (better semantic matching)
-        if not resume_parser.azure_client:
-            raise HTTPException(
-                status_code=503,
-                detail="Search functionality requires Azure OpenAI configuration"
-            )
+        # Clamp limit to prevent overly large responses or negative numbers
+        limit = max(1, min(limit, 100))
+        logger.info(f"📏 Result limit normalized to: {limit}")
 
         # Create comprehensive search text including all relevant terms
         search_components = [query]
@@ -508,13 +592,7 @@ async def search_resumes(
         logger.info(f"🔮 Creating embedding for search text: '{search_text}'")
         logger.info(f"🔮 Search components: {search_components}")
 
-        from src.resume_parser.clients.azure_openai import azure_client
-        async_client = azure_client.get_async_client()
-        response = await async_client.embeddings.create(
-            model=azure_client.get_embedding_deployment(),
-            input=search_text
-        )
-        query_vector = response.data[0].embedding
+        query_vector = await _generate_embedding(search_text)
 
         # Log embedding vector details
         logger.info(f"🔮 Generated embedding vector with {len(query_vector)} dimensions")
@@ -522,10 +600,20 @@ async def search_resumes(
         logger.info(f"🔮 Embedding magnitude: {sum(x*x for x in query_vector)**0.5:.4f}")
 
         # Create intelligent filters with proper role detection
-        filter_conditions = {}
+        filter_conditions: Dict[str, Any] = {}
 
         # Improved role filtering logic
         role_filters = search_processor.create_search_filters(parsed_query)
+        experience_filter_value = role_filters.pop('min_experience_years', None)
+
+        # Always apply location/seniority filters even when no role detected
+        location_filter_value = role_filters.pop('location', None)
+        if location_filter_value:
+            filter_conditions['location'] = location_filter_value
+
+        seniority_filter_value = role_filters.pop('seniority', None)
+        if seniority_filter_value and 'seniority' not in filter_conditions:
+            filter_conditions['seniority'] = seniority_filter_value
 
         # Apply role filters if we have clear role detection
         if parsed_query.job_roles:
@@ -546,7 +634,13 @@ async def search_resumes(
         if seniority_filter and seniority_filter.lower() not in ['none', 'null', '', 'string']:
             filter_conditions["seniority"] = seniority_filter
 
-        logger.info(f"🎯 Search filters: {filter_conditions}")
+        reported_filters = dict(filter_conditions)
+        if experience_filter_value is not None:
+            reported_filters['min_experience_years'] = experience_filter_value
+
+        logger.info(
+            f"🎯 Search filters (Qdrant): {filter_conditions} | Python experience filter: {experience_filter_value}"
+        )
         logger.info(f"📊 Detected roles: {parsed_query.job_roles}")
         logger.info(f"🔧 Detected skills: {parsed_query.skills}")
         logger.info(f"🗺️ Detected location: {parsed_query.location}")
@@ -686,7 +780,7 @@ async def search_resumes(
             word_search_query = " ".join(search_terms)
             logger.info(f"🔍 Word-based search query: '{word_search_query}'")
 
-            word_query_vector = await resume_parser.create_embedding(word_search_query)
+            word_query_vector = await _generate_embedding(word_search_query)
             if word_query_vector:
                 word_results = await qdrant_client.search_similar(
                     query_vector=word_query_vector,
@@ -747,7 +841,7 @@ async def search_resumes(
             logger.info("🚫 No relevant candidates found - returning empty results")
             detected_role_str = ", ".join(parsed_query.job_roles) if parsed_query.job_roles else "Unknown"
 
-            return {
+            response_payload = {
                 "query": query,
                 "parsed_query": {
                     "detected_roles": parsed_query.job_roles,
@@ -762,7 +856,7 @@ async def search_resumes(
                 "search_strategy": {
                     "type": "no_candidates_found",
                     "message": f"No {detected_role_str} candidates found in database",
-                    "filters_attempted": filter_conditions if filter_conditions else {},
+                    "filters_attempted": reported_filters if reported_filters else {},
                     "semantic_search_attempted": True,
                     "available_roles": search_processor.job_db.get_database_roles()[:10]
                 },
@@ -770,7 +864,17 @@ async def search_resumes(
                 "results": []
             }
 
+            if experience_filter_value is not None:
+                response_payload["search_strategy"]["experience_requirement"] = {
+                    "minimum_years": experience_filter_value,
+                    "message": f"Filtered out candidates with less than {experience_filter_value} years experience"
+                }
+
+            return response_payload
+
         logger.info(f"✅ Found {len(results)} total results for final ranking")
+
+        experience_filtered_out = 0
 
         # Apply Python-based location filtering if location filter was requested
         filtered_results = results
@@ -821,6 +925,18 @@ async def search_resumes(
 
             logger.info(f"🗺️ Location filtering: {len(results)} -> {len(filtered_results)} results")
 
+        # Apply experience filtering in Python to support legacy payloads without indexed fields
+        if experience_filter_value is not None:
+            pre_filter_count = len(filtered_results)
+            filtered_results = [
+                result for result in filtered_results
+                if _candidate_meets_experience_requirement(result.get('payload', {}), experience_filter_value)
+            ]
+            experience_filtered_out = pre_filter_count - len(filtered_results)
+            logger.info(
+                f"⏳ Experience filtering: {pre_filter_count} -> {len(filtered_results)} candidates with ≥ {experience_filter_value} years"
+            )
+
         # Remove duplicates based on name+email combination (keep the best score for each person)
         unique_results = {}
         for result in filtered_results:
@@ -841,7 +957,7 @@ async def search_resumes(
         # Format results with comprehensive information and detailed selection reasons
         formatted_results = _format_search_results(limited_results, parsed_query)
 
-        return {
+        response_payload = {
             "query": query,
             "parsed_query": {
                 "detected_roles": parsed_query.job_roles,
@@ -855,13 +971,21 @@ async def search_resumes(
             },
             "search_strategy": {
                 "type": "skill-focused" if len(parsed_query.skills) > len(parsed_query.job_roles) else "role-focused",
-                "filters_applied": filter_conditions,
+                "filters_applied": reported_filters,
                 "total_candidates_analyzed": len(results),
                 "final_results_returned": len(formatted_results)
             },
             "total_results": len(formatted_results),
             "results": formatted_results
         }
+
+        if experience_filter_value is not None:
+            response_payload["search_strategy"]["experience_requirement"] = {
+                "minimum_years": experience_filter_value,
+                "filtered_out_candidates": max(experience_filtered_out, 0)
+            }
+
+        return response_payload
 
     except Exception as e:
         logger.error(f"Error in resume search: {e}")

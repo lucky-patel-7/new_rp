@@ -3,3 +3,7 @@ __pycache__/app.cpython-311.pyc
 src/resume_parser/utils/__pycache__/roles_config.cpython-311.pyc
 src/resume_parser/utils/__pycache__/search_intelligence.cpython-311.pyc
 src/resume_parser/database/__pycache__/qdrant_client.cpython-311.pyc
+__pycache__
+
+
+/logs
