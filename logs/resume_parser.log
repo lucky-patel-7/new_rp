@@ -5898,3 +5898,322 @@ seniority
 2025-09-23 11:53:19 - app - INFO - 🎯 Re-ranking 11 semantic results for role relevance
 2025-09-23 11:53:19 - app - INFO - ✅ Found 2 total results for final ranking
 2025-09-23 11:53:19 - app - INFO - 🎯 COMPANY MATCH FOUND for Lucky Patel: Worked at 'silvertouch technologies' (matches 'Silvertouch Technologies') (boost: +0.5)
+2025-09-23 18:09:51 - root - INFO - Logging configured with level: INFO
+2025-09-23 18:09:51 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-23 18:09:51 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-23 18:09:51 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-23 18:09:51 - app - INFO - 📁 Upload directory: uploads
+2025-09-23 18:09:51 - app - INFO - 🔧 Debug mode: False
+2025-09-23 18:09:51 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 19, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-23 18:13:42 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-23 18:13:43 - root - INFO - Logging configured with level: INFO
+2025-09-23 18:13:43 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-23 18:13:43 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-23 18:13:43 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-23 18:13:43 - app - INFO - 📁 Upload directory: uploads
+2025-09-23 18:13:43 - app - INFO - 🔧 Debug mode: False
+2025-09-23 18:13:43 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 19, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-23 18:20:13 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-23 18:20:14 - root - INFO - Logging configured with level: INFO
+2025-09-23 18:20:14 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-23 18:20:14 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-23 18:20:14 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-23 18:20:14 - app - INFO - 📁 Upload directory: uploads
+2025-09-23 18:20:14 - app - INFO - 🔧 Debug mode: False
+2025-09-23 18:20:14 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 19, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-23 18:21:22 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-23 18:21:23 - root - INFO - Logging configured with level: INFO
+2025-09-23 18:21:23 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-23 18:21:23 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-23 18:21:23 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-23 18:21:23 - app - INFO - 📁 Upload directory: uploads
+2025-09-23 18:21:23 - app - INFO - 🔧 Debug mode: False
+2025-09-23 18:21:23 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 19, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-23 18:23:54 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-23 18:23:55 - root - INFO - Logging configured with level: INFO
+2025-09-23 18:23:55 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-23 18:23:55 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-23 18:23:55 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-23 18:23:55 - app - INFO - 📁 Upload directory: uploads
+2025-09-23 18:23:55 - app - INFO - 🔧 Debug mode: False
+2025-09-23 18:23:55 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 19, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-23 19:39:15 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-23 19:39:16 - root - INFO - Logging configured with level: INFO
+2025-09-23 19:39:16 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-23 19:39:16 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-23 19:39:16 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-23 19:39:16 - app - INFO - 📁 Upload directory: uploads
+2025-09-23 19:39:16 - app - INFO - 🔧 Debug mode: False
+2025-09-23 19:39:16 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 19, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-23 19:39:29 - app - INFO - 🛑 Shutting down Resume Parser API
+2025-09-23 19:39:30 - root - INFO - Logging configured with level: INFO
+2025-09-23 19:39:30 - src.resume_parser.clients.azure_openai - INFO - Synchronous Azure OpenAI client created successfully
+2025-09-23 19:39:30 - src.resume_parser.core.parser - INFO - ✅ Azure OpenAI client initialized successfully
+2025-09-23 19:39:30 - app - INFO - 🚀 Starting Resume Parser API
+2025-09-23 19:39:30 - app - INFO - 📁 Upload directory: uploads
+2025-09-23 19:39:30 - app - INFO - 🔧 Debug mode: False
+2025-09-23 19:39:30 - app - INFO - ✅ Qdrant connected: {'collection_name': 'resume_embeddings', 'points_count': 19, 'vectors_count': None, 'status': <CollectionStatus.GREEN: 'green'>}
+2025-09-23 19:40:08 - app - INFO - 🎯 Intent-based search for: I need a Senior Software Engineer with Python and Machine Learning skills from Google or similar tech companies
+2025-09-23 19:40:19 - app - INFO - 📋 Final requirements extracted: {'qdrant_filters': {'job_title': ['Senior Software Engineer'], 'seniority_level': ['Senior'], 'role_category': ['Engineering'], 'skills': ['Python'], 'skill_category': ['programming', 'data science'], 'company': ['Google'], 'company_type': ['Big Tech'], 'industry': ['technology']}, 'search_keywords': ['python', 'senior', 'big tech', 'senior software engineer', 'google'], 'filter_count': 8, 'has_strict_requirements': True, 'search_strategy': {'primary_intent': 'role', 'recommended_approach': 'role_first', 'complexity': 'multi_pass'}}
+2025-09-23 19:40:20 - app - INFO - 🔍 Qdrant filter conditions: {'current_role': ['Senior Software Engineer'], 'seniority': ['Senior'], 'role_category': ['Engineering'], 'skills': ['Python'], 'skill_categories': ['programming', 'data science'], 'companies': ['Google'], 'company_type': ['Big Tech'], 'industry': ['technology']}
+2025-09-23 19:40:20 - app - INFO - 🎯 Searching with strict filters based on final requirements
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 🔍 Qdrant search called with filter_conditions: {'current_role': ['Senior Software Engineer'], 'seniority': ['Senior'], 'role_category': ['Engineering'], 'skills': ['Python'], 'skill_categories': ['programming', 'data science'], 'companies': ['Google'], 'company_type': ['Big Tech'], 'industry': ['technology']}
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 🔍 Filter conditions type: <class 'dict'>
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 🎯 Qdrant returned 0 results from similarity search
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-23 19:40:20 - app - INFO - Found 0 results with strict filtering
+2025-09-23 19:40:20 - app - INFO - 🔄 No results with filters, trying semantic search
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 🎯 Qdrant returned 6 results from similarity search
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📊 Detailed Qdrant results with similarity scores:
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #1: Sarah Johnson | Score: 0.4988 | Location: 'New York, NY' | Role: 'Data Scientist' | Position: 'Senior Data Scientist'
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['DataTech Inc', 'Analytics Corp']
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['Python', 'R', 'SQL', 'Scala', 'Scikit-learn']
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Experienced Data Scientist with 4+ years of experience in machine learning and statistical analysis....
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #2: Rahul Gupta | Score: 0.4879 | Location: 'Unknown' | Role: 'Software Engineer' | Position: 'Sr. Technical Architect'
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['Aditya Birla Capital', 'Onixnet', 'Google (Mandiant)']
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['Elasticsearch', 'Python', 'RabbitMQ', 'WebDriver', 'Jenkins']
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: 9 years of experience in Observability, Python Programming, Reporting solutions, Data Analysis, Pyth...
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #3: John Smith | Score: 0.4704 | Location: 'San Francisco, CA' | Role: 'Software Engineer' | Position: 'Senior Software Engineer'
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['TechCorp', 'StartupXYZ']
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['React', 'JavaScript', 'TypeScript', 'HTML', 'CSS']
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Experienced Full Stack Developer with 5+ years of experience in building scalable web applications. ...
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #4: John Smith | Score: 0.4704 | Location: 'San Francisco, CA' | Role: 'Software Engineer' | Position: 'Senior Software Engineer'
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['TechCorp', 'StartupXYZ']
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['React', 'JavaScript', 'TypeScript', 'HTML', 'CSS']
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Experienced Full Stack Developer with 5+ years of experience in building scalable web applications. ...
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #5: Lucky Patel | Score: 0.4122 | Location: 'Ahmedabad, Gujarat' | Role: 'Software Development' | Position: 'Software Engineer'
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['Silvertouch Technologies']
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['ReactJS', 'NextJS', 'JavaScript', 'NodeJS', 'MongoDB']
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Full Stack Developer with over 2.5 years of experience in building scalable web applications using R...
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #6: Lucky Patel | Score: 0.4032 | Location: 'Ahmedabad, Gujarat' | Role: 'Full Stack Developer' | Position: 'Software Engineer'
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['Silvertouch Technologies']
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['ReactJS', 'NextJS', 'JavaScript', 'NodeJS', 'MongoDB']
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Full Stack Developer with 2.5+ years of experience in developing robust, scalable web applications. ...
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📍 Sample location data from results:
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 1: Sarah Johnson -> location: 'New York, NY'
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 2: Rahul Gupta -> location: 'Unknown'
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 3: John Smith -> location: 'San Francisco, CA'
+2025-09-23 19:40:20 - src.resume_parser.database.qdrant_client - INFO - Found 6 similar resumes
+2025-09-23 19:40:20 - app - INFO - Found 6 results with semantic search
+2025-09-23 19:40:43 - app - INFO - 🎯 Intent-based search for: Looking for PhD Computer Science graduates from Stanford or MIT with 5  years experience in Machine Learning
+2025-09-23 19:41:02 - app - INFO - 📋 Final requirements extracted: {'qdrant_filters': {'degree_level': ['PhD'], 'field_of_study': ['Computer Science'], 'institution': ['Stanford University', 'MIT'], 'skill_category': ['data science', 'machine learning'], 'min_experience': 5}, 'search_keywords': ['mit', 'computer science', 'phd', 'stanford university'], 'filter_count': 5, 'has_strict_requirements': True, 'search_strategy': {'primary_intent': 'education', 'recommended_approach': 'education_first', 'complexity': 'multi_pass'}}
+2025-09-23 19:41:03 - app - INFO - 🔍 Qdrant filter conditions: {'education_level': ['PhD'], 'education_field': ['Computer Science'], 'university': ['Stanford University', 'MIT'], 'skill_categories': ['data science', 'machine learning'], 'experience_years': {'gte': 5}}
+2025-09-23 19:41:03 - app - INFO - 🎯 Searching with strict filters based on final requirements
+2025-09-23 19:41:03 - src.resume_parser.database.qdrant_client - INFO - 🔍 Qdrant search called with filter_conditions: {'education_level': ['PhD'], 'education_field': ['Computer Science'], 'university': ['Stanford University', 'MIT'], 'skill_categories': ['data science', 'machine learning'], 'experience_years': {'gte': 5}}
+2025-09-23 19:41:03 - src.resume_parser.database.qdrant_client - INFO - 🔍 Filter conditions type: <class 'dict'>
+2025-09-23 19:41:03 - src.resume_parser.database.qdrant_client - INFO - 🎯 Qdrant returned 0 results from similarity search
+2025-09-23 19:41:03 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-23 19:41:03 - app - INFO - Found 0 results with strict filtering
+2025-09-23 19:41:03 - app - INFO - 🔄 No results with filters, trying semantic search
+2025-09-23 19:41:03 - src.resume_parser.database.qdrant_client - INFO - 🎯 Qdrant returned 4 results from similarity search
+2025-09-23 19:41:03 - src.resume_parser.database.qdrant_client - INFO - 📊 Detailed Qdrant results with similarity scores:
+2025-09-23 19:41:03 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #1: Sarah Johnson | Score: 0.4695 | Location: 'New York, NY' | Role: 'Data Scientist' | Position: 'Senior Data Scientist'
+2025-09-23 19:41:03 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['DataTech Inc', 'Analytics Corp']
+2025-09-23 19:41:03 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['Python', 'R', 'SQL', 'Scala', 'Scikit-learn']
+2025-09-23 19:41:03 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Experienced Data Scientist with 4+ years of experience in machine learning and statistical analysis....
+2025-09-23 19:41:03 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #2: John Smith | Score: 0.3795 | Location: 'San Francisco, CA' | Role: 'Software Engineer' | Position: 'Senior Software Engineer'
+2025-09-23 19:41:03 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['TechCorp', 'StartupXYZ']
+2025-09-23 19:41:03 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['React', 'JavaScript', 'TypeScript', 'HTML', 'CSS']
+2025-09-23 19:41:03 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Experienced Full Stack Developer with 5+ years of experience in building scalable web applications. ...
+2025-09-23 19:41:03 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #3: John Smith | Score: 0.3795 | Location: 'San Francisco, CA' | Role: 'Software Engineer' | Position: 'Senior Software Engineer'
+2025-09-23 19:41:03 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['TechCorp', 'StartupXYZ']
+2025-09-23 19:41:03 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['React', 'JavaScript', 'TypeScript', 'HTML', 'CSS']
+2025-09-23 19:41:03 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Experienced Full Stack Developer with 5+ years of experience in building scalable web applications. ...
+2025-09-23 19:41:03 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #4: Rahul Gupta | Score: 0.3569 | Location: 'Unknown' | Role: 'Software Engineer' | Position: 'Sr. Technical Architect'
+2025-09-23 19:41:03 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['Aditya Birla Capital', 'Onixnet', 'Google (Mandiant)']
+2025-09-23 19:41:03 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['Elasticsearch', 'Python', 'RabbitMQ', 'WebDriver', 'Jenkins']
+2025-09-23 19:41:03 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: 9 years of experience in Observability, Python Programming, Reporting solutions, Data Analysis, Pyth...
+2025-09-23 19:41:03 - src.resume_parser.database.qdrant_client - INFO - 📍 Sample location data from results:
+2025-09-23 19:41:03 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 1: Sarah Johnson -> location: 'New York, NY'
+2025-09-23 19:41:03 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 2: John Smith -> location: 'San Francisco, CA'
+2025-09-23 19:41:03 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 3: John Smith -> location: 'San Francisco, CA'
+2025-09-23 19:41:03 - src.resume_parser.database.qdrant_client - INFO - Found 4 similar resumes
+2025-09-23 19:41:03 - app - INFO - Found 4 results with semantic search
+2025-09-23 19:41:48 - app - INFO - 🎯 Intent-based search for: i need .net developer from ahmedabad
+2025-09-23 19:41:57 - app - INFO - 📋 Final requirements extracted: {'qdrant_filters': {'job_title': ['.NET Developer'], 'role_category': ['Engineering', 'Development'], 'location': ['Ahmedabad', 'Ahmedabad']}, 'search_keywords': ['.net developer', 'ahmedabad'], 'filter_count': 3, 'has_strict_requirements': True, 'search_strategy': {'primary_intent': 'role', 'recommended_approach': 'role_first', 'complexity': 'single_pass'}}
+2025-09-23 19:41:57 - app - INFO - 🔍 Qdrant filter conditions: {'current_role': ['.NET Developer'], 'role_category': ['Engineering', 'Development'], 'location': ['Ahmedabad', 'Ahmedabad']}
+2025-09-23 19:41:57 - app - INFO - 🎯 Searching with strict filters based on final requirements
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 🔍 Qdrant search called with filter_conditions: {'current_role': ['.NET Developer'], 'role_category': ['Engineering', 'Development'], 'location': ['Ahmedabad', 'Ahmedabad']}
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 🔍 Filter conditions type: <class 'dict'>
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 🎯 Qdrant returned 0 results from similarity search
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-23 19:41:58 - app - INFO - Found 0 results with strict filtering
+2025-09-23 19:41:58 - app - INFO - 🔄 No results with filters, trying semantic search
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 🎯 Qdrant returned 19 results from similarity search
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊 Detailed Qdrant results with similarity scores:
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #1: Renu Kewat | Score: 0.4486 | Location: 'Ahmedabad, Gujarat' | Role: 'Software Engineer' | Position: 'Software Engineer (.Net)'
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['Info Tark', 'Vagaro Technologies Pvt Ltd']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['C# .NET (Core & Framework)', 'ASP.NET Core MVC', 'Entity Framework (EF Core)', 'ADO Net', 'Web APIs / RESTful APIs']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Skilled .NET Developer with 4+ years of experience in developing scalable applications and enhancing...
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #2: Palak Patel | Score: 0.4416 | Location: 'Ahmedabad, Gujarat' | Role: 'Full Stack Developer' | Position: 'Associate Technology Developer'
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['IT Path Solutions', 'Kshatrainfotech Pvt Ltd']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['C#', '.NET Core', 'Angular With Typescript', 'Python', 'MS SQL Server']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: I am currently working as an Associate Technology Developer. My responsibilities include developing ...
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #3: Anish Nair | Score: 0.4317 | Location: 'Ahmedabad, Gujarat' | Role: 'Software Developer' | Position: 'Software Developer Trainee'
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['Sapphire Software Solutions', 'Maxgen Technologies']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['Python', 'C#', '.NET Core', 'HTML', 'CSS']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Skilled web developer with experience in designing and implementing efficient web applications and A...
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #4: Lucky Patel | Score: 0.4282 | Location: 'Ahmedabad, Gujarat' | Role: 'Software Development' | Position: 'Software Engineer'
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['Silvertouch Technologies']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['ReactJS', 'NextJS', 'JavaScript', 'NodeJS', 'MongoDB']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Full Stack Developer with over 2.5 years of experience in building scalable web applications using R...
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #5: Aastha Sahu | Score: 0.4267 | Location: 'Indore, India' | Role: 'Software Engineer' | Position: 'Associate Software Engineer'
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['Softude by Systematix', 'Softude by Systematix', 'Hammoq Infosystem']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['ASP.NET Core', 'MVC', 'Razor', 'HTML', 'CSS']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Result-oriented Associate Software Engineer with 2.6 years of hands-on experience in ASP.NET Core de...
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #6: Lucky Patel | Score: 0.4023 | Location: 'Ahmedabad, Gujarat' | Role: 'Full Stack Developer' | Position: 'Software Engineer'
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['Silvertouch Technologies']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['ReactJS', 'NextJS', 'JavaScript', 'NodeJS', 'MongoDB']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Full Stack Developer with 2.5+ years of experience in developing robust, scalable web applications. ...
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #7: Parth Limbadia | Score: 0.4004 | Location: 'Gandhinagar, Gujarat' | Role: 'Business Development' | Position: 'Student (Master of Science, Information Technology Network Security)'
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['Wama Software']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['Business Development', 'Lead Generation', 'Lead Prospecting', 'Client Acquisition', 'Sales Strategy & Outreach']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: A highly motivated and enthusiastic individual with a strong balance of business insight and technic...
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #8: Parth Limbadia | Score: 0.3953 | Location: 'Gandhinagar, Gujarat' | Role: 'Business Development' | Position: 'Unknown'
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['Wama Software']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['Business Development', 'Lead Generation', 'Lead Prospecting', 'Client Acquisition', 'Sales Strategy & Outreach']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: A highly motivated and enthusiastic individual with a strong balance of business insight and technic...
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #9: Mohammed Aamir Ansari | Score: 0.3489 | Location: 'Unknown' | Role: 'Solution Architect' | Position: 'Technical Architect'
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['ICICI Lombard', 'BNP Paribas', 'LearningMate']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['AWS', 'GCP', 'Azure', 'Jenkins', 'Terraform']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Solution Architect with 16+ years of experience designing and delivering scalable, secure, and resil...
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #10: Rahul Gupta | Score: 0.3143 | Location: 'Unknown' | Role: 'Software Engineer' | Position: 'Sr. Technical Architect'
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['Aditya Birla Capital', 'Onixnet', 'Google (Mandiant)']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['Elasticsearch', 'Python', 'RabbitMQ', 'WebDriver', 'Jenkins']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: 9 years of experience in Observability, Python Programming, Reporting solutions, Data Analysis, Pyth...
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #11: Ashwin Bhaskar | Score: 0.3077 | Location: 'Bengaluru, India' | Role: 'Business Analyst' | Position: 'Business Analyst'
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['Sigma Software Solutions']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['Agile Methodology', 'Waterfall Methodology', 'Business Analysis', 'Unified Modified Language (UML)', 'Requirement Elicitation/Gathering']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Experienced and dedicated Business Analyst with a proven track record, eager to contribute analytica...
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #12: Chitansee Kirar | Score: 0.3029 | Location: 'Vidisha, M.P' | Role: 'Business Analyst' | Position: 'Business Analyst'
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['Infosys']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['C', 'C++', 'JavaScript', 'HTML', 'SQL']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Certified Business Analyst with 3 years of IT experience in business analysis within the Banking dom...
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #13: Kishan Jee | Score: 0.2955 | Location: 'Unknown' | Role: 'Business Analyst' | Position: 'Business Analyst'
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['Impact Tech Solution']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['Requirement elicitation and documentation (BRD, FRD, SRS)', 'Agile methodologies and practices', 'Workflow analysis and enhancement', 'Exceptional verbal and written communication', 'Stakeholder management']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Experienced Business Analyst with over 2.5 years of hands-on experience in HRMS, Healthcare Manageme...
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #14: Radhika A Chavan | Score: 0.2814 | Location: 'Unknown' | Role: 'Business Analyst' | Position: 'Senior Business Analyst'
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['ABM Knowledgeware', 'Maximess Pvt. Ltd.', 'Ministry of Skill Development and Entrepreneur Gov. of Maharashtra']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['Business Process Analysis', 'Requirement Elicitation', 'Data Analysis', 'Stakeholder Management', 'Project Management']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Dedicated Senior Business Analyst with 7 years of experience in analyzing business processes, identi...
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #15: Kishore Dusa | Score: 0.2768 | Location: 'Hyderabad, India' | Role: 'Database Administrator' | Position: 'Senior Associate'
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['WNS Global Services']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['MS SQL Server Administration', 'Azure SQL Database Administration', 'Performance Tuning', 'Database Security', 'High Availability (Log Shipping, Mirroring, Clustering, Always On)']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Dedicated IT professional with over 11+ years of experience in IT and 5+ years of experience as MS S...
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #16: Vikas Gupta | Score: 0.2734 | Location: 'Mumbai, India' | Role: 'Business Analyst' | Position: 'Business Analyst'
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['HRMantra Software Pvt Ltd.', 'On My Own Technology']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['SAAS', 'Project Management', 'Advance MS-Excel', 'UAT', 'Business Requirement and Analysis']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Skilled and results-oriented Business Analyst with over 2 years of expertise. Along with experience ...
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #17: John Smith | Score: 0.2638 | Location: 'San Francisco, CA' | Role: 'Software Engineer' | Position: 'Senior Software Engineer'
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['TechCorp', 'StartupXYZ']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['React', 'JavaScript', 'TypeScript', 'HTML', 'CSS']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Experienced Full Stack Developer with 5+ years of experience in building scalable web applications. ...
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #18: John Smith | Score: 0.2638 | Location: 'San Francisco, CA' | Role: 'Software Engineer' | Position: 'Senior Software Engineer'
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['TechCorp', 'StartupXYZ']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['React', 'JavaScript', 'TypeScript', 'HTML', 'CSS']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Experienced Full Stack Developer with 5+ years of experience in building scalable web applications. ...
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #19: Sarah Johnson | Score: 0.1435 | Location: 'New York, NY' | Role: 'Data Scientist' | Position: 'Senior Data Scientist'
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['DataTech Inc', 'Analytics Corp']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['Python', 'R', 'SQL', 'Scala', 'Scikit-learn']
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Experienced Data Scientist with 4+ years of experience in machine learning and statistical analysis....
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📍 Sample location data from results:
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 1: Renu Kewat -> location: 'Ahmedabad, Gujarat'
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 2: Palak Patel -> location: 'Ahmedabad, Gujarat'
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 3: Anish Nair -> location: 'Ahmedabad, Gujarat'
+2025-09-23 19:41:58 - src.resume_parser.database.qdrant_client - INFO - Found 19 similar resumes
+2025-09-23 19:41:58 - app - INFO - Found 19 results with semantic search
+2025-09-23 19:43:00 - app - INFO - 🎯 Intent-based search for: i need developer from who worked in silvertouch technologies
+2025-09-23 19:43:09 - app - INFO - 📋 Final requirements extracted: {'qdrant_filters': {'job_title': ['Developer'], 'role_category': ['Engineering'], 'company': ['Silvertouch Technologies']}, 'search_keywords': ['silvertouch technologies', 'developer'], 'filter_count': 3, 'has_strict_requirements': True, 'search_strategy': {'primary_intent': 'company', 'recommended_approach': 'company_first', 'complexity': 'single_pass'}}
+2025-09-23 19:43:10 - app - INFO - 🔍 Qdrant filter conditions: {'current_role': ['Developer'], 'role_category': ['Engineering'], 'companies': ['Silvertouch Technologies']}
+2025-09-23 19:43:10 - app - INFO - 🎯 Searching with strict filters based on final requirements
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 🔍 Qdrant search called with filter_conditions: {'current_role': ['Developer'], 'role_category': ['Engineering'], 'companies': ['Silvertouch Technologies']}
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 🔍 Filter conditions type: <class 'dict'>
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 🎯 Qdrant returned 0 results from similarity search
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - Found 0 similar resumes
+2025-09-23 19:43:10 - app - INFO - Found 0 results with strict filtering
+2025-09-23 19:43:10 - app - INFO - 🔄 No results with filters, trying semantic search
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 🎯 Qdrant returned 19 results from similarity search
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊 Detailed Qdrant results with similarity scores:
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #1: Lucky Patel | Score: 0.4412 | Location: 'Ahmedabad, Gujarat' | Role: 'Software Development' | Position: 'Software Engineer'
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['Silvertouch Technologies']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['ReactJS', 'NextJS', 'JavaScript', 'NodeJS', 'MongoDB']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Full Stack Developer with over 2.5 years of experience in building scalable web applications using R...
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #2: Palak Patel | Score: 0.4181 | Location: 'Ahmedabad, Gujarat' | Role: 'Full Stack Developer' | Position: 'Associate Technology Developer'
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['IT Path Solutions', 'Kshatrainfotech Pvt Ltd']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['C#', '.NET Core', 'Angular With Typescript', 'Python', 'MS SQL Server']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: I am currently working as an Associate Technology Developer. My responsibilities include developing ...
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #3: Lucky Patel | Score: 0.4170 | Location: 'Ahmedabad, Gujarat' | Role: 'Full Stack Developer' | Position: 'Software Engineer'
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['Silvertouch Technologies']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['ReactJS', 'NextJS', 'JavaScript', 'NodeJS', 'MongoDB']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Full Stack Developer with 2.5+ years of experience in developing robust, scalable web applications. ...
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #4: Anish Nair | Score: 0.4137 | Location: 'Ahmedabad, Gujarat' | Role: 'Software Developer' | Position: 'Software Developer Trainee'
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['Sapphire Software Solutions', 'Maxgen Technologies']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['Python', 'C#', '.NET Core', 'HTML', 'CSS']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Skilled web developer with experience in designing and implementing efficient web applications and A...
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #5: Parth Limbadia | Score: 0.3791 | Location: 'Gandhinagar, Gujarat' | Role: 'Business Development' | Position: 'Unknown'
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['Wama Software']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['Business Development', 'Lead Generation', 'Lead Prospecting', 'Client Acquisition', 'Sales Strategy & Outreach']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: A highly motivated and enthusiastic individual with a strong balance of business insight and technic...
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #6: Parth Limbadia | Score: 0.3715 | Location: 'Gandhinagar, Gujarat' | Role: 'Business Development' | Position: 'Student (Master of Science, Information Technology Network Security)'
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['Wama Software']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['Business Development', 'Lead Generation', 'Lead Prospecting', 'Client Acquisition', 'Sales Strategy & Outreach']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: A highly motivated and enthusiastic individual with a strong balance of business insight and technic...
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #7: Aastha Sahu | Score: 0.3604 | Location: 'Indore, India' | Role: 'Software Engineer' | Position: 'Associate Software Engineer'
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['Softude by Systematix', 'Softude by Systematix', 'Hammoq Infosystem']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['ASP.NET Core', 'MVC', 'Razor', 'HTML', 'CSS']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Result-oriented Associate Software Engineer with 2.6 years of hands-on experience in ASP.NET Core de...
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #8: Renu Kewat | Score: 0.3602 | Location: 'Ahmedabad, Gujarat' | Role: 'Software Engineer' | Position: 'Software Engineer (.Net)'
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['Info Tark', 'Vagaro Technologies Pvt Ltd']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['C# .NET (Core & Framework)', 'ASP.NET Core MVC', 'Entity Framework (EF Core)', 'ADO Net', 'Web APIs / RESTful APIs']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Skilled .NET Developer with 4+ years of experience in developing scalable applications and enhancing...
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #9: Mohammed Aamir Ansari | Score: 0.3416 | Location: 'Unknown' | Role: 'Solution Architect' | Position: 'Technical Architect'
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['ICICI Lombard', 'BNP Paribas', 'LearningMate']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['AWS', 'GCP', 'Azure', 'Jenkins', 'Terraform']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Solution Architect with 16+ years of experience designing and delivering scalable, secure, and resil...
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #10: Ashwin Bhaskar | Score: 0.3322 | Location: 'Bengaluru, India' | Role: 'Business Analyst' | Position: 'Business Analyst'
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['Sigma Software Solutions']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['Agile Methodology', 'Waterfall Methodology', 'Business Analysis', 'Unified Modified Language (UML)', 'Requirement Elicitation/Gathering']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Experienced and dedicated Business Analyst with a proven track record, eager to contribute analytica...
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #11: Chitansee Kirar | Score: 0.3285 | Location: 'Vidisha, M.P' | Role: 'Business Analyst' | Position: 'Business Analyst'
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['Infosys']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['C', 'C++', 'JavaScript', 'HTML', 'SQL']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Certified Business Analyst with 3 years of IT experience in business analysis within the Banking dom...
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #12: Kishan Jee | Score: 0.3274 | Location: 'Unknown' | Role: 'Business Analyst' | Position: 'Business Analyst'
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['Impact Tech Solution']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['Requirement elicitation and documentation (BRD, FRD, SRS)', 'Agile methodologies and practices', 'Workflow analysis and enhancement', 'Exceptional verbal and written communication', 'Stakeholder management']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Experienced Business Analyst with over 2.5 years of hands-on experience in HRMS, Healthcare Manageme...
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #13: Rahul Gupta | Score: 0.3159 | Location: 'Unknown' | Role: 'Software Engineer' | Position: 'Sr. Technical Architect'
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['Aditya Birla Capital', 'Onixnet', 'Google (Mandiant)']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['Elasticsearch', 'Python', 'RabbitMQ', 'WebDriver', 'Jenkins']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: 9 years of experience in Observability, Python Programming, Reporting solutions, Data Analysis, Pyth...
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #14: Kishore Dusa | Score: 0.3060 | Location: 'Hyderabad, India' | Role: 'Database Administrator' | Position: 'Senior Associate'
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['WNS Global Services']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['MS SQL Server Administration', 'Azure SQL Database Administration', 'Performance Tuning', 'Database Security', 'High Availability (Log Shipping, Mirroring, Clustering, Always On)']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Dedicated IT professional with over 11+ years of experience in IT and 5+ years of experience as MS S...
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #15: John Smith | Score: 0.3042 | Location: 'San Francisco, CA' | Role: 'Software Engineer' | Position: 'Senior Software Engineer'
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['TechCorp', 'StartupXYZ']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['React', 'JavaScript', 'TypeScript', 'HTML', 'CSS']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Experienced Full Stack Developer with 5+ years of experience in building scalable web applications. ...
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #16: John Smith | Score: 0.3042 | Location: 'San Francisco, CA' | Role: 'Software Engineer' | Position: 'Senior Software Engineer'
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['TechCorp', 'StartupXYZ']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['React', 'JavaScript', 'TypeScript', 'HTML', 'CSS']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Experienced Full Stack Developer with 5+ years of experience in building scalable web applications. ...
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #17: Radhika A Chavan | Score: 0.2921 | Location: 'Unknown' | Role: 'Business Analyst' | Position: 'Senior Business Analyst'
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['ABM Knowledgeware', 'Maximess Pvt. Ltd.', 'Ministry of Skill Development and Entrepreneur Gov. of Maharashtra']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['Business Process Analysis', 'Requirement Elicitation', 'Data Analysis', 'Stakeholder Management', 'Project Management']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Dedicated Senior Business Analyst with 7 years of experience in analyzing business processes, identi...
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #18: Vikas Gupta | Score: 0.2900 | Location: 'Mumbai, India' | Role: 'Business Analyst' | Position: 'Business Analyst'
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['HRMantra Software Pvt Ltd.', 'On My Own Technology']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['SAAS', 'Project Management', 'Advance MS-Excel', 'UAT', 'Business Requirement and Analysis']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Skilled and results-oriented Business Analyst with over 2 years of expertise. Along with experience ...
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊 Result #19: Sarah Johnson | Score: 0.2134 | Location: 'New York, NY' | Role: 'Data Scientist' | Position: 'Senior Data Scientist'
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Work History Companies: ['DataTech Inc', 'Analytics Corp']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Skills: ['Python', 'R', 'SQL', 'Scala', 'Scikit-learn']
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📊   └─ Summary: Experienced Data Scientist with 4+ years of experience in machine learning and statistical analysis....
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📍 Sample location data from results:
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 1: Lucky Patel -> location: 'Ahmedabad, Gujarat'
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 2: Palak Patel -> location: 'Ahmedabad, Gujarat'
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - 📍 Result 3: Lucky Patel -> location: 'Ahmedabad, Gujarat'
+2025-09-23 19:43:10 - src.resume_parser.database.qdrant_client - INFO - Found 19 similar resumes
+2025-09-23 19:43:10 - app - INFO - Found 19 results with semantic search

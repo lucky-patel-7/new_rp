@@ -1,9 +1,247 @@
+# Environment variables
 .env
-__pycache__/app.cpython-311.pyc
-src/resume_parser/utils/__pycache__/roles_config.cpython-311.pyc
-src/resume_parser/utils/__pycache__/search_intelligence.cpython-311.pyc
-src/resume_parser/database/__pycache__/qdrant_client.cpython-311.pyc
-__pycache__
+.env.local
+.env.development
+.env.production
 
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
 
-/logs
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Logs and databases
+*.log
+*.sqlite
+*.db
+logs/
+log/
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# IDE files
+.idea/
+.vscode/
+*.code-workspace
+
+# OS specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Resume parser specific files
+temp_files/
+uploaded_files/
+upload_temp/
+storage/
+
+# Document files (uploaded resumes)
+*.pdf
+*.docx
+*.doc
+*.txt
+*.rtf
+
+# Azure/OpenAI credentials and config
+.azure/
+config.json
+secrets.json
+*.key
+*.pem
+azure_config.json
+
+# Qdrant database files
+qdrant_data/
+vector_db/
+qdrant_storage/
+
+# Model files and checkpoints
+models/
+checkpoints/
+*.pkl
+*.joblib
+*.model
+*.bin
+
+# Data files
+data/
+datasets/
+raw_data/
+processed_data/
+*.csv
+*.json
+*.xlsx
+*.parquet
+*.tsv
+
+# FastAPI specific
+.fastapi/
+
+# Uvicorn
+uvicorn.log
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+test_reports/
+
+# Documentation
+docs/build/
+
+# Local configuration
+local_config.py
+local_settings.py
+
+# Backup files
+*.bak
+*.backup
+
+# Cache directories
+.cache/
+cache/
+
+# Node modules (if any frontend components)
+node_modules/
+
+# Package manager files
+package-lock.json
+yarn.lock
+
+# Sensitive files
+api_keys.txt
+credentials.txt
+tokens.txt

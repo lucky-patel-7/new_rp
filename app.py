@@ -216,7 +216,7 @@ def _extract_candidate_companies(payload: Dict[str, Any]) -> List[str]:
             companies.append(company)
 
     if payload.get('company'):
-        companies.append(payload.get('company'))
+        companies.append(payload.get('company')) # type: ignore
 
     work_history = payload.get('work_history', [])
     for job in work_history:
@@ -449,8 +449,8 @@ async def upload_resume(file: UploadFile = File(...)):
         safe_work_history = [job.dict() if hasattr(job, 'dict') else dict(job) for job in getattr(resume_data, 'work_history', [])]
         safe_education = [edu.dict() if hasattr(edu, 'dict') else dict(edu) for edu in getattr(resume_data, 'education', [])]
         safe_role_classification = resume_data.role_classification.dict() if getattr(resume_data, 'role_classification', None) and hasattr(resume_data.role_classification, 'dict') else getattr(resume_data, 'role_classification', {})
-        safe_extraction_statistics = resume_data.extraction_statistics.dict() if getattr(resume_data, 'extraction_statistics', None) and hasattr(resume_data.extraction_statistics, 'dict') else getattr(resume_data, 'extraction_statistics', {})
-        safe_current_employment = resume_data.current_employment.dict() if getattr(resume_data, 'current_employment', None) and hasattr(resume_data.current_employment, 'dict') else getattr(resume_data, 'current_employment', None)
+        safe_extraction_statistics = resume_data.extraction_statistics.dict() if getattr(resume_data, 'extraction_statistics', None) and hasattr(resume_data.extraction_statistics, 'dict') else getattr(resume_data, 'extraction_statistics', {}) # type: ignore
+        safe_current_employment = resume_data.current_employment.dict() if getattr(resume_data, 'current_employment', None) and hasattr(resume_data.current_employment, 'dict') else getattr(resume_data, 'current_employment', None) # type: ignore
         safe_created_at = getattr(resume_data, 'created_at', None)
         upload_timestamp = safe_created_at.isoformat() if safe_created_at else None
 
@@ -523,157 +523,746 @@ async def upload_resume(file: UploadFile = File(...)):
 
 # Add this route to your app.py
 
+# @app.post("/analyze-query-intent")
+# async def analyze_query_intent(query: str = Form(...)):
+#     """
+#     Enhanced query intent analyzer capable of handling very complex multi-dimensional queries.
+    
+#     Handles complex queries like:
+#     "I'm looking for Principal Software Architects with PhD in Computer Science from top universities 
+#     (Stanford, MIT, Carnegie Mellon), 10+ years experience, who have worked at FAANG companies 
+#     (Facebook, Apple, Amazon, Netflix, Google), know distributed systems, Kubernetes, Java, Go, 
+#     currently in Silicon Valley or willing to relocate to San Francisco"
+#     """
+    
+#     try:
+#         from src.resume_parser.clients.azure_openai import azure_client
+#         import json
+#         import re
+        
+#         client = azure_client.get_sync_client()
+#         chat_deployment = azure_client.get_chat_deployment()
+        
+#         # Enhanced prompt with better complex query handling
+#         enhanced_intent_prompt = f"""
+# You are an advanced query intent analyzer for a resume search system. Analyze this job search query and extract ALL components with high precision. Return ONLY a JSON object.
+
+# Query: "{query}"
+
+# Extract and classify ALL components from this query. Be thorough and precise:
+
+# {{
+#     "query_metadata": {{
+#         "complexity_level": "simple|moderate|complex|very_complex",
+#         "query_type": "single_criteria|multi_criteria|comprehensive",
+#         "primary_intent": "education|role|skills|company|location|experience|hybrid",
+#         "secondary_intents": ["education", "role", "skills", "company", "location"],
+#         "confidence_score": 0.95,
+#         "intent_explanation": "Detailed explanation of the query structure and why this classification was chosen"
+#     }},
+    
+#     "extracted_components": {{
+#         "education_requirements": {{
+#             "has_requirement": true/false,
+#             "degree_levels": ["PhD", "Master's", "Bachelor's", "Associate"],
+#             "specific_degrees": ["PhD in Computer Science", "Master of Science", etc],
+#             "fields_of_study": ["Computer Science", "Engineering", "Data Science", etc],
+#             "institutions": ["Stanford University", "MIT", "Carnegie Mellon University", etc],
+#             "institution_tiers": ["top_tier", "ivy_league", "technical_schools"],
+#             "education_keywords": ["from top universities", "prestigious", etc]
+#         }},
+        
+#         "role_requirements": {{
+#             "has_requirement": true/false,
+#             "job_titles": ["Principal Software Architect", "Senior Engineer", etc],
+#             "role_levels": ["Principal", "Senior", "Lead", "Staff", "Director"],
+#             "role_categories": ["Engineering", "Management", "Technical", etc],
+#             "role_keywords": ["architect", "lead", "principal", etc]
+#         }},
+        
+#         "skill_requirements": {{
+#             "has_requirement": true/false,
+#             "technical_skills": ["distributed systems", "Kubernetes", "Java", "Go", "Python"],
+#             "frameworks": ["React", "Angular", "Spring", etc],
+#             "technologies": ["AWS", "Docker", "Microservices", etc],
+#             "domains": ["machine learning", "data science", "cybersecurity", etc],
+#             "skill_categories": ["programming", "architecture", "devops", "cloud"],
+#             "proficiency_indicators": ["expert", "advanced", "proficient"]
+#         }},
+        
+#         "company_requirements": {{
+#             "has_requirement": true/false,
+#             "specific_companies": ["Google", "Facebook", "Apple", "Amazon", "Netflix"],
+#             "company_groups": ["FAANG", "Big Tech", "Fortune 500"],
+#             "company_types": ["startup", "enterprise", "public", "private"],
+#             "company_sizes": ["large", "medium", "small"],
+#             "industry_sectors": ["technology", "finance", "healthcare", etc]
+#         }},
+        
+#         "experience_requirements": {{
+#             "has_requirement": true/false,
+#             "min_years": 10,
+#             "max_years": null,
+#             "specific_experience": ["10+ years", "5-8 years", etc],
+#             "experience_types": ["industry", "relevant", "total"],
+#             "seniority_levels": ["junior", "mid", "senior", "principal", "staff"]
+#         }},
+        
+#         "location_requirements": {{
+#             "has_requirement": true/false,
+#             "current_locations": ["Silicon Valley", "San Francisco", "New York"],
+#             "preferred_locations": ["San Francisco", "Bay Area"],
+#             "relocation_indicators": ["willing to relocate", "open to relocation"],
+#             "location_flexibility": "strict|flexible|remote_ok",
+#             "geographic_regions": ["West Coast", "East Coast", "US", "Global"]
+#         }},
+        
+#         "additional_criteria": {{
+#             "certifications": ["AWS Certified", "PMP", etc],
+#             "languages": ["English", "Spanish", etc],
+#             "work_authorization": ["US Citizen", "H1B", etc],
+#             "availability": ["immediate", "2 weeks notice", etc],
+#             "salary_expectations": "competitive|market_rate|specific_range",
+#             "work_preferences": ["remote", "hybrid", "on-site"]
+#         }}
+#     }},
+    
+#     "search_strategy": {{
+#         "recommended_approach": "education_first|role_first|skills_first|company_first|semantic_hybrid|multi_stage_filtering",
+#         "filtering_priority": ["education", "role", "experience", "skills", "company", "location"],
+#         "search_complexity": "single_pass|multi_pass|cascading_filters|ml_ranking",
+#         "expected_result_size": "very_small|small|medium|large",
+#         "fallback_strategies": ["relax_education", "expand_companies", "broader_location"]
+#     }},
+    
+#     "query_understanding": {{
+#         "key_constraints": ["PhD required", "FAANG experience", "10+ years", "specific skills"],
+#         "optional_preferences": ["Silicon Valley", "relocation flexibility"],
+#         "deal_breakers": ["education_level", "experience_minimum"],
+#         "negotiable_items": ["specific_location", "company_size"],
+#         "query_ambiguities": ["definition of top universities", "distributed systems scope"]
+#     }}
+# }}
+
+# IMPORTANT EXTRACTION RULES:
+# 1. For EDUCATION: Extract exact degree requirements, specific institutions mentioned, and education-related keywords
+# 2. For COMPANIES: Identify specific companies, company groups (like FAANG), and company characteristics
+# 3. For SKILLS: Separate technical skills, frameworks, domains, and proficiency levels
+# 4. For EXPERIENCE: Extract numeric requirements, seniority indicators, and experience types
+# 5. For LOCATION: Distinguish between current location, preferred location, and relocation willingness
+# 6. For COMPLEXITY: Classify based on number of criteria and specificity of requirements
+
+# EXAMPLES OF COMPLEX QUERIES:
+
+# "Senior Data Scientist with PhD in Statistics from Ivy League, 8+ years at tech companies, expert in PyTorch, TensorFlow, MLOps, currently in NYC or SF"
+# → complexity_level: "very_complex", primary_intent: "hybrid", multiple strict requirements
+
+# "Full-stack developer, React + Node.js, startup experience, remote OK"
+# → complexity_level: "moderate", primary_intent: "skills", some flexibility
+
+# "Looking for ML engineers from Google, Facebook, or similar, with computer vision expertise"
+# → complexity_level: "complex", primary_intent: "company", specific domain skills
+
+# Return only the JSON object, no additional text or explanations.
+# """
+
+#         # Make the API call
+#         response = client.chat.completions.create(
+#             model=chat_deployment,
+#             messages=[
+#                 {
+#                     "role": "system", 
+#                     "content": "You are an advanced query intent analyzer that returns comprehensive JSON analysis of job search queries. Focus on extracting ALL components with high precision."
+#                 },
+#                 {"role": "user", "content": enhanced_intent_prompt}
+#             ],
+#             max_tokens=1500,  # Increased for complex responses
+#             temperature=0.05   # Lower temperature for more consistent extraction
+#         )
+
+#         ai_response = response.choices[0].message.content
+        
+#         if ai_response:
+#             ai_response = ai_response.strip()
+
+#             # Clean up markdown formatting
+#             if ai_response.startswith("```json"):
+#                 ai_response = ai_response[7:]
+#             elif ai_response.startswith("```"):
+#                 ai_response = ai_response[3:]
+#             if ai_response.endswith("```"):
+#                 ai_response = ai_response[:-3]
+
+#             ai_response = ai_response.strip()
+
+#             # Parse the enhanced JSON response
+#             intent_data = json.loads(ai_response)
+            
+#             # Add comprehensive query analysis with regex patterns
+#             query_lower = query.lower()
+#             query_words = query_lower.split()
+            
+#             # Enhanced pattern matching for complex queries
+#             patterns = {
+#                 "degree_patterns": [
+#                     r'\b(phd|ph\.d\.?|doctorate|doctoral)\b',
+#                     r'\b(master[\'s]*|ms|m\.s\.?|mba|m\.b\.a\.?)\b',
+#                     r'\b(bachelor[\'s]*|bs|b\.s\.?|ba|b\.a\.?)\b'
+#                 ],
+#                 "university_patterns": [
+#                     r'\b(stanford|mit|harvard|berkeley|caltech|carnegie mellon|princeton|yale)\b',
+#                     r'\b(top universities|prestigious|ivy league|tier[- ]1)\b'
+#                 ],
+#                 "company_patterns": [
+#                     r'\b(google|facebook|apple|amazon|netflix|microsoft|meta)\b',
+#                     r'\b(faang|big tech|fortune 500)\b'
+#                 ],
+#                 "experience_patterns": [
+#                     r'\b(\d+)\+?\s*years?\b',
+#                     r'\b(senior|principal|staff|lead|director|vp|c-level)\b'
+#                 ],
+#                 "location_patterns": [
+#                     r'\b(silicon valley|san francisco|nyc|new york|seattle|austin)\b',
+#                     r'\b(relocate|relocation|willing to move|open to)\b'
+#                 ],
+#                 "skill_patterns": [
+#                     r'\b(python|java|javascript|go|rust|c\+\+)\b',
+#                     r'\b(kubernetes|docker|aws|azure|gcp)\b',
+#                     r'\b(machine learning|ai|distributed systems|microservices)\b'
+#                 ]
+#             }
+            
+#             # Count pattern matches for complexity assessment
+#             pattern_matches = {}
+#             total_matches = 0
+            
+#             for category, pattern_list in patterns.items():
+#                 matches = 0
+#                 for pattern in pattern_list:
+#                     matches += len(re.findall(pattern, query_lower))
+#                 pattern_matches[category] = matches
+#                 total_matches += matches
+            
+#             # Enhanced query analysis
+#             intent_data["advanced_analysis"] = {
+#                 "query_statistics": {
+#                     "query_length": len(query),
+#                     "word_count": len(query_words),
+#                     "sentence_count": len([s for s in query.split('.') if s.strip()]),
+#                     "comma_separated_criteria": len([c for c in query.split(',') if c.strip()]),
+#                     "parenthetical_info": len(re.findall(r'\([^)]+\)', query))
+#                 },
+#                 "pattern_analysis": pattern_matches,
+#                 "complexity_indicators": {
+#                     "multiple_criteria": total_matches >= 3,
+#                     "specific_institutions": pattern_matches.get("university_patterns", 0) > 0,
+#                     "company_requirements": pattern_matches.get("company_patterns", 0) > 0,
+#                     "technical_depth": pattern_matches.get("skill_patterns", 0) >= 2,
+#                     "experience_specific": pattern_matches.get("experience_patterns", 0) > 0,
+#                     "location_constraints": pattern_matches.get("location_patterns", 0) > 0
+#                 },
+#                 "query_structure": {
+#                     "has_conjunctions": any(word in query_lower for word in ['and', 'with', 'who', 'that']),
+#                     "has_qualifiers": any(word in query_lower for word in ['prefer', 'ideal', 'bonus', 'nice to have']),
+#                     "has_requirements": any(word in query_lower for word in ['must', 'required', 'need', 'should']),
+#                     "has_alternatives": any(word in query_lower for word in ['or', 'alternatively', 'either'])
+#                 },
+#                 "semantic_signals": {
+#                     "urgency_indicators": any(word in query_lower for word in ['asap', 'urgent', 'immediately', 'quickly']),
+#                     "flexibility_indicators": any(word in query_lower for word in ['flexible', 'open to', 'willing to', 'consider']),
+#                     "exclusivity_indicators": any(word in query_lower for word in ['only', 'exclusively', 'specifically', 'strictly'])
+#                 }
+#             }
+            
+#             # Determine overall complexity score
+#             complexity_score = min(100, (total_matches * 15) + (len(query_words) * 2))
+#             intent_data["advanced_analysis"]["overall_complexity_score"] = complexity_score
+            
+#             # Add processing recommendations
+#             intent_data["processing_recommendations"] = {
+#                 "use_multi_stage_filtering": complexity_score > 60,
+#                 "require_fuzzy_matching": pattern_matches.get("skill_patterns", 0) > 3,
+#                 "prioritize_exact_matches": intent_data["advanced_analysis"]["semantic_signals"]["exclusivity_indicators"],
+#                 "enable_fallback_search": True,
+#                 "suggested_result_limit": 50 if complexity_score > 70 else 100
+#             }
+
+#             return {
+#                 "success": True,
+#                 "query": query,
+#                 "intent_analysis": intent_data,
+#                 "processing_time": "enhanced_analysis_complete"
+#             }
+        
+#         else:
+#             return {
+#                 "success": False,
+#                 "error": "No response from AI service",
+#                 "query": query
+#             }
+            
+#     except json.JSONDecodeError as e:
+#         logger.error(f"JSON parsing error in query intent analysis: {e}")
+#         return {
+#             "success": False,
+#             "error": f"Failed to parse AI response: {str(e)}",
+#             "query": query,
+#             "raw_response": ai_response if 'ai_response' in locals() else None
+#         }
+        
+#     except Exception as e:
+#         logger.error(f"Error in enhanced query intent analysis: {e}")
+#         return {
+#             "success": False,
+#             "error": f"Intent analysis failed: {str(e)}",
+#             "query": query
+#         }
+    
 @app.post("/analyze-query-intent")
 async def analyze_query_intent(query: str = Form(...)):
     """
-    Analyze the intent of a search query to determine the search strategy.
+    Enhanced query intent analyzer capable of handling very complex multi-dimensional queries.
     
-    This helps distinguish between:
-    - Education-focused queries (degree/university requirements)
-    - Role-focused queries (job position requirements) 
-    - Skill-focused queries (technical skill requirements)
-    - Company-focused queries (work experience requirements)
-    - Location-focused queries (geographic requirements)
-    - Generic queries (broad candidate search)
+    Handles complex queries like:
+    "I'm looking for Principal Software Architects with PhD in Computer Science from top universities 
+    (Stanford, MIT, Carnegie Mellon), 10+ years experience, who have worked at FAANG companies 
+    (Facebook, Apple, Amazon, Netflix, Google), know distributed systems, Kubernetes, Java, Go, 
+    currently in Silicon Valley or willing to relocate to San Francisco"
     """
     
     try:
         from src.resume_parser.clients.azure_openai import azure_client
+        import json
+        import re
         
         client = azure_client.get_sync_client()
         chat_deployment = azure_client.get_chat_deployment()
         
-        intent_prompt = f"""
-Analyze this job search query and classify its primary intent. Return ONLY a JSON object.
+        # Enhanced prompt with better complex query handling
+        enhanced_intent_prompt = f"""
+You are an advanced query intent analyzer for a resume search system. Analyze this job search query and extract ALL components with high precision. Return ONLY a JSON object.
 
 Query: "{query}"
 
-Classify the query's primary intent and extract key components:
+Extract and classify ALL components from this query. Be thorough and precise:
 
 {{
-    "primary_intent": "education|role|skills|company|location|generic",
-    "confidence": 0.95,
-    "intent_explanation": "Brief explanation of why this intent was chosen",
-    "components": {{
+    "query_metadata": {{
+        "complexity_level": "simple|moderate|complex|very_complex",
+        "query_type": "single_criteria|multi_criteria|comprehensive",
+        "primary_intent": "education|role|skills|company|location|experience|hybrid",
+        "secondary_intents": ["education", "role", "skills", "company", "location"],
+        "confidence_score": 0.95,
+        "intent_explanation": "Detailed explanation of the query structure and why this classification was chosen"
+    }},
+    
+    "extracted_components": {{
         "education_requirements": {{
-            "has_degree_requirement": true/false,
-            "degree_types": ["Master of Science", "Bachelor of Arts", etc],
-            "fields_of_study": ["Data Science", "Computer Science", etc],
-            "institutions": ["Stanford University", "MIT", etc]
+            "has_requirement": true/false,
+            "degree_levels": ["PhD", "Master's", "Bachelor's", "Associate"],
+            "specific_degrees": ["PhD in Computer Science", "Master of Science", etc],
+            "fields_of_study": ["Computer Science", "Engineering", "Data Science", etc],
+            "institutions": ["Stanford University", "MIT", "Carnegie Mellon University", etc],
+            "institution_tiers": ["top_tier", "ivy_league", "technical_schools"],
+            "education_keywords": ["from top universities", "prestigious", etc]
         }},
+        
         "role_requirements": {{
-            "has_role_requirement": true/false,
-            "job_titles": ["Data Scientist", "Software Engineer", etc],
-            "seniority_levels": ["Junior", "Senior", "Manager", etc]
+            "has_requirement": true/false,
+            "job_titles": ["Principal Software Architect", "Senior Engineer", etc],
+            "role_levels": ["Principal", "Senior", "Lead", "Staff", "Director"],
+            "role_categories": ["Engineering", "Management", "Technical", etc],
+            "role_keywords": ["architect", "lead", "principal", etc]
         }},
+        
         "skill_requirements": {{
-            "has_skill_requirement": true/false,
-            "technical_skills": ["Python", "Machine Learning", etc],
-            "soft_skills": ["Communication", "Leadership", etc]
+            "has_requirement": true/false,
+            "technical_skills": ["distributed systems", "Kubernetes", "Java", "Go", "Python"],
+            "frameworks": ["React", "Angular", "Spring", etc],
+            "technologies": ["AWS", "Docker", "Microservices", etc],
+            "domains": ["machine learning", "data science", "cybersecurity", etc],
+            "skill_categories": ["programming", "architecture", "devops", "cloud"],
+            "proficiency_indicators": ["expert", "advanced", "proficient"]
         }},
+        
         "company_requirements": {{
-            "has_company_requirement": true/false,
-            "companies": ["Google", "Microsoft", etc],
-            "company_types": ["startup", "enterprise", etc]
+            "has_requirement": true/false,
+            "specific_companies": ["Google", "Facebook", "Apple", "Amazon", "Netflix"],
+            "company_groups": ["FAANG", "Big Tech", "Fortune 500"],
+            "company_types": ["startup", "enterprise", "public", "private"],
+            "company_sizes": ["large", "medium", "small"],
+            "industry_sectors": ["technology", "finance", "healthcare", etc]
         }},
-        "location_requirements": {{
-            "has_location_requirement": true/false,
-            "locations": ["San Francisco", "New York", etc]
-        }},
+        
         "experience_requirements": {{
-            "has_experience_requirement": true/false,
-            "min_years": 3,
-            "max_years": 10
+            "has_requirement": true/false,
+            "min_years": 10,
+            "max_years": null,
+            "specific_experience": ["10+ years", "5-8 years", etc],
+            "experience_types": ["industry", "relevant", "total"],
+            "seniority_levels": ["junior", "mid", "senior", "principal", "staff"]
+        }},
+        
+        "location_requirements": {{
+            "has_requirement": true/false,
+            "current_locations": ["Silicon Valley", "San Francisco", "New York"],
+            "preferred_locations": ["San Francisco", "Bay Area"],
+            "relocation_indicators": ["willing to relocate", "open to relocation"],
+            "location_flexibility": "strict|flexible|remote_ok",
+            "geographic_regions": ["West Coast", "East Coast", "US", "Global"]
+        }},
+        
+        "additional_criteria": {{
+            "certifications": ["AWS Certified", "PMP", etc],
+            "languages": ["English", "Spanish", etc],
+            "work_authorization": ["US Citizen", "H1B", etc],
+            "availability": ["immediate", "2 weeks notice", etc],
+            "salary_expectations": "competitive|market_rate|specific_range",
+            "work_preferences": ["remote", "hybrid", "on-site"]
         }}
     }},
-    "search_strategy_recommendation": "education_filtering|role_matching|skill_matching|semantic_search|hybrid",
-    "priority_order": ["education", "role", "skills", "location", "company"]
+    
+    "search_strategy": {{
+        "recommended_approach": "education_first|role_first|skills_first|company_first|semantic_hybrid|multi_stage_filtering",
+        "filtering_priority": ["education", "role", "experience", "skills", "company", "location"],
+        "search_complexity": "single_pass|multi_pass|cascading_filters|ml_ranking",
+        "expected_result_size": "very_small|small|medium|large",
+        "fallback_strategies": ["relax_education", "expand_companies", "broader_location"]
+    }},
+    
+    "query_understanding": {{
+        "key_constraints": ["PhD required", "FAANG experience", "10+ years", "specific skills"],
+        "optional_preferences": ["Silicon Valley", "relocation flexibility"],
+        "deal_breakers": ["education_level", "experience_minimum"],
+        "negotiable_items": ["specific_location", "company_size"],
+        "query_ambiguities": ["definition of top universities", "distributed systems scope"]
+    }}
 }}
 
-Examples:
+IMPORTANT EXTRACTION RULES:
+1. For EDUCATION: Extract exact degree requirements, specific institutions mentioned, and education-related keywords
+2. For COMPANIES: Identify specific companies, company groups (like FAANG), and company characteristics
+3. For SKILLS: Separate technical skills, frameworks, domains, and proficiency levels
+4. For EXPERIENCE: Extract numeric requirements, seniority indicators, and experience types
+5. For LOCATION: Distinguish between current location, preferred location, and relocation willingness
+6. For COMPLEXITY: Classify based on number of criteria and specificity of requirements
 
-"Master of Science in Data Science from Stanford University"
-→ primary_intent: "education", has_degree_requirement: true, search_strategy: "education_filtering"
+EXAMPLES OF COMPLEX QUERIES:
 
-"Senior Software Engineer with Python experience" 
-→ primary_intent: "role", has_role_requirement: true, has_skill_requirement: true, search_strategy: "hybrid"
+"Senior Data Scientist with PhD in Statistics from Ivy League, 8+ years at tech companies, expert in PyTorch, TensorFlow, MLOps, currently in NYC or SF"
+→ complexity_level: "very_complex", primary_intent: "hybrid", multiple strict requirements
 
-"Python developer in San Francisco"
-→ primary_intent: "skills", has_skill_requirement: true, has_location_requirement: true, search_strategy: "skill_matching"
+"Full-stack developer, React + Node.js, startup experience, remote OK"
+→ complexity_level: "moderate", primary_intent: "skills", some flexibility
 
-"candidates from Google"
-→ primary_intent: "company", has_company_requirement: true, search_strategy: "semantic_search"
+"Looking for ML engineers from Google, Facebook, or similar, with computer vision expertise"
+→ complexity_level: "complex", primary_intent: "company", specific domain skills
 
-Return only the JSON, no explanations.
+Return only the JSON object, no additional text or explanations.
 """
 
+        # Make the API call
         response = client.chat.completions.create(
             model=chat_deployment,
             messages=[
-                {"role": "system", "content": "You are a query intent analyzer that returns only valid JSON."},
-                {"role": "user", "content": intent_prompt}
+                {
+                    "role": "system", 
+                    "content": "You are an advanced query intent analyzer that returns comprehensive JSON analysis of job search queries. Focus on extracting ALL components with high precision."
+                },
+                {"role": "user", "content": enhanced_intent_prompt}
             ],
-            max_tokens=500,
-            temperature=0.1
+            max_tokens=1500,  # Increased for complex responses
+            temperature=0.05   # Lower temperature for more consistent extraction
         )
 
         ai_response = response.choices[0].message.content
+        
         if ai_response:
             ai_response = ai_response.strip()
 
-            # Remove markdown code blocks if present
+            # Clean up markdown formatting
             if ai_response.startswith("```json"):
                 ai_response = ai_response[7:]
-            if ai_response.startswith("```"):
+            elif ai_response.startswith("```"):
                 ai_response = ai_response[3:]
             if ai_response.endswith("```"):
                 ai_response = ai_response[:-3]
 
             ai_response = ai_response.strip()
 
-            # Parse the JSON response
-            import json
+            # Parse the enhanced JSON response
             intent_data = json.loads(ai_response)
             
-            # Add some additional analysis
-            query_words = query.lower().split()
-            intent_data["query_analysis"] = {
-                "query_length": len(query),
-                "word_count": len(query_words),
-                "contains_degree_terms": any(term in query.lower() for term in ['master', 'bachelor', 'phd', 'degree']),
-                "contains_university_terms": any(term in query.lower() for term in ['university', 'college', 'stanford', 'mit', 'harvard']),
-                "contains_role_terms": any(term in query.lower() for term in ['engineer', 'developer', 'manager', 'analyst', 'scientist']),
-                "contains_skill_terms": any(term in query.lower() for term in ['python', 'javascript', 'java', 'react', 'sql']),
-                "contains_location_indicators": any(term in query.lower() for term in ['in ', 'from ', 'at ', 'near ', 'based']),
-                "is_question_format": query.strip().endswith('?'),
-                "raw_query": query
+            # Add comprehensive query analysis with regex patterns
+            query_lower = query.lower()
+            query_words = query_lower.split()
+            
+            # Enhanced pattern matching for complex queries
+            patterns = {
+                "degree_patterns": [
+                    r'\b(phd|ph\.d\.?|doctorate|doctoral)\b',
+                    r'\b(master[\'s]*|ms|m\.s\.?|mba|m\.b\.a\.?)\b',
+                    r'\b(bachelor[\'s]*|bs|b\.s\.?|ba|b\.a\.?)\b'
+                ],
+                "university_patterns": [
+                    r'\b(stanford|mit|harvard|berkeley|caltech|carnegie mellon|princeton|yale)\b',
+                    r'\b(top universities|prestigious|ivy league|tier[- ]1)\b'
+                ],
+                "company_patterns": [
+                    r'\b(google|facebook|apple|amazon|netflix|microsoft|meta)\b',
+                    r'\b(faang|big tech|fortune 500)\b'
+                ],
+                "experience_patterns": [
+                    r'\b(\d+)\+?\s*years?\b',
+                    r'\b(senior|principal|staff|lead|director|vp|c-level)\b'
+                ],
+                "location_patterns": [
+                    r'\b(silicon valley|san francisco|nyc|new york|seattle|austin)\b',
+                    r'\b(relocate|relocation|willing to move|open to)\b'
+                ],
+                "skill_patterns": [
+                    r'\b(python|java|javascript|go|rust|c\+\+)\b',
+                    r'\b(kubernetes|docker|aws|azure|gcp)\b',
+                    r'\b(machine learning|ai|distributed systems|microservices)\b'
+                ]
             }
+            
+            # Count pattern matches for complexity assessment
+            pattern_matches = {}
+            total_matches = 0
+            
+            for category, pattern_list in patterns.items():
+                matches = 0
+                for pattern in pattern_list:
+                    matches += len(re.findall(pattern, query_lower))
+                pattern_matches[category] = matches
+                total_matches += matches
+            
+            # Enhanced query analysis
+            intent_data["advanced_analysis"] = {
+                "query_statistics": {
+                    "query_length": len(query),
+                    "word_count": len(query_words),
+                    "sentence_count": len([s for s in query.split('.') if s.strip()]),
+                    "comma_separated_criteria": len([c for c in query.split(',') if c.strip()]),
+                    "parenthetical_info": len(re.findall(r'\([^)]+\)', query))
+                },
+                "pattern_analysis": pattern_matches,
+                "complexity_indicators": {
+                    "multiple_criteria": total_matches >= 3,
+                    "specific_institutions": pattern_matches.get("university_patterns", 0) > 0,
+                    "company_requirements": pattern_matches.get("company_patterns", 0) > 0,
+                    "technical_depth": pattern_matches.get("skill_patterns", 0) >= 2,
+                    "experience_specific": pattern_matches.get("experience_patterns", 0) > 0,
+                    "location_constraints": pattern_matches.get("location_patterns", 0) > 0
+                },
+                "query_structure": {
+                    "has_conjunctions": any(word in query_lower for word in ['and', 'with', 'who', 'that']),
+                    "has_qualifiers": any(word in query_lower for word in ['prefer', 'ideal', 'bonus', 'nice to have']),
+                    "has_requirements": any(word in query_lower for word in ['must', 'required', 'need', 'should']),
+                    "has_alternatives": any(word in query_lower for word in ['or', 'alternatively', 'either'])
+                },
+                "semantic_signals": {
+                    "urgency_indicators": any(word in query_lower for word in ['asap', 'urgent', 'immediately', 'quickly']),
+                    "flexibility_indicators": any(word in query_lower for word in ['flexible', 'open to', 'willing to', 'consider']),
+                    "exclusivity_indicators": any(word in query_lower for word in ['only', 'exclusively', 'specifically', 'strictly'])
+                }
+            }
+            
+            # Determine overall complexity score
+            complexity_score = min(100, (total_matches * 15) + (len(query_words) * 2))
+            intent_data["advanced_analysis"]["overall_complexity_score"] = complexity_score
+            
+            # Add processing recommendations
+            intent_data["processing_recommendations"] = {
+                "use_multi_stage_filtering": complexity_score > 60,
+                "require_fuzzy_matching": pattern_matches.get("skill_patterns", 0) > 3,
+                "prioritize_exact_matches": intent_data["advanced_analysis"]["semantic_signals"]["exclusivity_indicators"],
+                "enable_fallback_search": True,
+                "suggested_result_limit": 50 if complexity_score > 70 else 100
+            }
+
+            # ============= NEW ADDITION: FINAL REQUIREMENTS FOR QDRANT SEARCH =============
+            # Extract key-value pairs for direct Qdrant filtering
+            components = intent_data.get("extracted_components", {})
+            
+            # Initialize Qdrant-ready filters
+            qdrant_filters = {}
+            search_keywords = []
+            
+            # Education filters
+            if components.get("education_requirements", {}).get("has_requirement", False):
+                edu_req = components["education_requirements"]
+                
+                if edu_req.get("degree_levels"):
+                    qdrant_filters["degree_level"] = edu_req["degree_levels"]
+                
+                if edu_req.get("fields_of_study"):
+                    qdrant_filters["field_of_study"] = edu_req["fields_of_study"]
+                
+                if edu_req.get("institutions"):
+                    qdrant_filters["institution"] = edu_req["institutions"]
+                
+                # Add to search keywords
+                search_keywords.extend(edu_req.get("degree_levels", []))
+                search_keywords.extend(edu_req.get("fields_of_study", []))
+                search_keywords.extend(edu_req.get("institutions", []))
+            
+            # Role/Job filters
+            if components.get("role_requirements", {}).get("has_requirement", False):
+                role_req = components["role_requirements"]
+                
+                if role_req.get("job_titles"):
+                    qdrant_filters["job_title"] = role_req["job_titles"]
+                
+                if role_req.get("role_levels"):
+                    qdrant_filters["seniority_level"] = role_req["role_levels"]
+                
+                if role_req.get("role_categories"):
+                    qdrant_filters["role_category"] = role_req["role_categories"]
+                
+                # Add to search keywords
+                search_keywords.extend(role_req.get("job_titles", []))
+                search_keywords.extend(role_req.get("role_levels", []))
+            
+            # Skills filters
+            if components.get("skill_requirements", {}).get("has_requirement", False):
+                skill_req = components["skill_requirements"]
+                
+                all_skills = []
+                all_skills.extend(skill_req.get("technical_skills", []))
+                all_skills.extend(skill_req.get("frameworks", []))
+                all_skills.extend(skill_req.get("technologies", []))
+                
+                if all_skills:
+                    qdrant_filters["skills"] = all_skills
+                
+                if skill_req.get("skill_categories"):
+                    qdrant_filters["skill_category"] = skill_req["skill_categories"]
+                
+                # Add to search keywords
+                search_keywords.extend(all_skills)
+            
+            # Company filters
+            if components.get("company_requirements", {}).get("has_requirement", False):
+                comp_req = components["company_requirements"]
+                
+                all_companies = []
+                all_companies.extend(comp_req.get("specific_companies", []))
+                
+                if all_companies:
+                    qdrant_filters["company"] = all_companies
+                
+                if comp_req.get("company_groups"):
+                    qdrant_filters["company_type"] = comp_req["company_groups"]
+                
+                if comp_req.get("industry_sectors"):
+                    qdrant_filters["industry"] = comp_req["industry_sectors"]
+                
+                # Add to search keywords
+                search_keywords.extend(all_companies)
+                search_keywords.extend(comp_req.get("company_groups", []))
+            
+            # Experience filters
+            if components.get("experience_requirements", {}).get("has_requirement", False):
+                exp_req = components["experience_requirements"]
+                
+                if exp_req.get("min_years") is not None:
+                    qdrant_filters["min_experience"] = exp_req["min_years"]
+                
+                if exp_req.get("max_years") is not None:
+                    qdrant_filters["max_experience"] = exp_req["max_years"]
+                
+                if exp_req.get("seniority_levels"):
+                    # If not already set from role requirements
+                    if "seniority_level" not in qdrant_filters:
+                        qdrant_filters["seniority_level"] = exp_req["seniority_levels"]
+            
+            # Location filters
+            if components.get("location_requirements", {}).get("has_requirement", False):
+                loc_req = components["location_requirements"]
+                
+                all_locations = []
+                all_locations.extend(loc_req.get("current_locations", []))
+                all_locations.extend(loc_req.get("preferred_locations", []))
+                
+                if all_locations:
+                    qdrant_filters["location"] = all_locations
+                
+                if loc_req.get("geographic_regions"):
+                    qdrant_filters["region"] = loc_req["geographic_regions"]
+                
+                # Add to search keywords
+                search_keywords.extend(all_locations)
+            
+            # Additional criteria filters
+            if components.get("additional_criteria"):
+                add_criteria = components["additional_criteria"]
+                
+                if add_criteria.get("certifications"):
+                    qdrant_filters["certifications"] = add_criteria["certifications"]
+                    search_keywords.extend(add_criteria["certifications"])
+                
+                if add_criteria.get("languages"):
+                    qdrant_filters["languages"] = add_criteria["languages"]
+                
+                if add_criteria.get("work_authorization"):
+                    qdrant_filters["work_authorization"] = add_criteria["work_authorization"]
+                
+                if add_criteria.get("work_preferences"):
+                    qdrant_filters["work_preference"] = add_criteria["work_preferences"]
+            
+            # Clean up search keywords
+            clean_keywords = list(set([
+                kw.strip().lower() for kw in search_keywords 
+                if kw and kw.strip() and len(kw.strip()) > 1
+            ]))
+            
+            # Create final requirements structure
+            final_requirements = {
+                "qdrant_filters": qdrant_filters,
+                "search_keywords": clean_keywords,
+                "filter_count": len(qdrant_filters),
+                "has_strict_requirements": len(qdrant_filters) > 0,
+                "search_strategy": {
+                    "primary_intent": intent_data.get("query_metadata", {}).get("primary_intent", "hybrid"),
+                    "recommended_approach": intent_data.get("search_strategy", {}).get("recommended_approach", "semantic_search"),
+                    "complexity": intent_data.get("search_strategy", {}).get("search_complexity", "single_pass")
+                }
+            }
+            
+            # Add final requirements to the response
+            intent_data["final_requirements"] = final_requirements
+            # ============= END OF NEW ADDITION =============
 
             return {
                 "success": True,
                 "query": query,
-                "intent_analysis": intent_data
+                "intent_analysis": intent_data,
+                "processing_time": "enhanced_analysis_complete"
             }
         
         else:
             return {
                 "success": False,
-                "error": "No response from AI",
+                "error": "No response from AI service",
                 "query": query
             }
             
-    except json.JSONDecodeError as e:
+    except json.JSONDecodeError as e: # type: ignore
+        logger.error(f"JSON parsing error in query intent analysis: {e}")
         return {
             "success": False,
-            "error": f"Failed to parse AI response: {e}",
+            "error": f"Failed to parse AI response: {str(e)}",
             "query": query,
-            "raw_response": ai_response if 'ai_response' in locals() else None
+            "raw_response": ai_response if 'ai_response' in locals() else None # type: ignore
         }
         
     except Exception as e:
+        logger.error(f"Error in enhanced query intent analysis: {e}")
         return {
             "success": False,
-            "error": f"Intent analysis failed: {e}",
+            "error": f"Intent analysis failed: {str(e)}",
             "query": query
         }
 
@@ -784,8 +1373,8 @@ async def bulk_upload_resumes(files: List[UploadFile] = File(...)):
                 safe_work_history = [job.dict() if hasattr(job, 'dict') else dict(job) for job in getattr(resume_data, 'work_history', [])]
                 safe_education = [edu.dict() if hasattr(edu, 'dict') else dict(edu) for edu in getattr(resume_data, 'education', [])]
                 safe_role_classification = resume_data.role_classification.dict() if getattr(resume_data, 'role_classification', None) and hasattr(resume_data.role_classification, 'dict') else getattr(resume_data, 'role_classification', {})
-                safe_extraction_statistics = resume_data.extraction_statistics.dict() if getattr(resume_data, 'extraction_statistics', None) and hasattr(resume_data.extraction_statistics, 'dict') else getattr(resume_data, 'extraction_statistics', {})
-                safe_current_employment = resume_data.current_employment.dict() if getattr(resume_data, 'current_employment', None) and hasattr(resume_data.current_employment, 'dict') else getattr(resume_data, 'current_employment', None)
+                safe_extraction_statistics = resume_data.extraction_statistics.dict() if getattr(resume_data, 'extraction_statistics', None) and hasattr(resume_data.extraction_statistics, 'dict') else getattr(resume_data, 'extraction_statistics', {}) # type: ignore
+                safe_current_employment = resume_data.current_employment.dict() if getattr(resume_data, 'current_employment', None) and hasattr(resume_data.current_employment, 'dict') else getattr(resume_data, 'current_employment', None) # type: ignore
                 safe_created_at = getattr(resume_data, 'created_at', None)
                 upload_timestamp = safe_created_at.isoformat() if safe_created_at else None
 
@@ -2349,6 +2938,325 @@ def _advanced_rank_results(results: List[Dict], parsed_query, preferred_skills: 
         result['final_score'] = score
 
     return sorted(results, key=lambda x: x.get('final_score', x.get('score', 0)), reverse=True)
+
+
+@app.post("/search-resumes-intent-based")
+async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(10)):
+    """
+    Enhanced resume search using analyze-query-intent to find exact candidates based on final requirements.
+
+    This route uses the analyze-query-intent function to understand exactly what the user wants,
+    then performs targeted Qdrant search with precise filters for more accurate results.
+
+    Args:
+        query: Natural language query describing the ideal candidate
+        limit: Maximum number of results to return
+
+    Returns:
+        Dict containing search results with detailed matching analysis
+    """
+    try:
+        logger.info(f"🎯 Intent-based search for: {query}")
+
+        # Step 1: Analyze the query to get final requirements
+        intent_result = await analyze_query_intent(query)
+
+        if not intent_result.get("success"):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Failed to analyze query intent: {intent_result.get('error', 'Unknown error')}"
+            )
+
+        # Extract final requirements
+        intent_data = intent_result.get("intent_analysis", {})
+        final_requirements = intent_data.get("final_requirements", {})
+
+        if not final_requirements:
+            raise HTTPException(
+                status_code=400,
+                detail="No final requirements extracted from query"
+            )
+
+        logger.info(f"📋 Final requirements extracted: {final_requirements}")
+
+        # Step 2: Generate embedding for the query
+        async def _generate_embedding(text: str) -> Optional[List[float]]:
+            """Generate embedding for the given text."""
+            try:
+                from src.resume_parser.clients.azure_openai import azure_client
+                client = azure_client.get_sync_client()
+
+                response = client.embeddings.create(
+                    input=text,
+                    model=azure_client.get_embedding_deployment()
+                )
+
+                return response.data[0].embedding
+            except Exception as e:
+                logger.error(f"Error generating embedding: {e}")
+                return None
+
+        query_vector = await _generate_embedding(query)
+        if not query_vector:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to generate query embedding"
+            )
+
+        # Step 3: Convert final_requirements to Qdrant filter format
+        qdrant_filters = final_requirements.get("qdrant_filters", {})
+
+        # Build Qdrant-compatible filter conditions
+        filter_conditions = {}
+
+        # Map final_requirements fields to Qdrant collection fields
+        field_mapping = {
+            "degree_level": "education_level",
+            "field_of_study": "education_field",
+            "institution": "university",
+            "job_title": "current_role",
+            "seniority_level": "seniority",
+            "role_category": "role_category",
+            "skills": "skills",
+            "skill_category": "skill_categories",
+            "company": "companies",
+            "company_type": "company_type",
+            "industry": "industry",
+            "min_experience": "experience_years",
+            "location": "location",
+            "certifications": "certifications",
+            "languages": "languages"
+        }
+
+        # Apply filters based on final requirements
+        for req_field, req_values in qdrant_filters.items():
+            if req_field in field_mapping:
+                qdrant_field = field_mapping[req_field]
+
+                # Handle different filter types
+                if req_field == "min_experience":
+                    # For experience, use range filter
+                    filter_conditions[qdrant_field] = {"gte": req_values}
+                elif isinstance(req_values, list):
+                    # For list values, use match any filter
+                    filter_conditions[qdrant_field] = req_values
+                else:
+                    # For single values
+                    filter_conditions[qdrant_field] = [req_values] if not isinstance(req_values, list) else req_values
+
+        logger.info(f"🔍 Qdrant filter conditions: {filter_conditions}")
+
+        # Step 4: Search Qdrant with filters
+        from src.resume_parser.database.qdrant_client import qdrant_client
+
+        # First try with strict filters
+        results = []
+        if filter_conditions:
+            logger.info("🎯 Searching with strict filters based on final requirements")
+            results = await qdrant_client.search_similar(
+                query_vector=query_vector,
+                limit=limit * 3,  # Get more for better ranking
+                filter_conditions=filter_conditions
+            )
+            logger.info(f"Found {len(results)} results with strict filtering")
+
+        # If no results with strict filters, try semantic search only
+        if len(results) == 0:
+            logger.info("🔄 No results with filters, trying semantic search")
+            results = await qdrant_client.search_similar(
+                query_vector=query_vector,
+                limit=limit * 2,
+                filter_conditions=None  # No filters, pure semantic matching
+            )
+            logger.info(f"Found {len(results)} results with semantic search")
+
+        # Step 5: Enhanced ranking based on final requirements
+        def calculate_intent_score(result: Dict[str, Any]) -> float:
+            """Calculate enhanced score based on final requirements matching."""
+            base_score = result.get('score', 0.0)
+            payload = result.get('payload', {})
+            bonus_score = 0.0
+
+            # Education matching bonus
+            edu_reqs = intent_data.get("extracted_components", {}).get("education_requirements", {})
+            if edu_reqs.get("has_requirement", False):
+                candidate_edu = payload.get('education_level', '').lower()
+                candidate_field = payload.get('education_field', '').lower()
+                candidate_uni = payload.get('university', '').lower()
+
+                # Degree level match
+                if edu_reqs.get("degree_levels"):
+                    for degree in edu_reqs["degree_levels"]:
+                        if degree.lower() in candidate_edu:
+                            bonus_score += 0.3
+                            break
+
+                # Field of study match
+                if edu_reqs.get("fields_of_study"):
+                    for field in edu_reqs["fields_of_study"]:
+                        if field.lower() in candidate_field:
+                            bonus_score += 0.25
+                            break
+
+                # Institution match
+                if edu_reqs.get("institutions"):
+                    for inst in edu_reqs["institutions"]:
+                        if inst.lower() in candidate_uni:
+                            bonus_score += 0.4  # High bonus for specific institution match
+                            break
+
+            # Role matching bonus
+            role_reqs = intent_data.get("extracted_components", {}).get("role_requirements", {})
+            if role_reqs.get("has_requirement", False):
+                candidate_role = payload.get('current_role', '').lower()
+                candidate_seniority = payload.get('seniority', '').lower()
+
+                # Job title match
+                if role_reqs.get("job_titles"):
+                    for title in role_reqs["job_titles"]:
+                        if title.lower() in candidate_role:
+                            bonus_score += 0.35
+                            break
+
+                # Seniority match
+                if role_reqs.get("role_levels"):
+                    for level in role_reqs["role_levels"]:
+                        if level.lower() in candidate_seniority:
+                            bonus_score += 0.25
+                            break
+
+            # Skills matching bonus
+            skill_reqs = intent_data.get("extracted_components", {}).get("skill_requirements", {})
+            if skill_reqs.get("has_requirement", False):
+                candidate_skills = [s.lower() for s in payload.get('skills', [])]
+
+                # Technical skills match
+                all_required_skills = []
+                all_required_skills.extend(skill_reqs.get("technical_skills", []))
+                all_required_skills.extend(skill_reqs.get("frameworks", []))
+                all_required_skills.extend(skill_reqs.get("technologies", []))
+
+                matched_skills = 0
+                for skill in all_required_skills:
+                    if skill.lower() in candidate_skills:
+                        matched_skills += 1
+
+                if all_required_skills:
+                    skill_match_ratio = matched_skills / len(all_required_skills)
+                    bonus_score += skill_match_ratio * 0.4  # Up to 0.4 bonus for all skills matched
+
+            # Company matching bonus
+            comp_reqs = intent_data.get("extracted_components", {}).get("company_requirements", {})
+            if comp_reqs.get("has_requirement", False):
+                candidate_companies = [c.lower() for c in payload.get('companies', [])]
+
+                # Specific company match
+                if comp_reqs.get("specific_companies"):
+                    for company in comp_reqs["specific_companies"]:
+                        if any(company.lower() in cand_comp for cand_comp in candidate_companies):
+                            bonus_score += 0.35
+                            break
+
+                # Company group match (like FAANG)
+                if comp_reqs.get("company_groups"):
+                    faang_companies = ["google", "facebook", "meta", "apple", "amazon", "netflix"]
+                    big_tech = ["microsoft", "uber", "airbnb", "tesla", "salesforce"]
+
+                    for group in comp_reqs["company_groups"]:
+                        if "faang" in group.lower():
+                            if any(faang in cand_comp for faang in faang_companies for cand_comp in candidate_companies):
+                                bonus_score += 0.4
+                                break
+                        elif "big tech" in group.lower():
+                            all_big_tech = faang_companies + big_tech
+                            if any(tech in cand_comp for tech in all_big_tech for cand_comp in candidate_companies):
+                                bonus_score += 0.3
+                                break
+
+            # Experience matching bonus
+            exp_reqs = intent_data.get("extracted_components", {}).get("experience_requirements", {})
+            if exp_reqs.get("has_requirement", False):
+                candidate_exp_str = payload.get('total_experience', '0')
+
+                # Extract years from candidate experience
+                import re
+                exp_match = re.search(r'(\d+)', candidate_exp_str)
+                if exp_match:
+                    candidate_years = int(exp_match.group(1))
+                    min_years = exp_reqs.get("min_years", 0)
+
+                    if candidate_years >= min_years:
+                        bonus_score += 0.2
+                    elif candidate_years >= min_years * 0.8:  # Close match
+                        bonus_score += 0.1
+
+            return base_score + bonus_score
+
+        # Apply enhanced scoring and ranking
+        for result in results:
+            result['intent_score'] = calculate_intent_score(result)
+
+        # Sort by intent score
+        results = sorted(results, key=lambda x: x.get('intent_score', 0), reverse=True)
+
+        # Limit results
+        results = results[:limit]
+
+        # Step 6: Format response with detailed analysis
+        formatted_results = []
+        for result in results:
+            payload = result.get('payload', {})
+            formatted_result = {
+                'id': result.get('id'),
+                'score': result.get('score', 0),
+                'intent_score': result.get('intent_score', 0),
+                'candidate': {
+                    'name': payload.get('name', 'N/A'),
+                    'email': payload.get('email', 'N/A'),
+                    'phone': payload.get('phone', 'N/A'),
+                    'current_role': payload.get('current_role', 'N/A'),
+                    'seniority': payload.get('seniority', 'N/A'),
+                    'total_experience': payload.get('total_experience', 'N/A'),
+                    'education_level': payload.get('education_level', 'N/A'),
+                    'education_field': payload.get('education_field', 'N/A'),
+                    'university': payload.get('university', 'N/A'),
+                    'skills': payload.get('skills', []),
+                    'companies': payload.get('companies', []),
+                    'location': payload.get('location', 'N/A')
+                },
+                'match_analysis': {
+                    'semantic_relevance': result.get('score', 0),
+                    'requirements_match': result.get('intent_score', 0) - result.get('score', 0),
+                    'total_score': result.get('intent_score', 0)
+                }
+            }
+            formatted_results.append(formatted_result)
+
+        return {
+            "success": True,
+            "query": query,
+            "total_results": len(formatted_results),
+            "intent_analysis": {
+                "final_requirements": final_requirements,
+                "filters_applied": filter_conditions,
+                "search_strategy": final_requirements.get("search_strategy", {})
+            },
+            "results": formatted_results,
+            "processing_summary": {
+                "query_analyzed": True,
+                "filters_used": len(filter_conditions) > 0,
+                "semantic_fallback": len(filter_conditions) > 0 and len(results) == limit * 2
+            }
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in intent-based resume search: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Search failed: {str(e)}"
+        )
 
 
 @app.get("/resume/{user_id}")
