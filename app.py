@@ -521,6 +521,161 @@ async def upload_resume(file: UploadFile = File(...)):
         except Exception:
             pass
 
+# Add this route to your app.py
+
+@app.post("/analyze-query-intent")
+async def analyze_query_intent(query: str = Form(...)):
+    """
+    Analyze the intent of a search query to determine the search strategy.
+    
+    This helps distinguish between:
+    - Education-focused queries (degree/university requirements)
+    - Role-focused queries (job position requirements) 
+    - Skill-focused queries (technical skill requirements)
+    - Company-focused queries (work experience requirements)
+    - Location-focused queries (geographic requirements)
+    - Generic queries (broad candidate search)
+    """
+    
+    try:
+        from src.resume_parser.clients.azure_openai import azure_client
+        
+        client = azure_client.get_sync_client()
+        chat_deployment = azure_client.get_chat_deployment()
+        
+        intent_prompt = f"""
+Analyze this job search query and classify its primary intent. Return ONLY a JSON object.
+
+Query: "{query}"
+
+Classify the query's primary intent and extract key components:
+
+{{
+    "primary_intent": "education|role|skills|company|location|generic",
+    "confidence": 0.95,
+    "intent_explanation": "Brief explanation of why this intent was chosen",
+    "components": {{
+        "education_requirements": {{
+            "has_degree_requirement": true/false,
+            "degree_types": ["Master of Science", "Bachelor of Arts", etc],
+            "fields_of_study": ["Data Science", "Computer Science", etc],
+            "institutions": ["Stanford University", "MIT", etc]
+        }},
+        "role_requirements": {{
+            "has_role_requirement": true/false,
+            "job_titles": ["Data Scientist", "Software Engineer", etc],
+            "seniority_levels": ["Junior", "Senior", "Manager", etc]
+        }},
+        "skill_requirements": {{
+            "has_skill_requirement": true/false,
+            "technical_skills": ["Python", "Machine Learning", etc],
+            "soft_skills": ["Communication", "Leadership", etc]
+        }},
+        "company_requirements": {{
+            "has_company_requirement": true/false,
+            "companies": ["Google", "Microsoft", etc],
+            "company_types": ["startup", "enterprise", etc]
+        }},
+        "location_requirements": {{
+            "has_location_requirement": true/false,
+            "locations": ["San Francisco", "New York", etc]
+        }},
+        "experience_requirements": {{
+            "has_experience_requirement": true/false,
+            "min_years": 3,
+            "max_years": 10
+        }}
+    }},
+    "search_strategy_recommendation": "education_filtering|role_matching|skill_matching|semantic_search|hybrid",
+    "priority_order": ["education", "role", "skills", "location", "company"]
+}}
+
+Examples:
+
+"Master of Science in Data Science from Stanford University"
+→ primary_intent: "education", has_degree_requirement: true, search_strategy: "education_filtering"
+
+"Senior Software Engineer with Python experience" 
+→ primary_intent: "role", has_role_requirement: true, has_skill_requirement: true, search_strategy: "hybrid"
+
+"Python developer in San Francisco"
+→ primary_intent: "skills", has_skill_requirement: true, has_location_requirement: true, search_strategy: "skill_matching"
+
+"candidates from Google"
+→ primary_intent: "company", has_company_requirement: true, search_strategy: "semantic_search"
+
+Return only the JSON, no explanations.
+"""
+
+        response = client.chat.completions.create(
+            model=chat_deployment,
+            messages=[
+                {"role": "system", "content": "You are a query intent analyzer that returns only valid JSON."},
+                {"role": "user", "content": intent_prompt}
+            ],
+            max_tokens=500,
+            temperature=0.1
+        )
+
+        ai_response = response.choices[0].message.content
+        if ai_response:
+            ai_response = ai_response.strip()
+
+            # Remove markdown code blocks if present
+            if ai_response.startswith("```json"):
+                ai_response = ai_response[7:]
+            if ai_response.startswith("```"):
+                ai_response = ai_response[3:]
+            if ai_response.endswith("```"):
+                ai_response = ai_response[:-3]
+
+            ai_response = ai_response.strip()
+
+            # Parse the JSON response
+            import json
+            intent_data = json.loads(ai_response)
+            
+            # Add some additional analysis
+            query_words = query.lower().split()
+            intent_data["query_analysis"] = {
+                "query_length": len(query),
+                "word_count": len(query_words),
+                "contains_degree_terms": any(term in query.lower() for term in ['master', 'bachelor', 'phd', 'degree']),
+                "contains_university_terms": any(term in query.lower() for term in ['university', 'college', 'stanford', 'mit', 'harvard']),
+                "contains_role_terms": any(term in query.lower() for term in ['engineer', 'developer', 'manager', 'analyst', 'scientist']),
+                "contains_skill_terms": any(term in query.lower() for term in ['python', 'javascript', 'java', 'react', 'sql']),
+                "contains_location_indicators": any(term in query.lower() for term in ['in ', 'from ', 'at ', 'near ', 'based']),
+                "is_question_format": query.strip().endswith('?'),
+                "raw_query": query
+            }
+
+            return {
+                "success": True,
+                "query": query,
+                "intent_analysis": intent_data
+            }
+        
+        else:
+            return {
+                "success": False,
+                "error": "No response from AI",
+                "query": query
+            }
+            
+    except json.JSONDecodeError as e:
+        return {
+            "success": False,
+            "error": f"Failed to parse AI response: {e}",
+            "query": query,
+            "raw_response": ai_response if 'ai_response' in locals() else None
+        }
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Intent analysis failed: {e}",
+            "query": query
+        }
 
 @app.post("/bulk-upload-resumes")
 async def bulk_upload_resumes(files: List[UploadFile] = File(...)):
