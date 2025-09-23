@@ -298,6 +298,58 @@ def _extract_education_info(payload: Dict[str, Any]) -> Dict[str, str]:
     return education_info
 
 
+async def _llm_semantic_similarity(query_term: str, candidate_term: str) -> bool:
+    """
+    Use LLM to determine semantic similarity between query and candidate terms.
+    Returns True if terms are semantically similar, False otherwise.
+    """
+    if not query_term or not candidate_term:
+        return False
+
+    # Quick check for exact matches first
+    if query_term.lower().strip() == candidate_term.lower().strip():
+        return True
+
+    try:
+        from src.resume_parser.clients.azure_openai import azure_client
+
+        # Create a prompt for semantic similarity comparison
+        prompt = f"""
+        Compare these two terms and determine if they are semantically similar or related in a professional/job context:
+
+        Term 1: "{query_term}"
+        Term 2: "{candidate_term}"
+
+        Consider these as similar if they:
+        - Refer to the same or related job roles/positions
+        - Are in the same professional category or field
+        - Have overlapping responsibilities or skills
+        - Are different names for similar roles (e.g., "Software Engineer" vs "Software Developer")
+
+        Answer only "YES" if they are similar/related, or "NO" if they are not.
+        """
+
+        client = azure_client.get_async_client()
+        response = await client.chat.completions.create(
+            model=azure_client.get_chat_deployment(),
+            messages=[
+                {"role": "system", "content": "You are a professional career matching expert. Answer only YES or NO."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=5,
+            temperature=0.1
+        )
+
+        ai_response = response.choices[0].message.content
+        if ai_response:
+            return ai_response.strip().upper() == "YES"
+        return False
+
+    except Exception as e:
+        # Fallback to basic string matching
+        return query_term.lower().strip() == candidate_term.lower().strip()
+
+
 def _find_company_match(
     payload: Dict[str, Any],
     query_companies: List[str]
@@ -3041,24 +3093,18 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
         logger.info(f"📋 Final requirements extracted: {final_requirements}")
 
         # Step 2: Generate embedding for the query
-        async def _generate_embedding(text: str) -> Optional[List[float]]:
-            """Generate embedding for the given text."""
-            try:
-                from src.resume_parser.clients.azure_openai import azure_client
-                client = azure_client.get_sync_client()
+        try:
+            from src.resume_parser.clients.azure_openai import azure_client
+            client = azure_client.get_sync_client()
 
-                response = client.embeddings.create(
-                    input=text,
-                    model=azure_client.get_embedding_deployment()
-                )
+            response = client.embeddings.create(
+                input=query,
+                model=azure_client.get_embedding_deployment()
+            )
 
-                return response.data[0].embedding
-            except Exception as e:
-                logger.error(f"Error generating embedding: {e}")
-                return None
-
-        query_vector = await _generate_embedding(query)
-        if not query_vector:
+            query_vector = response.data[0].embedding
+        except Exception as e:
+            logger.error(f"Error generating embedding: {e}")
             raise HTTPException(
                 status_code=500,
                 detail="Failed to generate query embedding"
@@ -3212,7 +3258,7 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
                     if not title_match:
                         should_include = False
 
-                # Role category filtering (flexible matching)
+                # Role category filtering (flexible matching with LLM semantic similarity)
                 role_category_requirements = qdrant_filters.get('role_category')
                 if role_category_requirements and should_include:
                     candidate_role_category = payload.get('role_category', '').lower()
@@ -3220,15 +3266,108 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
 
                     if isinstance(role_category_requirements, list):
                         for req_category in role_category_requirements:
+                            # First try exact matching
                             if req_category.lower() in candidate_role_category or candidate_role_category in req_category.lower():
                                 category_match = True
                                 break
+                            # Then try LLM semantic matching for better accuracy
+                            try:
+                                if await _llm_semantic_similarity(req_category, candidate_role_category):
+                                    category_match = True
+                                    break
+                            except:
+                                # Fallback to basic matching if LLM fails
+                                pass
                     else:
                         req_category = str(role_category_requirements).lower()
+                        # First try exact matching
                         if req_category in candidate_role_category or candidate_role_category in req_category:
                             category_match = True
+                        # Then try LLM semantic matching
+                        else:
+                            try:
+                                if await _llm_semantic_similarity(req_category, candidate_role_category):
+                                    category_match = True
+                            except:
+                                # Fallback if LLM fails
+                                pass
 
                     if not category_match:
+                        should_include = False
+
+                # Skills filtering (flexible matching)
+                skills_requirements = qdrant_filters.get('skills')
+                if skills_requirements and should_include:
+                    candidate_skills = [s.lower() for s in payload.get('skills', [])]
+                    skills_match = False
+
+                    if isinstance(skills_requirements, list):
+                        required_skills = [skill.lower() for skill in skills_requirements]
+                        # Check if candidate has at least 50% of required skills
+                        matched_skills = sum(1 for req_skill in required_skills
+                                           if any(req_skill in cand_skill for cand_skill in candidate_skills))
+                        skills_match = matched_skills >= len(required_skills) * 0.5
+                    else:
+                        req_skill = str(skills_requirements).lower()
+                        skills_match = any(req_skill in cand_skill for cand_skill in candidate_skills)
+
+                    if not skills_match:
+                        should_include = False
+
+                # Company filtering (flexible matching)
+                company_requirements = qdrant_filters.get('company')
+                if company_requirements and should_include:
+                    candidate_companies = [c.lower() for c in _extract_candidate_companies(payload)]
+                    company_match = False
+
+                    if isinstance(company_requirements, list):
+                        for req_company in company_requirements:
+                            if any(req_company.lower() in cand_company or cand_company in req_company.lower()
+                                  for cand_company in candidate_companies):
+                                company_match = True
+                                break
+                    else:
+                        req_company = str(company_requirements).lower()
+                        company_match = any(req_company in cand_company or cand_company in req_company
+                                          for cand_company in candidate_companies)
+
+                    if not company_match:
+                        should_include = False
+
+                # Education filtering (flexible matching)
+                education_requirements = qdrant_filters.get('education_level') or qdrant_filters.get('field_of_study') or qdrant_filters.get('institution')
+                if education_requirements and should_include:
+                    education_info = _extract_education_info(payload)
+                    education_match = False
+
+                    # Check education level
+                    education_level_req = qdrant_filters.get('education_level')
+                    if education_level_req:
+                        candidate_edu_level = education_info['education_level'].lower()
+                        if isinstance(education_level_req, list):
+                            education_match = any(req.lower() in candidate_edu_level for req in education_level_req)
+                        else:
+                            education_match = str(education_level_req).lower() in candidate_edu_level
+
+                    # Check field of study
+                    field_of_study_req = qdrant_filters.get('field_of_study')
+                    if field_of_study_req and not education_match:
+                        candidate_field = education_info['education_field'].lower()
+                        if isinstance(field_of_study_req, list):
+                            education_match = any(req.lower() in candidate_field for req in field_of_study_req)
+                        else:
+                            education_match = str(field_of_study_req).lower() in candidate_field
+
+                    # Check institution
+                    institution_req = qdrant_filters.get('institution')
+                    if institution_req and not education_match:
+                        candidate_institution = education_info['university'].lower()
+                        if isinstance(institution_req, list):
+                            education_match = any(req.lower() in candidate_institution for req in institution_req)
+                        else:
+                            education_match = str(institution_req).lower() in candidate_institution
+
+                    if not education_match:
                         should_include = False
 
                 if should_include:
@@ -3237,12 +3376,120 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
             logger.info(f"🎯 Post-retrieval filtering: {len(results)} → {len(filtered_results)} candidates")
             results = filtered_results
 
+        # Helper function to generate selection reasons
+        def generate_selection_reason(payload: Dict[str, Any], match_details: Dict[str, bool], qdrant_filters: Dict[str, Any]) -> str:
+            """Generate a detailed explanation of why this candidate was selected."""
+            reasons = []
+
+            # Location match
+            if match_details.get('location_match'):
+                candidate_location = payload.get('location', 'Unknown')
+                req_locations = qdrant_filters.get('location', [])
+                if isinstance(req_locations, list):
+                    location_text = ', '.join(req_locations)
+                else:
+                    location_text = str(req_locations)
+                reasons.append(f"🗺️ Location match: Located in '{candidate_location}' (matches requirement: {location_text})")
+
+            # Experience match
+            if match_details.get('experience_match'):
+                candidate_exp = payload.get('total_experience', 'Unknown')
+                min_exp = qdrant_filters.get('min_experience')
+                max_exp = qdrant_filters.get('max_experience')
+                if min_exp is not None:
+                    reasons.append(f"📅 Experience match: {candidate_exp} experience (meets minimum {min_exp} years requirement)")
+                elif max_exp is not None:
+                    reasons.append(f"📅 Experience match: {candidate_exp} experience (within maximum {max_exp} years limit)")
+
+            # Role/Position match
+            if match_details.get('role_match'):
+                candidate_role = payload.get('current_position', 'Unknown')
+                job_titles = qdrant_filters.get('job_title', [])
+                role_categories = qdrant_filters.get('role_category', [])
+                if job_titles:
+                    job_title_text = ', '.join(job_titles) if isinstance(job_titles, list) else str(job_titles)
+                    reasons.append(f"💼 Role match: Current position '{candidate_role}' aligns with requirement: {job_title_text}")
+                if role_categories:
+                    category_text = ', '.join(role_categories) if isinstance(role_categories, list) else str(role_categories)
+                    role_category = payload.get('role_category', 'Unknown')
+                    reasons.append(f"🎯 Category match: Role category '{role_category}' matches: {category_text}")
+
+            # Skills match
+            if match_details.get('skills_match'):
+                candidate_skills = payload.get('skills', [])
+                required_skills = qdrant_filters.get('skills', [])
+                if isinstance(required_skills, list):
+                    matched_skills = []
+                    for req_skill in required_skills:
+                        for cand_skill in candidate_skills:
+                            if req_skill.lower() in cand_skill.lower():
+                                matched_skills.append(cand_skill)
+                                break
+                    if matched_skills:
+                        skills_text = ', '.join(matched_skills[:3])  # Show first 3 matched skills
+                        if len(matched_skills) > 3:
+                            skills_text += f" and {len(matched_skills) - 3} more"
+                        reasons.append(f"🛠️ Skills match: Has required skills including {skills_text}")
+                else:
+                    for cand_skill in candidate_skills:
+                        if str(required_skills).lower() in cand_skill.lower():
+                            reasons.append(f"🛠️ Skills match: Has required skill '{cand_skill}'")
+                            break
+
+            # Company match
+            if match_details.get('company_match'):
+                candidate_companies = _extract_candidate_companies(payload)
+                required_companies = qdrant_filters.get('company', [])
+                if candidate_companies:
+                    company_text = ', '.join(candidate_companies[:2])  # Show first 2 companies
+                    if len(candidate_companies) > 2:
+                        company_text += f" and {len(candidate_companies) - 2} more"
+                    reasons.append(f"🏢 Company match: Experience at {company_text}")
+
+            # Education match
+            if match_details.get('education_match'):
+                education_info = _extract_education_info(payload)
+                edu_level = qdrant_filters.get('education_level')
+                field_of_study = qdrant_filters.get('field_of_study')
+                institution = qdrant_filters.get('institution')
+
+                if edu_level and education_info['education_level'] != 'N/A':
+                    reasons.append(f"🎓 Education level match: {education_info['education_level']} (meets requirement)")
+                if field_of_study and education_info['education_field'] != 'N/A':
+                    reasons.append(f"📚 Field of study match: {education_info['education_field']}")
+                if institution and education_info['university'] != 'N/A':
+                    reasons.append(f"🏛️ Institution match: {education_info['university']}")
+
+            # If no specific matches but candidate was selected (semantic relevance)
+            if not any(match_details.values()) and len(reasons) == 0:
+                candidate_role = payload.get('current_position', 'Unknown')
+                candidate_skills = payload.get('skills', [])
+                if candidate_skills:
+                    skills_sample = ', '.join(candidate_skills[:3])
+                    if len(candidate_skills) > 3:
+                        skills_sample += f" and {len(candidate_skills) - 3} more"
+                    reasons.append(f"🔍 Semantic relevance: Profile matches query context - {candidate_role} with skills in {skills_sample}")
+                else:
+                    reasons.append(f"🔍 Semantic relevance: Profile '{candidate_role}' matches query context")
+
+            return " | ".join(reasons) if reasons else "Selected based on overall profile relevance"
+
         # Step 5: Enhanced ranking based on final requirements
         def calculate_intent_score(result: Dict[str, Any]) -> float:
             """Calculate enhanced score based on final requirements matching."""
             base_score = result.get('score', 0.0)
             payload = result.get('payload', {})
             bonus_score = 0.0
+
+            # Track what criteria were matched for transparency
+            match_details = {
+                'education_match': False,
+                'role_match': False,
+                'skills_match': False,
+                'company_match': False,
+                'experience_match': False,
+                'location_match': False
+            }
 
             # Education matching bonus
             edu_reqs = intent_data.get("extracted_components", {}).get("education_requirements", {})
@@ -3256,6 +3503,7 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
                     for degree in edu_reqs["degree_levels"]:
                         if degree.lower() in candidate_edu:
                             bonus_score += 0.3
+                            match_details['education_match'] = True
                             break
 
                 # Field of study match
@@ -3263,6 +3511,7 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
                     for field in edu_reqs["fields_of_study"]:
                         if field.lower() in candidate_field:
                             bonus_score += 0.25
+                            match_details['education_match'] = True
                             break
 
                 # Institution match
@@ -3270,6 +3519,7 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
                     for inst in edu_reqs["institutions"]:
                         if inst.lower() in candidate_uni:
                             bonus_score += 0.4  # High bonus for specific institution match
+                            match_details['education_match'] = True
                             break
 
             # Role matching bonus
@@ -3283,6 +3533,7 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
                     for title in role_reqs["job_titles"]:
                         if title.lower() in candidate_role:
                             bonus_score += 0.35
+                            match_details['role_match'] = True
                             break
 
                 # Seniority match
@@ -3290,6 +3541,7 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
                     for level in role_reqs["role_levels"]:
                         if level.lower() in candidate_seniority:
                             bonus_score += 0.25
+                            match_details['role_match'] = True
                             break
 
             # Skills matching bonus
@@ -3311,6 +3563,8 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
                 if all_required_skills:
                     skill_match_ratio = matched_skills / len(all_required_skills)
                     bonus_score += skill_match_ratio * 0.4  # Up to 0.4 bonus for all skills matched
+                    if skill_match_ratio > 0:
+                        match_details['skills_match'] = True
 
             # Company matching bonus
             comp_reqs = intent_data.get("extracted_components", {}).get("company_requirements", {})
@@ -3322,6 +3576,7 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
                     for company in comp_reqs["specific_companies"]:
                         if any(company.lower() in cand_comp for cand_comp in candidate_companies):
                             bonus_score += 0.35
+                            match_details['company_match'] = True
                             break
 
                 # Company group match (like FAANG)
@@ -3333,11 +3588,13 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
                         if "faang" in group.lower():
                             if any(faang in cand_comp for faang in faang_companies for cand_comp in candidate_companies):
                                 bonus_score += 0.4
+                                match_details['company_match'] = True
                                 break
                         elif "big tech" in group.lower():
                             all_big_tech = faang_companies + big_tech
                             if any(tech in cand_comp for tech in all_big_tech for cand_comp in candidate_companies):
                                 bonus_score += 0.3
+                                match_details['company_match'] = True
                                 break
 
             # Experience matching bonus
@@ -3354,8 +3611,32 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
 
                     if candidate_years >= min_years:
                         bonus_score += 0.2
+                        match_details['experience_match'] = True
                     elif candidate_years >= min_years * 0.8:  # Close match
                         bonus_score += 0.1
+                        match_details['experience_match'] = True
+
+            # Location matching bonus
+            location_reqs = qdrant_filters.get('location')
+            if location_reqs:
+                candidate_location = payload.get('location', '').lower()
+                location_match = False
+
+                if isinstance(location_reqs, list):
+                    for req_location in location_reqs:
+                        if req_location.lower() in candidate_location or candidate_location in req_location.lower():
+                            location_match = True
+                            break
+                else:
+                    req_location = str(location_reqs).lower()
+                    location_match = req_location in candidate_location or candidate_location in req_location
+
+                if location_match:
+                    bonus_score += 0.25  # Significant bonus for location match
+                    match_details['location_match'] = True
+
+            # Store match details for debugging
+            result['match_details'] = match_details
 
             return base_score + bonus_score
 
@@ -3374,6 +3655,11 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
         for result in results:
             payload = result.get('payload', {})
             education_info = _extract_education_info(payload)
+            match_details = result.get('match_details', {})
+
+            # Generate selection reason
+            selection_reason = generate_selection_reason(payload, match_details, qdrant_filters)
+
             formatted_result = {
                 'id': result.get('id'),
                 'score': result.get('score', 0),
@@ -3395,8 +3681,14 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
                 'match_analysis': {
                     'semantic_relevance': result.get('score', 0),
                     'requirements_match': result.get('intent_score', 0) - result.get('score', 0),
-                    'total_score': result.get('intent_score', 0)
-                }
+                    'total_score': result.get('intent_score', 0),
+                    'match_details': match_details,
+                    'matching_criteria': [
+                        criterion for criterion, matched in match_details.items()
+                        if matched
+                    ]
+                },
+                'selection_reason': selection_reason
             }
             formatted_results.append(formatted_result)
 
@@ -3413,7 +3705,12 @@ async def search_resumes_intent_based(query: str = Form(...), limit: int = Form(
             "processing_summary": {
                 "query_analyzed": True,
                 "filters_used": len(filter_conditions) > 0,
-                "semantic_fallback": len(filter_conditions) > 0 and len(results) == limit * 2
+                "post_retrieval_filtering_applied": has_post_retrieval_filters,
+                "semantic_fallback": len(filter_conditions) == 0,
+                "candidates_before_filtering": len(results) if 'results' in locals() else 0,
+                "candidates_after_filtering": len(formatted_results),
+                "filter_types_applied": list(qdrant_filters.keys()),
+                "search_approach": "hybrid" if has_post_retrieval_filters else "qdrant_only" if filter_conditions else "semantic_only"
             }
         }
 
