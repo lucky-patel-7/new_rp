@@ -185,6 +185,40 @@ class QdrantVectorClient:
                 }
                 results.append(result)
 
+            # Log detailed Qdrant search results
+            logger.info(f"🎯 Qdrant returned {len(results)} results from similarity search")
+            if results:
+                logger.info(f"📊 Detailed Qdrant results with similarity scores:")
+                for i, result in enumerate(results):
+                    payload = result.get('payload', {})
+                    score = result.get('score', 0)
+                    name = payload.get('name', 'NO_NAME')
+                    location = payload.get('location', 'NO_LOCATION')
+                    role_category = payload.get('role_category', 'NO_ROLE')
+                    current_position = payload.get('current_position', 'NO_POSITION')
+
+                    logger.info(f"📊 Result #{i+1}: {name} | Score: {score:.4f} | Location: '{location}' | Role: '{role_category}' | Position: '{current_position}'")
+
+                    # Show work history companies for comprehensive matching debugging
+                    work_history = payload.get('work_history', [])
+                    companies = []
+                    for job in work_history:
+                        if isinstance(job, dict) and job.get('company'):
+                            companies.append(job.get('company'))
+                    if companies:
+                        logger.info(f"📊   └─ Work History Companies: {companies[:3]}")  # Show first 3 companies
+
+                    # Show available skills for debugging
+                    skills = payload.get('skills', [])
+                    if skills:
+                        logger.info(f"📊   └─ Skills: {skills[:5]}")  # Show first 5 skills
+
+                    # Show summary excerpt for keyword matching
+                    summary = payload.get('summary', '')
+                    if summary:
+                        summary_excerpt = summary[:100] + "..." if len(summary) > 100 else summary
+                        logger.info(f"📊   └─ Summary: {summary_excerpt}")
+
             # Log some sample location data for debugging
             if results:
                 logger.info(f"📍 Sample location data from results:")

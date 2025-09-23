@@ -104,3 +104,13 @@ seniority
 2025-09-22 16:33:21 - src.resume_parser.core.parser - ERROR - Error in experience calculation: 'description'
 2025-09-22 16:33:54 - src.resume_parser.core.parser - ERROR - Error in experience calculation: 'description'
 2025-09-22 17:08:04 - app - ERROR - Error in resume search: Connection error.
+2025-09-22 21:09:12 - src.resume_parser.core.parser - ERROR - Error in experience calculation: 'description'
+2025-09-22 21:09:14 - app - ERROR - ❌ Error processing file 2 (AvinashShinde[14y_0m].docx): Failed to parse resume: Resume content is too short or empty
+2025-09-22 21:09:29 - src.resume_parser.core.parser - ERROR - Error in experience calculation: 'description'
+2025-09-22 21:09:43 - src.resume_parser.core.parser - ERROR - Error in experience calculation: 'description'
+2025-09-22 21:09:56 - src.resume_parser.core.parser - ERROR - Error in experience calculation: 'description'
+2025-09-22 21:45:35 - app - ERROR - Error in resume search: 'ConfigBasedRoleDatabase' object has no attribute 'get_role_database_category'
+2025-09-22 21:46:22 - app - ERROR - Error in resume search: 'ConfigBasedRoleDatabase' object has no attribute 'get_role_database_category'
+2025-09-22 21:46:52 - app - ERROR - Error in resume search: 'ConfigBasedRoleDatabase' object has no attribute 'get_role_database_category'
+2025-09-22 21:48:14 - app - ERROR - Error in resume search: 'ConfigBasedRoleDatabase' object has no attribute 'get_role_database_category'
+2025-09-22 21:48:46 - app - ERROR - Error in resume search: cannot access local variable 'projects' where it is not associated with a value

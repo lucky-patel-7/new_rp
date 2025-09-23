@@ -1,0 +1,1060 @@
+{
+  "sectors": [
+    {
+      "sector_name": "Information Technology",
+      "roles": [
+        {
+          "role_name": "Software Engineer",
+          "sub_roles": [
+            "Frontend Developer",
+            "Backend Developer",
+            "Full Stack Developer",
+            "Mobile App Developer"
+          ]
+        },
+        {
+          "role_name": "DevOps Engineer",
+          "sub_roles": [
+            "Cloud Engineer",
+            "Systems Engineer",
+            "Automation Engineer"
+          ]
+        },
+        {
+          "role_name": "Data Engineer",
+          "sub_roles": [
+            "ETL Developer",
+            "Data Architect",
+            "Database Administrator"
+          ]
+        },
+        {
+          "role_name": "Quality Assurance",
+          "sub_roles": [
+            "Manual Tester",
+            "Automation Tester",
+            "Test Engineer"
+          ]
+        },
+        {
+          "role_name": "Data Scientist",
+          "sub_roles": [
+            "Machine Learning Engineer",
+            "NLP Scientist",
+            "Data Analyst"
+          ]
+        },
+        {
+          "role_name": "Business Intelligence",
+          "sub_roles": [
+            "BI Developer",
+            "BI Analyst",
+            "BI Consultant"
+          ]
+        },
+        {
+          "role_name": "Data Architect",
+          "sub_roles": [
+            "Big Data Engineer",
+            "Cloud Data Architect",
+            "Data Platform Engineer"
+          ]
+        }
+      ]
+    },
+    {
+      "sector_name": "Artificial Intelligence",
+      "roles": [
+        {
+          "role_name": "Machine Learning Engineer",
+          "sub_roles": [
+            "Deep Learning Engineer",
+            "Recommendation Systems Engineer",
+            "ML Ops Engineer"
+          ]
+        },
+        {
+          "role_name": "Data Scientist",
+          "sub_roles": [
+            "Predictive Modeler",
+            "Operations Research Analyst",
+            "Analytics Consultant"
+          ]
+        },
+        {
+          "role_name": "AI Research Scientist",
+          "sub_roles": [
+            "Deep Learning Researcher",
+            "Applied AI Researcher"
+          ]
+        },
+        {
+          "role_name": "AI FinTech Developer",
+          "sub_roles": [
+            "Fraud Detection Engineer",
+            "Credit Scoring Developer"
+          ]
+        },
+        {
+          "role_name": "AI Product Manager",
+          "sub_roles": [
+            "AI Product Owner",
+            "AI Program Manager"
+          ]
+        },
+        {
+          "role_name": "Robotics Engineer",
+          "sub_roles": [
+            "Robotics Programmer",
+            "Automation Engineer"
+          ]
+        },
+        {
+          "role_name": "Computer Vision Engineer",
+          "sub_roles": [
+            "Image Processing Specialist",
+            "Autonomous Vehicle Engineer"
+          ]
+        },
+        {
+          "role_name": "NLP Engineer",
+          "sub_roles": [
+            "Chatbot Developer",
+            "Speech Recognition Engineer",
+            "Machine Translation Engineer"
+          ]
+        },
+        {
+          "role_name": "AI Ethics Specialist",
+          "sub_roles": [
+            "Algorithm Fairness Specialist",
+            "AI Governance Consultant"
+          ]
+        },
+        {
+          "role_name": "AI Hardware Engineer",
+          "sub_roles": [
+            "GPU Architect",
+            "Chip Design Engineer"
+          ]
+        },
+        {
+          "role_name": "AI Software Engineer",
+          "sub_roles": [
+            "AI Application Developer",
+            "Recommendation System Developer"
+          ]
+        },
+        {
+          "role_name": "UX Designer (AI)",
+          "sub_roles": [
+            "AI-driven UX Designer",
+            "Personalized UI Designer"
+          ]
+        },
+        {
+          "role_name": "UX Developer (AI)",
+          "sub_roles": [
+            "Front-end AI Developer"
+          ]
+        },
+        {
+          "role_name": "Algorithm Developer",
+          "sub_roles": [
+            "Optimization Algorithm Developer"
+          ]
+        }
+      ]
+    },
+    {
+      "sector_name": "Healthcare",
+      "roles": [
+        {
+          "role_name": "Physician",
+          "sub_roles": [
+            "General Practitioner",
+            "Surgeon",
+            "Pediatrician"
+          ]
+        },
+        {
+          "role_name": "Nurse",
+          "sub_roles": [
+            "Registered Nurse",
+            "Nurse Practitioner",
+            "Clinical Nurse Specialist"
+          ]
+        },
+        {
+          "role_name": "Technician",
+          "sub_roles": [
+            "Radiologic Technologist",
+            "Laboratory Technician",
+            "Surgical Technician"
+          ]
+        },
+        {
+          "role_name": "Therapist",
+          "sub_roles": [
+            "Physical Therapist",
+            "Occupational Therapist",
+            "Respiratory Therapist"
+          ]
+        },
+        {
+          "role_name": "Assistant",
+          "sub_roles": [
+            "Medical Assistant",
+            "Dental Assistant",
+            "Physician Assistant"
+          ]
+        },
+        {
+          "role_name": "Pharmacist",
+          "sub_roles": [
+            "Clinical Pharmacist",
+            "Retail Pharmacist"
+          ]
+        },
+        {
+          "role_name": "Home Health Aide",
+          "sub_roles": [
+            "Personal Care Assistant",
+            "Home Nursing Aide"
+          ]
+        },
+        {
+          "role_name": "Medical Sonographer",
+          "sub_roles": [
+            "Diagnostic Medical Sonographer"
+          ]
+        },
+        {
+          "role_name": "Dental Hygienist",
+          "sub_roles": [
+            "Dental Hygienist"
+          ]
+        },
+        {
+          "role_name": "Medical Lab Technician",
+          "sub_roles": [
+            "Clinical Lab Technician",
+            "Blood Bank Technologist"
+          ]
+        }
+      ]
+    },
+    {
+      "sector_name": "Finance & Insurance",
+      "roles": [
+        {
+          "role_name": "Financial Analyst",
+          "sub_roles": [
+            "Investment Analyst",
+            "Risk Analyst",
+            "Budget Analyst"
+          ]
+        },
+        {
+          "role_name": "Accountant",
+          "sub_roles": [
+            "Certified Public Accountant",
+            "Staff Accountant",
+            "Cost Accountant"
+          ]
+        },
+        {
+          "role_name": "Insurance Professional",
+          "sub_roles": [
+            "Actuary",
+            "Claims Adjuster",
+            "Claims Clerk",
+            "Customer Service Representative",
+            "Loss Control Specialist",
+            "Insurance Sales Agent",
+            "Insurance Underwriter"
+          ]
+        },
+        {
+          "role_name": "Controller",
+          "sub_roles": [
+            "Chief Financial Officer",
+            "Treasurer",
+            "Finance Vice President"
+          ]
+        },
+        {
+          "role_name": "Auditor",
+          "sub_roles": [
+            "Internal Auditor",
+            "Audit Manager",
+            "Audit Senior"
+          ]
+        },
+        {
+          "role_name": "Accounting Clerk",
+          "sub_roles": [
+            "Bookkeeper",
+            "Finance Clerk",
+            "Accounts Payable Clerk"
+          ]
+        },
+        {
+          "role_name": "Financial Planner",
+          "sub_roles": [
+            "Wealth Manager",
+            "Investment Planner"
+          ]
+        }
+      ]
+    },
+    {
+      "sector_name": "Manufacturing",
+      "roles": [
+        {
+          "role_name": "Assembler/Fabricator",
+          "sub_roles": [
+            "Electronic Assembler",
+            "Welder",
+            "Fabricator",
+            "Print Binding Worker"
+          ]
+        },
+        {
+          "role_name": "Machinist/Operator",
+          "sub_roles": [
+            "CNC Machinist",
+            "Lathe Operator",
+            "Milling Machine Operator",
+            "Industrial Engineering Technician"
+          ]
+        },
+        {
+          "role_name": "Production Manager",
+          "sub_roles": [
+            "Assembly Supervisor",
+            "Plant Manager",
+            "Manufacturing Engineer",
+            "Operations Manager"
+          ]
+        },
+        {
+          "role_name": "Quality Control",
+          "sub_roles": [
+            "Quality Assurance Engineer",
+            "Quality Control Supervisor",
+            "Inspector"
+          ]
+        },
+        {
+          "role_name": "Welder/Brazer",
+          "sub_roles": [
+            "Welder",
+            "Soldering Machine Operator",
+            "Pipefitter"
+          ]
+        },
+        {
+          "role_name": "Supply Chain Specialist",
+          "sub_roles": [
+            "Supply Chain Analyst",
+            "Logistics Manager"
+          ]
+        }
+      ]
+    },
+    {
+      "sector_name": "Retail & E-commerce",
+      "roles": [
+        {
+          "role_name": "Retail Sales",
+          "sub_roles": [
+            "Sales Associate",
+            "Cashier",
+            "Customer Service Representative"
+          ]
+        },
+        {
+          "role_name": "Store Manager",
+          "sub_roles": [
+            "Assistant Manager",
+            "Department Manager"
+          ]
+        },
+        {
+          "role_name": "Buyer",
+          "sub_roles": [
+            "Merchandise Planner",
+            "Procurement Manager"
+          ]
+        },
+        {
+          "role_name": "E-commerce Specialist",
+          "sub_roles": [
+            "Web Developer",
+            "Programmer",
+            "Supply Chain Manager",
+            "Fulfillment Staff",
+            "Graphic Designer",
+            "Customer Service Representative"
+          ]
+        },
+        {
+          "role_name": "Merchandiser",
+          "sub_roles": [
+            "Visual Merchandiser",
+            "Planogram Specialist"
+          ]
+        }
+      ]
+    },
+    {
+      "sector_name": "Construction",
+      "roles": [
+        {
+          "role_name": "Construction Project Manager",
+          "sub_roles": [
+            "Site Manager",
+            "Project Engineer"
+          ]
+        },
+        {
+          "role_name": "General Contractor",
+          "sub_roles": [
+            "Construction Contractor"
+          ]
+        },
+        {
+          "role_name": "Construction Foreman",
+          "sub_roles": [
+            "Crew Supervisor",
+            "Foreman"
+          ]
+        },
+        {
+          "role_name": "Estimator",
+          "sub_roles": [
+            "Cost Estimator"
+          ]
+        },
+        {
+          "role_name": "Superintendent",
+          "sub_roles": [
+            "Construction Superintendent"
+          ]
+        },
+        {
+          "role_name": "Structural Engineer",
+          "sub_roles": [
+            "Civil Structural Engineer"
+          ]
+        },
+        {
+          "role_name": "Construction Inspector",
+          "sub_roles": [
+            "Building Inspector",
+            "Site Inspector"
+          ]
+        },
+        {
+          "role_name": "Architect",
+          "sub_roles": [
+            "Building Designer"
+          ]
+        },
+        {
+          "role_name": "Trades",
+          "sub_roles": [
+            "Electrician",
+            "Plumber",
+            "Bricklayer",
+            "Roofer"
+          ]
+        },
+        {
+          "role_name": "Laborer",
+          "sub_roles": [
+            "General Laborer"
+          ]
+        }
+      ]
+    },
+    {
+      "sector_name": "Education",
+      "roles": [
+        {
+          "role_name": "Teacher",
+          "sub_roles": [
+            "Elementary Teacher",
+            "High School Teacher",
+            "Special Education Teacher"
+          ]
+        },
+        {
+          "role_name": "Administrator",
+          "sub_roles": [
+            "Principal",
+            "Superintendent"
+          ]
+        },
+        {
+          "role_name": "Counselor",
+          "sub_roles": [
+            "School Counselor",
+            "Career Counselor"
+          ]
+        },
+        {
+          "role_name": "Librarian",
+          "sub_roles": [
+            "School Librarian",
+            "Media Specialist"
+          ]
+        },
+        {
+          "role_name": "Educational Technologist",
+          "sub_roles": [
+            "Instructional Technologist",
+            "IT Support"
+          ]
+        }
+      ]
+    },
+    {
+      "sector_name": "Agriculture & Natural Resources",
+      "roles": [
+        {
+          "role_name": "Farmer",
+          "sub_roles": [
+            "Crop Farmer",
+            "Livestock Farmer"
+          ]
+        },
+        {
+          "role_name": "Rancher",
+          "sub_roles": [
+            "Cattle Rancher",
+            "Sheep Farmer"
+          ]
+        },
+        {
+          "role_name": "Fisherman",
+          "sub_roles": [
+            "Commercial Fisherman",
+            "Aquaculture Worker"
+          ]
+        },
+        {
+          "role_name": "Logger",
+          "sub_roles": [
+            "Forestry Worker",
+            "Timber Cruiser"
+          ]
+        },
+        {
+          "role_name": "Equipment Operator",
+          "sub_roles": [
+            "Tractor Operator",
+            "Harvester Operator"
+          ]
+        },
+        {
+          "role_name": "Agricultural Scientist",
+          "sub_roles": [
+            "Agronomist",
+            "Soil Scientist"
+          ]
+        }
+      ]
+    },
+    {
+      "sector_name": "Transportation & Logistics",
+      "roles": [
+        {
+          "role_name": "Driver",
+          "sub_roles": [
+            "Truck Driver",
+            "Bus Driver",
+            "Delivery Driver",
+            "Taxi Driver"
+          ]
+        },
+        {
+          "role_name": "Pilot",
+          "sub_roles": [
+            "Commercial Pilot",
+            "Cargo Pilot"
+          ]
+        },
+        {
+          "role_name": "Conductor",
+          "sub_roles": [
+            "Train Conductor"
+          ]
+        },
+        {
+          "role_name": "Logistics Manager",
+          "sub_roles": [
+            "Supply Chain Analyst",
+            "Inventory Manager",
+            "Freight Agent"
+          ]
+        },
+        {
+          "role_name": "Warehouse Staff",
+          "sub_roles": [
+            "Warehouse Associate",
+            "Stock Clerk",
+            "Forklift Operator"
+          ]
+        },
+        {
+          "role_name": "Ship Captain",
+          "sub_roles": [
+            "Merchant Marine Captain",
+            "Ferry Captain"
+          ]
+        }
+      ]
+    },
+    {
+      "sector_name": "Media & Entertainment",
+      "roles": [
+        {
+          "role_name": "Actor",
+          "sub_roles": [
+            "Film Actor",
+            "Stage Actor"
+          ]
+        },
+        {
+          "role_name": "Producer",
+          "sub_roles": [
+            "Film Producer",
+            "TV Producer",
+            "Music Producer"
+          ]
+        },
+        {
+          "role_name": "Director",
+          "sub_roles": [
+            "Film Director",
+            "Television Director"
+          ]
+        },
+        {
+          "role_name": "Editor",
+          "sub_roles": [
+            "Video Editor",
+            "Content Editor",
+            "Journalist"
+          ]
+        },
+        {
+          "role_name": "Journalist",
+          "sub_roles": [
+            "Reporter",
+            "Correspondent"
+          ]
+        },
+        {
+          "role_name": "Camera Operator",
+          "sub_roles": [
+            "Videographer",
+            "Cinematographer"
+          ]
+        },
+        {
+          "role_name": "Sound Engineer",
+          "sub_roles": [
+            "Audio Technician",
+            "Sound Designer"
+          ]
+        },
+        {
+          "role_name": "Animator",
+          "sub_roles": [
+            "2D Animator",
+            "3D Animator"
+          ]
+        }
+      ]
+    },
+    {
+      "sector_name": "Legal",
+      "roles": [
+        {
+          "role_name": "Attorney",
+          "sub_roles": [
+            "Litigation Attorney",
+            "Corporate Lawyer",
+            "Public Defender"
+          ]
+        },
+        {
+          "role_name": "Paralegal",
+          "sub_roles": [
+            "Legal Assistant",
+            "Legal Secretary"
+          ]
+        },
+        {
+          "role_name": "Clerk",
+          "sub_roles": [
+            "Court Clerk",
+            "Law Clerk"
+          ]
+        },
+        {
+          "role_name": "Mediator/Arbitrator",
+          "sub_roles": [
+            "Mediator",
+            "Arbitrator"
+          ]
+        },
+        {
+          "role_name": "Judge",
+          "sub_roles": [
+            "District Judge",
+            "Magistrate"
+          ]
+        }
+      ]
+    },
+    {
+      "sector_name": "Government & Public Administration",
+      "roles": [
+        {
+          "role_name": "Politician",
+          "sub_roles": [
+            "Legislator",
+            "Mayor",
+            "Council Member"
+          ]
+        },
+        {
+          "role_name": "Policy Advisor",
+          "sub_roles": [
+            "Policy Analyst",
+            "Legislative Assistant"
+          ]
+        },
+        {
+          "role_name": "Public Administrator",
+          "sub_roles": [
+            "City Manager",
+            "County Administrator"
+          ]
+        },
+        {
+          "role_name": "Law Enforcement",
+          "sub_roles": [
+            "Police Officer",
+            "Sheriff",
+            "Detective"
+          ]
+        },
+        {
+          "role_name": "Social Worker",
+          "sub_roles": [
+            "Public Welfare Officer",
+            "Community Outreach Worker"
+          ]
+        },
+        {
+          "role_name": "Regulatory Inspector",
+          "sub_roles": [
+            "Health Inspector",
+            "Building Inspector"
+          ]
+        }
+      ]
+    },
+    {
+      "sector_name": "Real Estate & Property Management",
+      "roles": [
+        {
+          "role_name": "Real Estate Broker",
+          "sub_roles": [
+            "Residential Agent",
+            "Commercial Broker"
+          ]
+        },
+        {
+          "role_name": "Property Manager",
+          "sub_roles": [
+            "Leasing Agent",
+            "Facilities Manager"
+          ]
+        },
+        {
+          "role_name": "Developer",
+          "sub_roles": [
+            "Real Estate Developer",
+            "Land Developer"
+          ]
+        },
+        {
+          "role_name": "Architect",
+          "sub_roles": [
+            "Urban Planner",
+            "Landscape Architect"
+          ]
+        },
+        {
+          "role_name": "Maintenance",
+          "sub_roles": [
+            "Building Superintendent",
+            "Maintenance Technician"
+          ]
+        }
+      ]
+    },
+    {
+      "sector_name": "Utilities",
+      "roles": [
+        {
+          "role_name": "Power Plant Operator",
+          "sub_roles": [
+            "Control Room Operator",
+            "Boiler Operator"
+          ]
+        },
+        {
+          "role_name": "Lineman",
+          "sub_roles": [
+            "Electric Lineworker",
+            "Telecommunications Lineworker"
+          ]
+        },
+        {
+          "role_name": "Meter Reader",
+          "sub_roles": [
+            "Utility Meter Reader",
+            "Smart Meter Technician"
+          ]
+        },
+        {
+          "role_name": "Electrical Engineer",
+          "sub_roles": [
+            "Power Systems Engineer",
+            "Transmission Engineer"
+          ]
+        },
+        {
+          "role_name": "Water Treatment Technician",
+          "sub_roles": [
+            "Wastewater Operator",
+            "Water Quality Technician"
+          ]
+        }
+      ]
+    },
+    {
+      "sector_name": "Telecommunications",
+      "roles": [
+        {
+          "role_name": "Network Engineer",
+          "sub_roles": [
+            "Network Administrator",
+            "Network Architect"
+          ]
+        },
+        {
+          "role_name": "Software Developer",
+          "sub_roles": [
+            "Telecom Software Developer",
+            "VoIP Developer"
+          ]
+        },
+        {
+          "role_name": "Technician",
+          "sub_roles": [
+            "Cable Technician",
+            "Field Service Technician"
+          ]
+        },
+        {
+          "role_name": "Customer Support",
+          "sub_roles": [
+            "Call Center Representative",
+            "Technical Support Representative"
+          ]
+        },
+        {
+          "role_name": "Sales Representative",
+          "sub_roles": [
+            "Telecom Sales Executive",
+            "Account Manager"
+          ]
+        },
+        {
+          "role_name": "Telecom Manager",
+          "sub_roles": [
+            "Operations Manager",
+            "Project Manager"
+          ]
+        }
+      ]
+    },
+    {
+      "sector_name": "Hospitality & Lodging",
+      "roles": [
+        {
+          "role_name": "Hotel Manager",
+          "sub_roles": [
+            "General Manager",
+            "Assistant Manager"
+          ]
+        },
+        {
+          "role_name": "Front Desk Staff",
+          "sub_roles": [
+            "Receptionist",
+            "Reservation Agent"
+          ]
+        },
+        {
+          "role_name": "Housekeeping",
+          "sub_roles": [
+            "Housekeeper",
+            "Housekeeping Supervisor"
+          ]
+        },
+        {
+          "role_name": "Food & Beverage",
+          "sub_roles": [
+            "Server",
+            "Bartender",
+            "Banquet Server",
+            "Chef"
+          ]
+        },
+        {
+          "role_name": "Concierge",
+          "sub_roles": [
+            "Guest Services Agent",
+            "Tour Desk Clerk"
+          ]
+        },
+        {
+          "role_name": "Event Planner",
+          "sub_roles": [
+            "Meeting Planner",
+            "Wedding Planner"
+          ]
+        }
+      ]
+    },
+    {
+      "sector_name": "Marketing & Advertising",
+      "roles": [
+        {
+          "role_name": "Marketing Manager",
+          "sub_roles": [
+            "Brand Manager",
+            "Digital Marketing Manager",
+            "Content Marketing Manager"
+          ]
+        },
+        {
+          "role_name": "Digital Marketing Manager",
+          "sub_roles": [
+            "SEO Specialist",
+            "PPC Specialist"
+          ]
+        },
+        {
+          "role_name": "Content Marketing Manager",
+          "sub_roles": [
+            "Content Writer",
+            "Content Strategist"
+          ]
+        },
+        {
+          "role_name": "Social Media Manager",
+          "sub_roles": [
+            "Social Media Specialist",
+            "Community Manager"
+          ]
+        },
+        {
+          "role_name": "SEO Specialist",
+          "sub_roles": [
+            "SEO Analyst",
+            "Link Building Specialist"
+          ]
+        },
+        {
+          "role_name": "Marketing Analyst",
+          "sub_roles": [
+            "Market Research Analyst",
+            "Data Analyst"
+          ]
+        },
+        {
+          "role_name": "Product Marketing Manager",
+          "sub_roles": [
+            "Product Marketer",
+            "Go-to-Market Specialist"
+          ]
+        },
+        {
+          "role_name": "Email Marketing Manager",
+          "sub_roles": [
+            "Email Campaign Manager",
+            "Lifecycle Marketing Specialist"
+          ]
+        },
+        {
+          "role_name": "Marketing Coordinator",
+          "sub_roles": [
+            "Marketing Assistant",
+            "Campaign Coordinator"
+          ]
+        }
+      ]
+    },
+    {
+      "sector_name": "Accounting & Auditing",
+      "roles": [
+        {
+          "role_name": "Accountant",
+          "sub_roles": [
+            "Certified Public Accountant",
+            "Staff Accountant",
+            "Cost Accountant"
+          ]
+        },
+        {
+          "role_name": "Auditor",
+          "sub_roles": [
+            "Internal Auditor",
+            "External Auditor"
+          ]
+        },
+        {
+          "role_name": "Chief Financial Officer",
+          "sub_roles": [
+            "Finance Director",
+            "Chief Accounting Officer"
+          ]
+        },
+        {
+          "role_name": "Controller",
+          "sub_roles": [
+            "Treasurer",
+            "Finance Vice President"
+          ]
+        },
+        {
+          "role_name": "Accounting Clerk",
+          "sub_roles": [
+            "Bookkeeper",
+            "Accounts Payable Clerk"
+          ]
+        }
+      ]
+    }
+  ]
+}
