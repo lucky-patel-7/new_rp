@@ -7,7 +7,7 @@ Much more flexible and maintainable.
 
 import re
 from typing import Dict, List, Optional, Tuple, Any
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from ..utils.logging import get_logger
 from .roles_config import roles_config
 from ..clients.azure_openai import azure_client
@@ -22,15 +22,25 @@ class ParsedQuery:
     original_query: str
     job_roles: List[str]
     skills: List[str]
-    experience_years: Optional[int]
-    seniority_level: Optional[str]
-    location: Optional[str]
-    companies: List[str]
-    keywords: List[str]
-    company_type: Optional[str]
-    intent: str  # 'hire', 'find', 'search', etc.
-    expanded_query: str
+    role_inferred_skills: List[str]
+    forced_keywords: List[str] = field(default_factory=list)
+    required_degrees: List[str] = field(default_factory=list)
+    required_institutions: List[str] = field(default_factory=list)
+    experience_years: Optional[int] = None
+    min_experience_years: Optional[int] = None
+    max_experience_years: Optional[int] = None
+    seniority_level: Optional[str] = None
+    location: Optional[str] = None
+    companies: List[str] = field(default_factory=list)
+    keywords: List[str] = field(default_factory=list)
+    company_type: Optional[str] = None
+    intent: str = 'general'  # 'hire', 'find', 'search', etc.
+    expanded_query: str = ''
     unavailable_role_info: Optional[Dict[str, Any]] = None
+
+    def effective_skills(self) -> List[str]:
+        """Return explicit skills if present, otherwise inferred role skills."""
+        return self.skills if self.skills else self.role_inferred_skills
 
 
 class ConfigBasedRoleDatabase:
@@ -120,8 +130,11 @@ class IntelligentSearchProcessor:
         # Extract skills
         skills = self._extract_skills(query, job_roles)
 
-        # Extract experience requirements
-        experience_years = self._extract_experience(query)
+        # Extract experience requirements (min/max range awareness)
+        min_experience_years, max_experience_years = self._extract_experience_range(query)
+        experience_years = min_experience_years if min_experience_years is not None else max_experience_years
+
+        role_inferred_skills = self._aggregate_role_skills(job_roles)
 
         # Extract seniority level
         seniority_level = self._extract_seniority(query)
@@ -135,20 +148,47 @@ class IntelligentSearchProcessor:
         # Create expanded query
         expanded_query = self._expand_query(query, job_roles, skills)
 
+        forced_keywords = self._extract_forced_keywords(query)
+        required_degrees, required_institutions = self._extract_education_constraints(query)
+
+        # If the detected location matches an education institution requirement, treat it as education
+        if location:
+            normalized_location = location.strip().lower()
+            if any(normalized_location == inst.strip().lower() for inst in required_institutions):
+                logger.info(f"🎓 Treating location '{location}' as required institution; removing from location filter")
+                location = None
+
         parsed = ParsedQuery(
             original_query=query,
             job_roles=job_roles,
             skills=skills,
+            role_inferred_skills=role_inferred_skills,
+            forced_keywords=forced_keywords,
             experience_years=experience_years,
+            min_experience_years=min_experience_years,
+            max_experience_years=max_experience_years,
             seniority_level=seniority_level,
             location=location,
             company_type=None,
             intent=intent,
             expanded_query=expanded_query,
-            unavailable_role_info=unavailable_info
+            unavailable_role_info=unavailable_info,
+            required_degrees=required_degrees,
+            required_institutions=required_institutions
         )
 
-        logger.info(f"Parsed query - Roles: {job_roles}, Skills: {skills[:5]}, Seniority: {seniority_level}, Location: {location}")
+        # Augment forced keywords with parsed data context
+        parsed.forced_keywords = self._extract_forced_keywords(query, parsed)
+
+        logger.info(
+            "Parsed query - Roles: %s, Skills: %s, Seniority: %s, Location: %s, MinExp: %s, MaxExp: %s",
+            job_roles,
+            skills[:5],
+            seniority_level,
+            location,
+            min_experience_years,
+            max_experience_years
+        )
         if unavailable_info:
             logger.info(f"Unavailable role detected: {unavailable_info}")
 
@@ -160,11 +200,12 @@ class IntelligentSearchProcessor:
         query_lower = query.lower()
         query_words = query_lower.split()
 
-        # Get skills from identified roles first
+        # Get skills from identified roles first (only if mentioned in query)
         for role in job_roles:
             role_skills = self.job_db.get_role_skills(role)
             for skill in role_skills:
-                if skill.lower() in query_lower:
+                skill_lower = skill.lower()
+                if skill_lower in query_lower:
                     skills.append(skill)
 
         # Comprehensive technology/skill patterns - much more flexible
@@ -225,22 +266,191 @@ class IntelligentSearchProcessor:
 
         return clean_skills
 
-    def _extract_experience(self, query: str) -> Optional[int]:
-        """Extract experience requirements from query."""
-        patterns = [
-            r'(\d+)\+?\s*years?\s*(?:of\s*)?experience',
-            r'(\d+)\+?\s*yrs?\s*experience',
-            r'minimum\s*(\d+)\s*years?',
-            r'at least\s*(\d+)\s*years?',
-            r'(\d+)\+\s*years?'
+    def _aggregate_role_skills(self, roles: List[str], limit: int = 30) -> List[str]:
+        """Aggregate unique skills from configured role data."""
+        aggregated: List[str] = []
+        seen: set = set()
+
+        for role in roles:
+            role_skills = self.job_db.get_role_skills(role) or []
+            for skill in role_skills:
+                if not skill or not isinstance(skill, str):
+                    continue
+                skill_clean = skill.strip()
+                if not skill_clean:
+                    continue
+                key = skill_clean.lower()
+                if key in seen:
+                    continue
+                aggregated.append(skill_clean)
+                seen.add(key)
+                if len(aggregated) >= limit:
+                    return aggregated
+
+        return aggregated
+
+    def _extract_forced_keywords(self, query: str, parsed_query: Optional[ParsedQuery] = None) -> List[str]:
+        """Extract keywords that must appear in candidate data (attribute-style constraints)."""
+        forced: List[str] = []
+        seen: set = set()
+
+        def add_term(text: Optional[str]):
+            if not text or not isinstance(text, str):
+                return
+            cleaned = text.strip()
+            if not cleaned:
+                return
+            key = cleaned.lower()
+            if key in seen:
+                return
+            forced.append(cleaned)
+            seen.add(key)
+
+        query_lower = query.lower()
+
+        # Attribute pattern: "<attr> status <value>" or "<attr> status is <value>"
+        status_pattern = re.compile(r'(\b[\w\s]{2,40}?)\s+status\s*(?:is|=|:)?\s*(\b[\w\s-]{2,40}\b)', re.IGNORECASE)
+        for attr, value in status_pattern.findall(query_lower):
+            attr_clean = attr.strip()
+            value_clean = value.strip()
+            if attr_clean and value_clean:
+                add_term(f"{attr_clean} status {value_clean}")
+                add_term(value_clean)
+
+        # General "<attr> is <value>" / "<attr> = <value>" / "<attr>: <value>"
+        attribute_pattern = re.compile(r'(\b[\w\s]{2,30}?)\s*(?:is|=|:)\s*(\b[\w\s-]{2,40}\b)', re.IGNORECASE)
+        for attr, value in attribute_pattern.findall(query_lower):
+            attr_clean = attr.strip()
+            value_clean = value.strip()
+            if attr_clean and value_clean and attr_clean not in {'what', 'who', 'where', 'when', 'why', 'how'}:
+                add_term(f"{attr_clean} {value_clean}")
+                add_term(value_clean)
+
+        # Pattern: "must be <value>" / "should be <value>" / "needs to be <value>"
+        be_pattern = re.compile(r'(must|should|needs|need|has to|have to)\s+(?:be|have)\s+(\b[\w\s-]{2,40}\b)', re.IGNORECASE)
+        for _, value in be_pattern.findall(query_lower):
+            add_term(value)
+
+        # Quoted phrases enforce exact matches
+        quoted_pattern = re.compile(r'"([^"]+)"|\'([^\']+)\'')
+        for quoted in quoted_pattern.findall(query_lower):
+            phrase = quoted[0] or quoted[1]
+            add_term(phrase)
+
+        # Include AI-derived keywords to ensure coverage
+        if parsed_query is not None:
+            for keyword in parsed_query.keywords:
+                add_term(keyword)
+
+        return forced
+
+    def _extract_education_constraints(self, query: str) -> Tuple[List[str], List[str]]:
+        """Extract degree and institution requirements from the query."""
+        degrees: List[str] = []
+        institutions: List[str] = []
+        seen_degrees: set = set()
+        seen_institutions: set = set()
+
+        query_lower = query.lower()
+
+        degree_patterns = [
+            r'(bachelor(?:s)?(?: of)? [a-z\s]+)',
+            r'(master(?:s)?(?: of)? [a-z\s]+)',
+            r'((?:ba|b\.a\.|bs|b\.s\.|btech|b\.tech|mtech|m\.tech|mba|m\.b\.a\.|phd|ph\.d\.|mca|bca)\b[\w\s]*)',
+            r'(associate(?:s)?(?: of)? [a-z\s]+)',
+            r'(diploma(?: in)? [a-z\s]+)'
         ]
 
-        for pattern in patterns:
-            match = re.search(pattern, query.lower())
-            if match:
-                return int(match.group(1))
+        for pattern in degree_patterns:
+            for match in re.findall(pattern, query_lower, re.IGNORECASE):
+                degree_clean = match.strip().title()
+                key = degree_clean.lower()
+                if degree_clean and key not in seen_degrees and len(degree_clean) > 2:
+                    degrees.append(degree_clean)
+                    seen_degrees.add(key)
 
-        return None
+        # Pattern: "from <institution>" / "at <institution>" / "in <institution>"
+        institution_pattern = re.compile(r'\bfrom\s+([a-z0-9&.,\-\s]{3,60})|\bat\s+([a-z0-9&.,\-\s]{3,60})', re.IGNORECASE)
+        for match in institution_pattern.findall(query):
+            institution = match[0] or match[1]
+            cleaned = institution.strip()
+            if cleaned:
+                # Trim trailing words like "university", "college" etc remain included
+                key = cleaned.lower()
+                if key not in seen_institutions:
+                    institutions.append(cleaned)
+                    seen_institutions.add(key)
+
+        return degrees, institutions
+
+    def _extract_experience_range(self, query: str) -> Tuple[Optional[int], Optional[int]]:
+        """Extract minimum and maximum experience requirements from a query."""
+        query_lower = query.lower()
+
+        # Range expressions (between/from/A-B)
+        range_patterns = [
+            r'between\s*(\d+)\s*(?:\+?\s*)?and\s*(\d+)\s*years?',
+            r'from\s*(\d+)\s*(?:\+?\s*)?(?:years?|yrs?)?\s*to\s*(\d+)\s*years?',
+            r'(\d+)\s*[-–—]\s*(\d+)\s*years?',
+            r'(\d+)\s*(?:to)\s*(\d+)\s*years?'
+        ]
+
+        for pattern in range_patterns:
+            match = re.search(pattern, query_lower)
+            if match:
+                start = int(match.group(1))
+                end = int(match.group(2))
+                if start > end:
+                    start, end = end, start
+                return start, end
+
+        # "Up to" / maximum expressions
+        match = re.search(r'(?:up to|at most|maximum(?: of)?|no more than)\s*(\d+)\s*years?', query_lower)
+        if match:
+            return None, int(match.group(1))
+
+        # "Less than" / "under"
+        match = re.search(r'(?:less than|under|below)\s*(\d+)\s*years?', query_lower)
+        if match:
+            value = int(match.group(1))
+            return None, max(value - 1, 0)
+
+        # "More than" / "over"
+        match = re.search(r'(?:more than|over|greater than)\s*(\d+)\s*years?', query_lower)
+        if match:
+            value = int(match.group(1))
+            return value, None
+
+        # "At least" / minimum
+        match = re.search(r'(?:at least|minimum(?: of)?|not less than)\s*(\d+)\s*years?', query_lower)
+        if match:
+            return int(match.group(1)), None
+
+        # Explicit "exactly" phrasing
+        match = re.search(r'(?:exactly|equal to)\s*(\d+)\s*years?', query_lower)
+        if match:
+            value = int(match.group(1))
+            return value, value
+
+        # Numeric value followed by years/yrs +/- modifiers
+        simple_patterns = [
+            r'(\d+)\+?\s*years?\s*(?:of\s*)?experience',
+            r'(\d+)\+?\s*yrs?\s*experience',
+            r'(\d+)\s*years?\s*(?:experience|exp)',
+            r'(\d+)\s*yrs?'
+        ]
+
+        for pattern in simple_patterns:
+            match = re.search(pattern, query_lower)
+            if match:
+                return int(match.group(1)), None
+
+        return None, None
+
+    def _extract_experience(self, query: str) -> Optional[int]:
+        """Backward-compatible helper that returns the minimum experience if present."""
+        min_exp, max_exp = self._extract_experience_range(query)
+        return min_exp if min_exp is not None else max_exp
 
     def _extract_seniority(self, query: str) -> Optional[str]:
         """Extract seniority level from query using config."""
@@ -279,17 +489,33 @@ class IntelligentSearchProcessor:
 
     def _expand_query(self, query: str, job_roles: List[str], skills: List[str]) -> str:
         """Expand the query with synonyms and related terms."""
-        expanded_parts = [query]
+        expanded_parts: List[str] = []
+        seen: set = set()
+
+        def add_part(text: Optional[str]):
+            if not text or not isinstance(text, str):
+                return
+            cleaned = text.strip()
+            key = cleaned.lower()
+            if cleaned and key not in seen:
+                expanded_parts.append(cleaned)
+                seen.add(key)
+
+        add_part(query)
 
         # Add role synonyms from config
         for role in job_roles:
             role_titles = self.job_db.get_role_titles(role)
-            expanded_parts.extend(role_titles[:3])
+            for title in role_titles[:5]:
+                add_part(title)
 
-        # Add related skills from config
-        for role in job_roles:
-            role_skills = self.job_db.get_role_skills(role)
-            expanded_parts.extend(role_skills[:5])
+        # Add explicit skills mentioned in query
+        for skill in skills:
+            add_part(skill)
+
+        # Add inferred skills from configuration
+        for skill in self._aggregate_role_skills(job_roles, limit=40):
+            add_part(skill)
 
         return ' '.join(expanded_parts)
 
@@ -320,8 +546,11 @@ class IntelligentSearchProcessor:
             logger.info(f"🗺️ Adding location filter: {parsed_query.location}")
 
         # Experience filter
-        if parsed_query.experience_years:
-            filters['min_experience_years'] = parsed_query.experience_years
+        if parsed_query.min_experience_years is not None:
+            filters['min_experience_years'] = parsed_query.min_experience_years
+
+        if parsed_query.max_experience_years is not None:
+            filters['max_experience_years'] = parsed_query.max_experience_years
 
         return filters
 
@@ -408,6 +637,12 @@ class IntelligentSearchProcessor:
 
     def calculate_comprehensive_relevance_score(self, payload: Dict[str, Any], parsed_query: ParsedQuery) -> float:
         """Calculate comprehensive relevance score using all available data."""
+
+        # For AI/ML specialized roles, enforce strict skill requirements
+        if self._is_ai_ml_query(parsed_query):
+            if not self._has_required_ai_ml_skills(payload, parsed_query):
+                return 0.0  # Exclude candidates without AI/ML skills
+
         score = 0.0
         max_score = 0.0
 
@@ -416,27 +651,61 @@ class IntelligentSearchProcessor:
         query_lower = parsed_query.original_query.lower()
         query_words = [word.strip() for word in query_lower.split() if len(word.strip()) >= 2]
 
-        # 1. Direct skills matching (weight: 4.0) - but only if we have skills in query
-        if parsed_query.skills:
+        effective_skills = parsed_query.effective_skills()
+
+        # 1. Enhanced skills matching (weight: 4.0) - but only if we have skills in query
+        if effective_skills:
             candidate_skills = [s.lower() for s in payload.get('skills', [])]
             skill_matches = 0
             exact_skill_matches = 0
+            matched_skills = []
 
-            for skill in parsed_query.skills:
+            logger.info(f"🔧 Evaluating skills for candidate {payload.get('name', 'UNKNOWN')}")
+            logger.info(f"🔧 Query skills: {effective_skills}")
+            logger.info(f"🔧 Candidate skills: {payload.get('skills', [])}")
+
+            for skill in effective_skills:
                 skill_lower = skill.lower()
-                # Exact match in skills
+                # Exact match in skills array
                 if skill_lower in candidate_skills:
                     exact_skill_matches += 1
-                # Partial match in skills
+                    matched_skills.append(f"EXACT:{skill}")
+                    logger.info(f"🔧 ✅ EXACT match: '{skill}' found in candidate's skills")
+                # Partial match in skills array (e.g., "python" matches "Python 3.9")
                 elif any(skill_lower in candidate_skill for candidate_skill in candidate_skills):
-                    skill_matches += 0.7
+                    skill_matches += 0.8  # Increased from 0.7 for better partial matching
+                    matched_skills.append(f"PARTIAL:{skill}")
+                    matching_skill = next(cs for cs in candidate_skills if skill_lower in cs)
+                    logger.info(f"🔧 ✅ PARTIAL match: '{skill}' found in '{matching_skill}'")
+                # Reverse partial match (e.g., "machine learning" partially matches "ml")
+                elif any(candidate_skill in skill_lower for candidate_skill in candidate_skills if len(candidate_skill) > 2):
+                    skill_matches += 0.6
+                    matched_skills.append(f"REVERSE:{skill}")
+                    matching_skill = next(cs for cs in candidate_skills if cs in skill_lower)
+                    logger.info(f"🔧 ✅ REVERSE match: '{matching_skill}' matches part of '{skill}'")
                 # Check if skill appears in comprehensive text
                 elif skill_lower in comprehensive_text:
-                    skill_matches += 0.5
+                    skill_matches += 0.4  # Reduced weight for text-only matches
+                    matched_skills.append(f"TEXT:{skill}")
+                    logger.info(f"🔧 ✅ TEXT match: '{skill}' found in resume content")
+                else:
+                    logger.info(f"🔧 ❌ NO match: '{skill}' not found")
 
-            total_skill_score = (exact_skill_matches + skill_matches) / len(parsed_query.skills)
+            # Enhanced scoring: bonus for multiple matches and exact matches
+            skill_match_ratio = (exact_skill_matches + skill_matches) / max(len(effective_skills), 1)
+            exact_match_bonus = exact_skill_matches / max(len(effective_skills), 1) * 0.5  # Bonus for exact matches
+            total_skill_score = min(skill_match_ratio + exact_match_bonus, 1.0)  # Cap at 1.0
+
             score += total_skill_score * 4.0
             max_score += 4.0
+
+            logger.info(f"🔧 Skills scoring: exact={exact_skill_matches}, partial={skill_matches:.1f}, total_score={total_skill_score:.3f}")
+            logger.info(f"🔧 Matched skills: {matched_skills}")
+
+            # Additional boost for highly relevant candidates with strong skill matches
+            if total_skill_score > 0.7:
+                score += 0.5  # Small bonus for strong skill matches
+                logger.info(f"🔧 🚀 Skill excellence bonus: +0.5 (total_skill_score={total_skill_score:.3f})")
 
         # For role-only queries (like "hr manager"), focus on role and position matching
         else:
@@ -479,7 +748,7 @@ class IntelligentSearchProcessor:
             return min(score / max_score, 1.0)
 
         # Fallback for edge cases
-        return 0.1 if parsed_query.job_roles or parsed_query.skills else 0.0
+        return 0.1 if parsed_query.job_roles or effective_skills else 0.0
 
     def _enhance_query_with_llm(self, query: str) -> Optional[str]:
         """Use LLM to fix typos and normalize the query."""
@@ -566,6 +835,8 @@ Return ONLY a valid JSON object with these exact fields:
     "job_roles": ["list of relevant job roles from the available roles, or empty list if none match"],
     "skills": ["list of technical skills/technologies mentioned, excluding location words and common words"],
     "experience_years": number or null,
+    "min_experience_years": number or null,
+    "max_experience_years": number or null,
     "seniority_level": "junior/mid/senior/manager/director" or null,
     "location": "extracted location" or null,
     "companies": ["list of company/organization names mentioned, or empty list if none"],
@@ -587,6 +858,20 @@ Important rules:
    - "handle finances" → "Financial Analyst"
    - "sales person" → "Sales Representative"
    - "marketing campaigns" → "Marketing Manager"
+   - "ai developer" → "Data Scientist" or "Machine Learning Engineer" (ONLY if candidate has AI/ML skills)
+   - "artificial intelligence" → "Data Scientist" or "Machine Learning Engineer" (ONLY if candidate has AI/ML skills)
+   - "machine learning" → "Data Scientist" or "Machine Learning Engineer" (ONLY if candidate has AI/ML skills)
+   - "ml engineer" → "Machine Learning Engineer" or "Data Scientist" (ONLY if candidate has AI/ML skills)
+   - "ai engineer" → "Machine Learning Engineer" or "Data Scientist" (ONLY if candidate has AI/ML skills)
+   - "nlp" → "Data Scientist" or "Machine Learning Engineer" (ONLY if candidate has AI/ML skills)
+   - "computer vision" → "Data Scientist" or "Machine Learning Engineer" (ONLY if candidate has AI/ML skills)
+   - "deep learning" → "Data Scientist" or "Machine Learning Engineer" (ONLY if candidate has AI/ML skills)
+
+CRITICAL: For AI/ML related queries, candidates MUST have specific AI/ML skills like:
+- Machine Learning, Deep Learning, TensorFlow, PyTorch, Scikit-learn, Keras
+- NLP, Computer Vision, Neural Networks, AI, Artificial Intelligence
+- Data Science, Statistics, Model Deployment, Feature Engineering
+Do NOT include general software developers unless they have these specific skills.
 2. skills: Include technical skills AND interpret natural language:
    - "good with Excel" → ["Excel"]
    - "knows databases" → ["SQL", "Database"]
@@ -597,12 +882,17 @@ Important rules:
 5. keywords: Extract all important words for semantic matching if no specific role/skill/location found
 6. Do not include words like "from", "in", "at", city names, or country names in skills
 7. Return only the JSON, no explanations
+8. Populate min_experience_years/max_experience_years for any mentioned range or boundary (e.g., "3-5 years", "at least 4 years", "up to 2 years")
 
 Natural Language Examples:
 - "someone who can build websites" → job_roles: ["Frontend Developer"], skills: ["HTML", "CSS", "JavaScript"]
 - "person good with data analysis" → job_roles: ["Data Analyst"], skills: ["Python", "Excel", "SQL"]
 - "need someone for social media" → job_roles: ["Social Media Manager"], skills: ["Social Media", "Digital Marketing"]
 - "candidate who knows accounting software" → job_roles: ["Accountant"], skills: ["Excel", "Accounting Software"]
+- "ai developer from ahmedabad" → job_roles: ["Data Scientist"], skills: ["Python", "Machine Learning", "AI"], location: "Ahmedabad"
+- "need machine learning engineer" → job_roles: ["Machine Learning Engineer"], skills: ["Python", "Machine Learning", "Deep Learning"]
+- "artificial intelligence expert" → job_roles: ["Data Scientist"], skills: ["AI", "Python", "Machine Learning"]
+- "nlp developer" → job_roles: ["Data Scientist"], skills: ["NLP", "Python", "Machine Learning"]
 - "candidates from Silvertouch Technologies" → companies: ["Silvertouch Technologies"], keywords: ["candidates", "Silvertouch", "Technologies"]
 - "people working at Google" → companies: ["Google"], keywords: ["people", "working", "Google"]
 """
@@ -636,14 +926,38 @@ Natural Language Examples:
                 parsed_data = json.loads(ai_response)
 
                 # Validate and clean the response
+                def _safe_int(value: Any) -> Optional[int]:
+                    try:
+                        if value is None:
+                            return None
+                        if isinstance(value, (int, float)):
+                            return int(value)
+                        value_str = str(value).strip()
+                        if not value_str:
+                            return None
+                        return int(float(value_str))
+                    except (TypeError, ValueError):
+                        return None
+
                 job_roles = parsed_data.get("job_roles", [])
                 skills = parsed_data.get("skills", [])
-                experience_years = parsed_data.get("experience_years")
+                experience_years = _safe_int(parsed_data.get("experience_years"))
+                min_experience_years = _safe_int(parsed_data.get("min_experience_years"))
+                max_experience_years = _safe_int(parsed_data.get("max_experience_years"))
                 seniority_level = parsed_data.get("seniority_level")
                 location = parsed_data.get("location")
                 companies = parsed_data.get("companies", [])
                 keywords = parsed_data.get("keywords", [])
                 intent = parsed_data.get("intent", "general")
+
+                if min_experience_years is None and max_experience_years is None and experience_years is not None:
+                    min_experience_years = experience_years
+
+                if min_experience_years is not None and max_experience_years is not None and min_experience_years > max_experience_years:
+                    min_experience_years, max_experience_years = max_experience_years, min_experience_years
+
+                primary_experience_years = min_experience_years if min_experience_years is not None else max_experience_years
+                role_inferred_skills = self._aggregate_role_skills(job_roles)
 
                 # Check for unavailable roles
                 unavailable_info = None
@@ -653,16 +967,32 @@ Natural Language Examples:
                         if unavailable_check:
                             unavailable_info = unavailable_check
                             job_roles = []  # Clear roles if unavailable
+                            role_inferred_skills = []
                             break
 
                 # Create expanded query
                 expanded_query = self._expand_query(query, job_roles, skills)
 
-                return ParsedQuery(
+                required_degrees, required_institutions = self._extract_education_constraints(query)
+
+                location = parsed_data.get("location")
+                if location:
+                    normalized_location = location.strip().lower()
+                    if any(normalized_location == inst.strip().lower() for inst in required_institutions):
+                        logger.info(f"🎓 Treating location '{location}' as required institution (AI parse); removing from location filter")
+                        location = None
+
+                parsed = ParsedQuery(
                     original_query=query,
                     job_roles=job_roles,
                     skills=skills,
-                    experience_years=experience_years,
+                    role_inferred_skills=role_inferred_skills,
+                    forced_keywords=[],
+                    required_degrees=required_degrees,
+                    required_institutions=required_institutions,
+                    experience_years=primary_experience_years,
+                    min_experience_years=min_experience_years,
+                    max_experience_years=max_experience_years,
                     seniority_level=seniority_level,
                     location=location,
                     companies=companies,
@@ -673,11 +1003,159 @@ Natural Language Examples:
                     unavailable_role_info=unavailable_info
                 )
 
+                parsed.forced_keywords = self._extract_forced_keywords(query, parsed)
+                deg_llm, inst_llm = self._extract_education_constraints(query)
+                if deg_llm:
+                    parsed.required_degrees = list({*(parsed.required_degrees), *deg_llm})
+                if inst_llm:
+                    parsed.required_institutions = list({*(parsed.required_institutions), *inst_llm})
+                return parsed
+
         except Exception as e:
             logger.warning(f"AI query parsing failed: {e}")
             return None
 
         return None
+
+    def _is_ai_ml_query(self, parsed_query: ParsedQuery) -> bool:
+        """Check if this is an AI/ML specialized query that requires specific skills."""
+        ai_ml_terms = [
+            'ai', 'artificial intelligence', 'machine learning', 'ml', 'deep learning',
+            'nlp', 'natural language processing', 'computer vision', 'neural network',
+            'ai developer', 'ml engineer', 'ai engineer', 'data scientist'
+        ]
+
+        query_lower = parsed_query.original_query.lower()
+
+        # Check if query contains AI/ML terms
+        if any(term in query_lower for term in ai_ml_terms):
+            return True
+
+        # Check if detected roles are AI/ML related
+        ai_ml_roles = ['Data Scientist', 'Machine Learning Engineer', 'AI Research Scientist',
+                       'Computer Vision Engineer', 'NLP Engineer', 'AI Software Engineer']
+
+        return any(role in parsed_query.job_roles for role in ai_ml_roles)
+
+    def _has_required_ai_ml_skills(self, payload: Dict[str, Any], parsed_query: ParsedQuery) -> bool:
+        """Check if candidate has required AI/ML skills for specialized roles."""
+        # Core AI/ML technologies that indicate actual AI development
+        core_ai_skills = [
+            'machine learning', 'deep learning', 'artificial intelligence', 'ai development',
+            'tensorflow', 'pytorch', 'scikit-learn', 'keras', 'neural networks',
+            'nlp', 'natural language processing', 'computer vision', 'opencv',
+            'data science', 'model deployment', 'feature engineering', 'xgboost',
+            'lightgbm', 'neural network', 'ml models', 'ai models'
+        ]
+
+        # Supporting skills (less specific)
+        supporting_skills = ['pandas', 'numpy', 'python', 'r', 'statistics', 'matlab']
+
+        # Check skills array for core AI/ML technologies
+        candidate_skills = [s.lower() for s in payload.get('skills', [])]
+        core_skills_count = sum(1 for skill in core_ai_skills if any(skill in cs for cs in candidate_skills))
+
+        logger.info(f"🤖 AI/ML Skills Check for {payload.get('name', 'UNKNOWN')}")
+        logger.info(f"🤖 Candidate skills: {payload.get('skills', [])}")
+        logger.info(f"🤖 Core AI skills found: {core_skills_count}")
+
+        # Check work history for ACTUAL AI/ML work (not just mentions)
+        work_history = payload.get('work_history', [])
+        substantial_ai_experience = False
+        ai_work_details = []
+
+        for job in work_history:
+            if isinstance(job, dict):
+                job_description = job.get('description', '').lower()
+                position = job.get('position', '').lower()
+
+                # Look for substantial AI/ML work indicators
+                ai_indicators = [
+                    'machine learning model', 'ai model', 'neural network', 'deep learning',
+                    'data science', 'ml engineer', 'ai engineer', 'data scientist',
+                    'computer vision', 'nlp', 'natural language processing', 'tensorflow',
+                    'pytorch', 'model training', 'model deployment', 'feature engineering'
+                ]
+
+                ai_mentions = sum(1 for indicator in ai_indicators if indicator in job_description or indicator in position)
+                if ai_mentions >= 2:  # Multiple substantial AI mentions
+                    substantial_ai_experience = True
+                    ai_work_details.append(f"{job.get('position', 'Unknown')} - {ai_mentions} AI indicators")
+
+        # Check projects for ACTUAL AI/ML implementation
+        key_projects = payload.get('key_projects', [])
+        substantial_ai_projects = False
+        ai_project_details = []
+
+        logger.info(f"🤖 DEBUG: Projects for {payload.get('name', 'UNKNOWN')}: {key_projects}")
+
+        for project in key_projects:
+            if isinstance(project, str):
+                project_lower = project.lower()
+                # Look for AI/ML project indicators
+                ai_project_indicators = [
+                    'machine learning', 'neural network', 'ai', 'computer vision',
+                    'nlp', 'deep learning', 'tensorflow', 'pytorch', 'model',
+                    'prediction', 'classification', 'regression', 'clustering'
+                ]
+
+                ai_project_mentions = sum(1 for indicator in ai_project_indicators if indicator in project_lower)
+                logger.info(f"🤖 DEBUG: Project '{project}' has {ai_project_mentions} AI indicators")
+
+                if ai_project_mentions >= 1:  # At least one substantial AI project mention
+                    substantial_ai_projects = True
+                    ai_project_details.append(f"{project} - {ai_project_mentions} AI indicators")
+
+        # Also check comprehensive text for AI/ML project references since key_projects might be empty
+        comprehensive_text = self.extract_comprehensive_search_text(payload).lower()
+        logger.info(f"🤖 DEBUG: Comprehensive text snippet for {payload.get('name', 'UNKNOWN')}: {comprehensive_text[:200]}...")
+
+        if not substantial_ai_projects:
+            # More sensitive detection for AI/ML in project context
+            ai_text_indicators = [
+                'machine learning', 'neural network', 'deep learning', 'ai development',
+                'artificial intelligence', 'computer vision', 'nlp', 'natural language processing',
+                'tensorflow', 'pytorch', 'ml model', 'ai model', 'prediction model'
+            ]
+
+            text_ai_mentions = sum(1 for indicator in ai_text_indicators if indicator in comprehensive_text)
+            logger.info(f"🤖 DEBUG: Text AI mentions found: {text_ai_mentions}")
+
+            if text_ai_mentions >= 1:
+                substantial_ai_projects = True
+                ai_project_details.append(f"Text content - {text_ai_mentions} AI indicators found")
+                logger.info(f"🤖 DEBUG: ✅ Found AI indicators in comprehensive text: {text_ai_mentions}")
+
+        logger.info(f"🤖 Substantial AI work experience: {substantial_ai_experience} - {ai_work_details}")
+        logger.info(f"🤖 Substantial AI projects: {substantial_ai_projects} - {ai_project_details}")
+
+        # Enhanced criteria for AI/ML roles - More inclusive for actual AI developers:
+        # Option 1: Has at least 1 core AI skill (shows technical knowledge)
+        # Option 2: Has substantial AI projects (shows practical experience)
+        # Option 3: Has substantial AI work experience (shows professional background)
+        # Option 4: Has supporting skills with AI project mentions (for candidates like Lucky who have ML projects)
+
+        # Additional check: Look for explicit AI project mentions in full resume content
+        full_resume_text = ' '.join([
+            payload.get('summary', ''),
+            ' '.join([str(proj) for proj in payload.get('key_projects', [])]),
+            ' '.join([str(job.get('description', '')) for job in payload.get('work_history', []) if isinstance(job, dict)])
+        ]).lower()
+
+        has_ai_project_mention = any(term in full_resume_text for term in [
+            'machine learning', 'ai project', 'artificial intelligence', 'neural network',
+            'deep learning', 'computer vision', 'nlp project'
+        ])
+
+        meets_criteria = (
+            core_skills_count >= 1 or  # Has at least 1 core AI skill
+            substantial_ai_experience or  # Has substantial AI work experience
+            substantial_ai_projects or  # Has substantial AI projects
+            (has_ai_project_mention and core_skills_count >= 0)  # Has AI project mentions (for cases like Lucky)
+        )
+
+        logger.info(f"🤖 Final AI/ML qualification: {meets_criteria} (core_skills={core_skills_count}, ai_exp={substantial_ai_experience}, ai_proj={substantial_ai_projects}, ai_mentions={has_ai_project_mention})")
+        return meets_criteria
 
 
 # Global instance

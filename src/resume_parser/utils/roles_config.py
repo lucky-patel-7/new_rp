@@ -81,10 +81,14 @@ class RolesConfig:
             for role in sector.get("roles", []):
                 role_name = role.get("role_name", "")
                 sub_roles = role.get("sub_roles", [])
+                skills = [skill.strip() for skill in role.get("skills", []) if isinstance(skill, str) and skill.strip()]
 
                 # Add main role name
                 processed["all_role_names"].add(role_name)
                 processed["role_to_sector"][role_name.lower()] = sector_name
+                if skills:
+                    processed["role_skills"][role_name] = skills
+                    processed["role_skills"][role_name.lower()] = skills
 
                 # Add search terms for main role
                 search_terms = [role_name.lower()]
@@ -94,14 +98,22 @@ class RolesConfig:
                 for sub_role in sub_roles:
                     processed["all_sub_roles"].add(sub_role)
                     processed["search_terms_to_role"][sub_role.lower()] = role_name
+                    if skills:
+                        processed["role_skills"][sub_role] = skills
+                        processed["role_skills"][sub_role.lower()] = skills
 
                     # Also map sub-role variations
                     processed["search_terms_to_role"][sub_role.lower().replace(" ", "")] = role_name
+                    if skills:
+                        processed["role_skills"][sub_role.lower().replace(" ", "")] = skills
 
                 # Add role name variations
                 role_variations = self._generate_role_variations(role_name)
                 for variation in role_variations:
                     processed["search_terms_to_role"][variation.lower()] = role_name
+                    if skills:
+                        processed["role_skills"][variation] = skills
+                        processed["role_skills"][variation.lower()] = skills
 
         return processed
 
@@ -284,28 +296,30 @@ class RolesConfig:
         return self._processed_roles["role_to_sector"].get(role_name.lower())
 
     def get_role_skills(self, role_name: str) -> List[str]:
-        """Get skills associated with a role based on sector and common skills."""
-        # For comprehensive search, return common technical skills based on role type
+        """Get skills associated with a role from configuration, with heuristics fallback."""
+        if not role_name:
+            return []
+
         role_lower = role_name.lower()
-        skills = []
+        skills = self._processed_roles["role_skills"].get(role_name)
+        if not skills:
+            skills = self._processed_roles["role_skills"].get(role_lower, [])
 
-        # Software/Engineering roles
+        if skills:
+            return skills
+
+        # Fallback heuristics if config is missing skills
+        inferred = []
         if any(term in role_lower for term in ["software", "developer", "engineer", "programming"]):
-            skills.extend(["Python", "JavaScript", "Java", "Git", "SQL", "React", "Node.js", "Docker"])
-
-        # Data roles
+            inferred.extend(["Python", "JavaScript", "Java", "Git", "SQL", "React", "Node.js", "Docker"])
         if any(term in role_lower for term in ["data", "analyst", "scientist", "ml", "ai"]):
-            skills.extend(["Python", "SQL", "Pandas", "NumPy", "Machine Learning", "Tableau", "Excel"])
-
-        # Marketing roles
+            inferred.extend(["Python", "SQL", "Pandas", "NumPy", "Machine Learning", "Tableau", "Excel"])
         if any(term in role_lower for term in ["marketing", "social media", "content", "seo"]):
-            skills.extend(["Digital Marketing", "SEO", "Content Marketing", "Social Media", "Analytics", "Adobe Creative Suite"])
-
-        # Business roles
+            inferred.extend(["Digital Marketing", "SEO", "Content Marketing", "Social Media", "Analytics", "Adobe Creative Suite"])
         if any(term in role_lower for term in ["business", "analyst", "manager", "project"]):
-            skills.extend(["Business Analysis", "Project Management", "Excel", "PowerBI", "Agile", "Scrum"])
+            inferred.extend(["Business Analysis", "Project Management", "Excel", "PowerBI", "Agile", "Scrum"])
 
-        return skills
+        return inferred
 
     def get_role_search_terms(self, role_name: str) -> List[str]:
         """Get search terms for a role."""

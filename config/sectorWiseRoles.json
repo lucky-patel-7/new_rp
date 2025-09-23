@@ -10,6 +10,14 @@
             "Backend Developer",
             "Full Stack Developer",
             "Mobile App Developer"
+          ],
+          "skills": [
+            "Python",
+            "Java",
+            "Object-Oriented Design",
+            "REST APIs",
+            "Git",
+            "Software Architecture"
           ]
         },
         {
@@ -18,6 +26,14 @@
             "Cloud Engineer",
             "Systems Engineer",
             "Automation Engineer"
+          ],
+          "skills": [
+            "CI/CD",
+            "Docker",
+            "Kubernetes",
+            "Terraform",
+            "Linux Administration",
+            "Monitoring"
           ]
         },
         {
@@ -26,6 +42,14 @@
             "ETL Developer",
             "Data Architect",
             "Database Administrator"
+          ],
+          "skills": [
+            "ETL Pipelines",
+            "SQL",
+            "Apache Spark",
+            "Data Warehousing",
+            "Airflow",
+            "Cloud Data Platforms"
           ]
         },
         {
@@ -34,6 +58,14 @@
             "Manual Tester",
             "Automation Tester",
             "Test Engineer"
+          ],
+          "skills": [
+            "Test Planning",
+            "Automation Testing",
+            "Selenium",
+            "Defect Tracking",
+            "Regression Testing",
+            "API Testing"
           ]
         },
         {
@@ -42,6 +74,14 @@
             "Machine Learning Engineer",
             "NLP Scientist",
             "Data Analyst"
+          ],
+          "skills": [
+            "Machine Learning",
+            "Python",
+            "Statistics",
+            "Data Visualization",
+            "Pandas",
+            "Model Deployment"
           ]
         },
         {
@@ -50,6 +90,14 @@
             "BI Developer",
             "BI Analyst",
             "BI Consultant"
+          ],
+          "skills": [
+            "Power BI",
+            "Tableau",
+            "Data Modeling",
+            "SQL",
+            "Dashboard Design",
+            "Reporting"
           ]
         },
         {
@@ -58,6 +106,14 @@
             "Big Data Engineer",
             "Cloud Data Architect",
             "Data Platform Engineer"
+          ],
+          "skills": [
+            "Data Modeling",
+            "Database Design",
+            "Cloud Data Architecture",
+            "SQL",
+            "Data Governance",
+            "NoSQL"
           ]
         }
       ]
@@ -71,6 +127,14 @@
             "Deep Learning Engineer",
             "Recommendation Systems Engineer",
             "ML Ops Engineer"
+          ],
+          "skills": [
+            "Machine Learning",
+            "Python",
+            "TensorFlow",
+            "PyTorch",
+            "Model Deployment",
+            "Feature Engineering"
           ]
         },
         {
@@ -79,6 +143,14 @@
             "Predictive Modeler",
             "Operations Research Analyst",
             "Analytics Consultant"
+          ],
+          "skills": [
+            "Machine Learning",
+            "Python",
+            "Statistics",
+            "Data Visualization",
+            "Pandas",
+            "Model Deployment"
           ]
         },
         {
@@ -86,6 +158,14 @@
           "sub_roles": [
             "Deep Learning Researcher",
             "Applied AI Researcher"
+          ],
+          "skills": [
+            "Deep Learning",
+            "Research Methodology",
+            "Python",
+            "Mathematics",
+            "Scientific Writing",
+            "Experiment Design"
           ]
         },
         {
@@ -93,6 +173,14 @@
           "sub_roles": [
             "Fraud Detection Engineer",
             "Credit Scoring Developer"
+          ],
+          "skills": [
+            "Financial Modeling",
+            "Machine Learning",
+            "Python",
+            "Risk Analytics",
+            "Fraud Detection",
+            "Regulatory Compliance"
           ]
         },
         {
@@ -100,6 +188,14 @@
           "sub_roles": [
             "AI Product Owner",
             "AI Program Manager"
+          ],
+          "skills": [
+            "Product Strategy",
+            "AI Fundamentals",
+            "Stakeholder Management",
+            "Roadmapping",
+            "User Research",
+            "Metrics Analysis"
           ]
         },
         {
@@ -107,6 +203,14 @@
           "sub_roles": [
             "Robotics Programmer",
             "Automation Engineer"
+          ],
+          "skills": [
+            "Robotics",
+            "C++",
+            "Control Systems",
+            "ROS",
+            "Embedded Systems",
+            "Sensors"
           ]
         },
         {
@@ -114,6 +218,14 @@
           "sub_roles": [
             "Image Processing Specialist",
             "Autonomous Vehicle Engineer"
+          ],
+          "skills": [
+            "Computer Vision",
+            "OpenCV",
+            "Deep Learning",
+            "Image Processing",
+            "Python",
+            "Object Detection"
           ]
         },
         {
@@ -122,6 +234,14 @@
             "Chatbot Developer",
             "Speech Recognition Engineer",
             "Machine Translation Engineer"
+          ],
+          "skills": [
+            "Natural Language Processing",
+            "Python",
+            "Transformers",
+            "TensorFlow",
+            "Text Mining",
+            "Model Fine-Tuning"
           ]
         },
         {
@@ -129,6 +249,14 @@
           "sub_roles": [
             "Algorithm Fairness Specialist",
             "AI Governance Consultant"
+          ],
+          "skills": [
+            "Ethical AI",
+            "Policy Development",
+            "Risk Assessment",
+            "Bias Mitigation",
+            "Stakeholder Engagement",
+            "Compliance"
           ]
         },
         {
@@ -136,6 +264,14 @@
           "sub_roles": [
             "GPU Architect",
             "Chip Design Engineer"
+          ],
+          "skills": [
+            "ASIC Design",
+            "FPGA",
+            "VHDL",
+            "Hardware Optimization",
+            "GPU Architecture",
+            "Thermal Management"
           ]
         },
         {
@@ -143,6 +279,14 @@
           "sub_roles": [
             "AI Application Developer",
             "Recommendation System Developer"
+          ],
+          "skills": [
+            "AI Application Development",
+            "Python",
+            "APIs",
+            "Cloud Services",
+            "Microservices",
+            "Model Integration"
           ]
         },
         {
@@ -150,18 +294,42 @@
           "sub_roles": [
             "AI-driven UX Designer",
             "Personalized UI Designer"
+          ],
+          "skills": [
+            "User Research",
+            "Interaction Design",
+            "Prototyping",
+            "Design Thinking",
+            "AI UX Patterns",
+            "Usability Testing"
           ]
         },
         {
           "role_name": "UX Developer (AI)",
           "sub_roles": [
             "Front-end AI Developer"
+          ],
+          "skills": [
+            "Front-End Development",
+            "React",
+            "CSS",
+            "Design Systems",
+            "Accessibility",
+            "AI Interface Integration"
           ]
         },
         {
           "role_name": "Algorithm Developer",
           "sub_roles": [
             "Optimization Algorithm Developer"
+          ],
+          "skills": [
+            "Optimization",
+            "Data Structures",
+            "Mathematics",
+            "C++",
+            "Algorithm Analysis",
+            "Simulation"
           ]
         }
       ]
@@ -175,6 +343,14 @@
             "General Practitioner",
             "Surgeon",
             "Pediatrician"
+          ],
+          "skills": [
+            "Diagnosis",
+            "Clinical Procedures",
+            "Patient Care",
+            "Medical Documentation",
+            "Pharmacology",
+            "Team Collaboration"
           ]
         },
         {
@@ -183,6 +359,14 @@
             "Registered Nurse",
             "Nurse Practitioner",
             "Clinical Nurse Specialist"
+          ],
+          "skills": [
+            "Patient Monitoring",
+            "Medication Administration",
+            "IV Therapy",
+            "Care Planning",
+            "Clinical Documentation",
+            "Patient Education"
           ]
         },
         {
@@ -191,6 +375,14 @@
             "Radiologic Technologist",
             "Laboratory Technician",
             "Surgical Technician"
+          ],
+          "skills": [
+            "Installation",
+            "Maintenance",
+            "Troubleshooting",
+            "Customer Support",
+            "Testing",
+            "Documentation"
           ]
         },
         {
@@ -199,6 +391,14 @@
             "Physical Therapist",
             "Occupational Therapist",
             "Respiratory Therapist"
+          ],
+          "skills": [
+            "Treatment Planning",
+            "Patient Assessment",
+            "Therapeutic Exercises",
+            "Care Coordination",
+            "Documentation",
+            "Patient Counseling"
           ]
         },
         {
@@ -207,6 +407,14 @@
             "Medical Assistant",
             "Dental Assistant",
             "Physician Assistant"
+          ],
+          "skills": [
+            "Patient Support",
+            "Scheduling",
+            "Medical Documentation",
+            "Vital Signs",
+            "Clinical Procedures",
+            "Customer Service"
           ]
         },
         {
@@ -214,6 +422,14 @@
           "sub_roles": [
             "Clinical Pharmacist",
             "Retail Pharmacist"
+          ],
+          "skills": [
+            "Medication Management",
+            "Pharmacology",
+            "Prescription Review",
+            "Patient Counseling",
+            "Drug Interactions",
+            "Inventory Control"
           ]
         },
         {
@@ -221,18 +437,42 @@
           "sub_roles": [
             "Personal Care Assistant",
             "Home Nursing Aide"
+          ],
+          "skills": [
+            "Personal Care",
+            "Medication Reminders",
+            "Vital Signs",
+            "Mobility Assistance",
+            "Meal Preparation",
+            "Home Safety"
           ]
         },
         {
           "role_name": "Medical Sonographer",
           "sub_roles": [
             "Diagnostic Medical Sonographer"
+          ],
+          "skills": [
+            "Ultrasound Imaging",
+            "Patient Care",
+            "Anatomy",
+            "Diagnostic Procedures",
+            "Equipment Maintenance",
+            "Reporting"
           ]
         },
         {
           "role_name": "Dental Hygienist",
           "sub_roles": [
             "Dental Hygienist"
+          ],
+          "skills": [
+            "Dental Prophylaxis",
+            "Patient Education",
+            "X-ray Operation",
+            "Oral Health Assessment",
+            "Sterilization",
+            "Charting"
           ]
         },
         {
@@ -240,6 +480,14 @@
           "sub_roles": [
             "Clinical Lab Technician",
             "Blood Bank Technologist"
+          ],
+          "skills": [
+            "Sample Collection",
+            "Laboratory Testing",
+            "Quality Control",
+            "Microscopy",
+            "Lab Equipment",
+            "Safety Procedures"
           ]
         }
       ]
@@ -253,6 +501,14 @@
             "Investment Analyst",
             "Risk Analyst",
             "Budget Analyst"
+          ],
+          "skills": [
+            "Financial Modeling",
+            "Excel",
+            "Forecasting",
+            "Budgeting",
+            "Variance Analysis",
+            "Reporting"
           ]
         },
         {
@@ -261,6 +517,14 @@
             "Certified Public Accountant",
             "Staff Accountant",
             "Cost Accountant"
+          ],
+          "skills": [
+            "General Ledger",
+            "Financial Reporting",
+            "Accounts Payable",
+            "Tax Preparation",
+            "SAP",
+            "Reconciliation"
           ]
         },
         {
@@ -273,6 +537,14 @@
             "Loss Control Specialist",
             "Insurance Sales Agent",
             "Insurance Underwriter"
+          ],
+          "skills": [
+            "Risk Assessment",
+            "Policy Administration",
+            "Claims Management",
+            "Customer Service",
+            "Underwriting",
+            "Regulatory Compliance"
           ]
         },
         {
@@ -281,6 +553,14 @@
             "Chief Financial Officer",
             "Treasurer",
             "Finance Vice President"
+          ],
+          "skills": [
+            "Financial Reporting",
+            "Internal Controls",
+            "Budgeting",
+            "ERP Systems",
+            "Cash Management",
+            "Audit Coordination"
           ]
         },
         {
@@ -289,6 +569,14 @@
             "Internal Auditor",
             "Audit Manager",
             "Audit Senior"
+          ],
+          "skills": [
+            "Audit Planning",
+            "GAAP",
+            "Internal Controls",
+            "Risk Assessment",
+            "Data Analytics",
+            "Reporting"
           ]
         },
         {
@@ -297,6 +585,14 @@
             "Bookkeeper",
             "Finance Clerk",
             "Accounts Payable Clerk"
+          ],
+          "skills": [
+            "Accounts Payable",
+            "Accounts Receivable",
+            "Data Entry",
+            "Invoice Processing",
+            "Bank Reconciliations",
+            "ERP Systems"
           ]
         },
         {
@@ -304,6 +600,14 @@
           "sub_roles": [
             "Wealth Manager",
             "Investment Planner"
+          ],
+          "skills": [
+            "Financial Planning",
+            "Retirement Planning",
+            "Client Advisory",
+            "Portfolio Management",
+            "Risk Analysis",
+            "Compliance"
           ]
         }
       ]
@@ -318,6 +622,14 @@
             "Welder",
             "Fabricator",
             "Print Binding Worker"
+          ],
+          "skills": [
+            "Assembly",
+            "Blueprint Reading",
+            "Hand Tools",
+            "Quality Inspection",
+            "Safety",
+            "Soldering"
           ]
         },
         {
@@ -327,6 +639,14 @@
             "Lathe Operator",
             "Milling Machine Operator",
             "Industrial Engineering Technician"
+          ],
+          "skills": [
+            "CNC Programming",
+            "Machine Setup",
+            "Precision Measurement",
+            "Tooling",
+            "Maintenance",
+            "Blueprint Reading"
           ]
         },
         {
@@ -336,6 +656,14 @@
             "Plant Manager",
             "Manufacturing Engineer",
             "Operations Manager"
+          ],
+          "skills": [
+            "Production Planning",
+            "Lean Manufacturing",
+            "Resource Management",
+            "Team Leadership",
+            "Process Improvement",
+            "Safety Compliance"
           ]
         },
         {
@@ -344,6 +672,14 @@
             "Quality Assurance Engineer",
             "Quality Control Supervisor",
             "Inspector"
+          ],
+          "skills": [
+            "Inspection",
+            "Quality Standards",
+            "Statistical Process Control",
+            "Root Cause Analysis",
+            "ISO Compliance",
+            "Documentation"
           ]
         },
         {
@@ -352,6 +688,14 @@
             "Welder",
             "Soldering Machine Operator",
             "Pipefitter"
+          ],
+          "skills": [
+            "Welding",
+            "Blueprint Reading",
+            "Safety Procedures",
+            "Metal Fabrication",
+            "TIG Welding",
+            "MIG Welding"
           ]
         },
         {
@@ -359,6 +703,14 @@
           "sub_roles": [
             "Supply Chain Analyst",
             "Logistics Manager"
+          ],
+          "skills": [
+            "Supply Planning",
+            "Inventory Management",
+            "Logistics",
+            "ERP",
+            "Vendor Management",
+            "Demand Forecasting"
           ]
         }
       ]
@@ -372,6 +724,14 @@
             "Sales Associate",
             "Cashier",
             "Customer Service Representative"
+          ],
+          "skills": [
+            "Customer Service",
+            "Point of Sale",
+            "Product Knowledge",
+            "Upselling",
+            "Merchandising",
+            "Cash Handling"
           ]
         },
         {
@@ -379,6 +739,14 @@
           "sub_roles": [
             "Assistant Manager",
             "Department Manager"
+          ],
+          "skills": [
+            "Team Leadership",
+            "Sales Management",
+            "Inventory Control",
+            "Staff Scheduling",
+            "Customer Experience",
+            "Store Operations"
           ]
         },
         {
@@ -386,6 +754,14 @@
           "sub_roles": [
             "Merchandise Planner",
             "Procurement Manager"
+          ],
+          "skills": [
+            "Vendor Negotiation",
+            "Forecasting",
+            "Inventory Planning",
+            "Market Analysis",
+            "Purchase Orders",
+            "Cost Management"
           ]
         },
         {
@@ -397,6 +773,14 @@
             "Fulfillment Staff",
             "Graphic Designer",
             "Customer Service Representative"
+          ],
+          "skills": [
+            "E-commerce Platforms",
+            "Digital Marketing",
+            "SEO",
+            "Analytics",
+            "Merchandising",
+            "Customer Experience"
           ]
         },
         {
@@ -404,6 +788,14 @@
           "sub_roles": [
             "Visual Merchandiser",
             "Planogram Specialist"
+          ],
+          "skills": [
+            "Visual Merchandising",
+            "Planograms",
+            "Inventory Analysis",
+            "Retail Execution",
+            "Promotion Planning",
+            "Store Audits"
           ]
         }
       ]
@@ -416,12 +808,28 @@
           "sub_roles": [
             "Site Manager",
             "Project Engineer"
+          ],
+          "skills": [
+            "Project Planning",
+            "Budget Management",
+            "Contract Management",
+            "Scheduling",
+            "Site Coordination",
+            "Safety Compliance"
           ]
         },
         {
           "role_name": "General Contractor",
           "sub_roles": [
             "Construction Contractor"
+          ],
+          "skills": [
+            "Construction Management",
+            "Contract Negotiation",
+            "Budgeting",
+            "Subcontractor Coordination",
+            "Permitting",
+            "Site Supervision"
           ]
         },
         {
@@ -429,24 +837,56 @@
           "sub_roles": [
             "Crew Supervisor",
             "Foreman"
+          ],
+          "skills": [
+            "Crew Supervision",
+            "Scheduling",
+            "Safety Management",
+            "Blueprint Reading",
+            "Equipment Operation",
+            "Quality Control"
           ]
         },
         {
           "role_name": "Estimator",
           "sub_roles": [
             "Cost Estimator"
+          ],
+          "skills": [
+            "Cost Estimation",
+            "Blueprint Reading",
+            "Takeoffs",
+            "Bid Preparation",
+            "Construction Materials",
+            "Pricing"
           ]
         },
         {
           "role_name": "Superintendent",
           "sub_roles": [
             "Construction Superintendent"
+          ],
+          "skills": [
+            "Site Management",
+            "Scheduling",
+            "Safety Compliance",
+            "Quality Assurance",
+            "Stakeholder Communication",
+            "Issue Resolution"
           ]
         },
         {
           "role_name": "Structural Engineer",
           "sub_roles": [
             "Civil Structural Engineer"
+          ],
+          "skills": [
+            "Structural Analysis",
+            "Finite Element Analysis",
+            "Concrete Design",
+            "Steel Design",
+            "Building Codes",
+            "AutoCAD"
           ]
         },
         {
@@ -454,12 +894,28 @@
           "sub_roles": [
             "Building Inspector",
             "Site Inspector"
+          ],
+          "skills": [
+            "Code Compliance",
+            "Inspection",
+            "Documentation",
+            "Safety Standards",
+            "Report Writing",
+            "Construction Knowledge"
           ]
         },
         {
           "role_name": "Architect",
           "sub_roles": [
             "Building Designer"
+          ],
+          "skills": [
+            "Architectural Design",
+            "AutoCAD",
+            "Revit",
+            "Building Codes",
+            "3D Modeling",
+            "Client Presentation"
           ]
         },
         {
@@ -469,12 +925,28 @@
             "Plumber",
             "Bricklayer",
             "Roofer"
+          ],
+          "skills": [
+            "Trade Skills",
+            "Blueprint Reading",
+            "Safety Procedures",
+            "Tools Operation",
+            "Maintenance",
+            "Troubleshooting"
           ]
         },
         {
           "role_name": "Laborer",
           "sub_roles": [
             "General Laborer"
+          ],
+          "skills": [
+            "Manual Labor",
+            "Site Cleanup",
+            "Material Handling",
+            "Safety Practices",
+            "Equipment Operation",
+            "Teamwork"
           ]
         }
       ]
@@ -488,6 +960,14 @@
             "Elementary Teacher",
             "High School Teacher",
             "Special Education Teacher"
+          ],
+          "skills": [
+            "Curriculum Development",
+            "Classroom Management",
+            "Lesson Planning",
+            "Assessment",
+            "Student Engagement",
+            "Differentiated Instruction"
           ]
         },
         {
@@ -495,6 +975,14 @@
           "sub_roles": [
             "Principal",
             "Superintendent"
+          ],
+          "skills": [
+            "School Leadership",
+            "Policy Implementation",
+            "Budget Management",
+            "Staff Supervision",
+            "Community Relations",
+            "Strategic Planning"
           ]
         },
         {
@@ -502,6 +990,14 @@
           "sub_roles": [
             "School Counselor",
             "Career Counselor"
+          ],
+          "skills": [
+            "Student Counseling",
+            "Crisis Intervention",
+            "Career Guidance",
+            "Assessment",
+            "Communication",
+            "Record Keeping"
           ]
         },
         {
@@ -509,6 +1005,14 @@
           "sub_roles": [
             "School Librarian",
             "Media Specialist"
+          ],
+          "skills": [
+            "Cataloging",
+            "Information Literacy",
+            "Collection Management",
+            "Research Support",
+            "Library Systems",
+            "User Services"
           ]
         },
         {
@@ -516,6 +1020,14 @@
           "sub_roles": [
             "Instructional Technologist",
             "IT Support"
+          ],
+          "skills": [
+            "Instructional Design",
+            "Learning Technologies",
+            "LMS Administration",
+            "Training",
+            "Multimedia",
+            "Curriculum Integration"
           ]
         }
       ]
@@ -528,6 +1040,14 @@
           "sub_roles": [
             "Crop Farmer",
             "Livestock Farmer"
+          ],
+          "skills": [
+            "Crop Management",
+            "Irrigation",
+            "Soil Science",
+            "Equipment Operation",
+            "Harvesting",
+            "Pest Control"
           ]
         },
         {
@@ -535,6 +1055,14 @@
           "sub_roles": [
             "Cattle Rancher",
             "Sheep Farmer"
+          ],
+          "skills": [
+            "Livestock Care",
+            "Feed Management",
+            "Breeding",
+            "Veterinary Coordination",
+            "Pasture Management",
+            "Equipment Operation"
           ]
         },
         {
@@ -542,6 +1070,14 @@
           "sub_roles": [
             "Commercial Fisherman",
             "Aquaculture Worker"
+          ],
+          "skills": [
+            "Fishing Techniques",
+            "Navigation",
+            "Boat Operation",
+            "Safety Procedures",
+            "Net Maintenance",
+            "Catch Processing"
           ]
         },
         {
@@ -549,6 +1085,14 @@
           "sub_roles": [
             "Forestry Worker",
             "Timber Cruiser"
+          ],
+          "skills": [
+            "Tree Felling",
+            "Chainsaw Operation",
+            "Safety Protocols",
+            "Equipment Maintenance",
+            "Log Transport",
+            "Navigation"
           ]
         },
         {
@@ -556,6 +1100,14 @@
           "sub_roles": [
             "Tractor Operator",
             "Harvester Operator"
+          ],
+          "skills": [
+            "Heavy Equipment Operation",
+            "Maintenance",
+            "Safety Compliance",
+            "Site Preparation",
+            "GPS Systems",
+            "Material Handling"
           ]
         },
         {
@@ -563,6 +1115,14 @@
           "sub_roles": [
             "Agronomist",
             "Soil Scientist"
+          ],
+          "skills": [
+            "Research",
+            "Data Analysis",
+            "Crop Science",
+            "Soil Testing",
+            "Experimental Design",
+            "Reporting"
           ]
         }
       ]
@@ -577,6 +1137,14 @@
             "Bus Driver",
             "Delivery Driver",
             "Taxi Driver"
+          ],
+          "skills": [
+            "Driving",
+            "Route Planning",
+            "Vehicle Maintenance",
+            "Safety Compliance",
+            "Customer Service",
+            "Log Keeping"
           ]
         },
         {
@@ -584,12 +1152,28 @@
           "sub_roles": [
             "Commercial Pilot",
             "Cargo Pilot"
+          ],
+          "skills": [
+            "Flight Operations",
+            "Navigation",
+            "Aircraft Systems",
+            "Safety Procedures",
+            "Communication",
+            "Weather Analysis"
           ]
         },
         {
           "role_name": "Conductor",
           "sub_roles": [
             "Train Conductor"
+          ],
+          "skills": [
+            "Rail Operations",
+            "Safety Compliance",
+            "Scheduling",
+            "Communication",
+            "Ticketing",
+            "Emergency Response"
           ]
         },
         {
@@ -598,6 +1182,14 @@
             "Supply Chain Analyst",
             "Inventory Manager",
             "Freight Agent"
+          ],
+          "skills": [
+            "Supply Chain",
+            "Transportation Planning",
+            "Warehouse Management",
+            "Inventory Control",
+            "Vendor Management",
+            "Analytics"
           ]
         },
         {
@@ -606,6 +1198,14 @@
             "Warehouse Associate",
             "Stock Clerk",
             "Forklift Operator"
+          ],
+          "skills": [
+            "Inventory Handling",
+            "Forklift Operation",
+            "Order Picking",
+            "Shipping",
+            "Receiving",
+            "Safety"
           ]
         },
         {
@@ -613,6 +1213,14 @@
           "sub_roles": [
             "Merchant Marine Captain",
             "Ferry Captain"
+          ],
+          "skills": [
+            "Navigation",
+            "Crew Management",
+            "Maritime Regulations",
+            "Safety",
+            "Engine Systems",
+            "Voyage Planning"
           ]
         }
       ]
@@ -625,6 +1233,14 @@
           "sub_roles": [
             "Film Actor",
             "Stage Actor"
+          ],
+          "skills": [
+            "Performance",
+            "Script Analysis",
+            "Improvisation",
+            "Voice Control",
+            "Stage Presence",
+            "Character Development"
           ]
         },
         {
@@ -633,6 +1249,14 @@
             "Film Producer",
             "TV Producer",
             "Music Producer"
+          ],
+          "skills": [
+            "Project Management",
+            "Budgeting",
+            "Scheduling",
+            "Negotiation",
+            "Creative Direction",
+            "Team Leadership"
           ]
         },
         {
@@ -640,6 +1264,14 @@
           "sub_roles": [
             "Film Director",
             "Television Director"
+          ],
+          "skills": [
+            "Creative Direction",
+            "Script Analysis",
+            "Leadership",
+            "Storyboarding",
+            "Collaboration",
+            "Visual Communication"
           ]
         },
         {
@@ -648,6 +1280,14 @@
             "Video Editor",
             "Content Editor",
             "Journalist"
+          ],
+          "skills": [
+            "Editing",
+            "Storytelling",
+            "Adobe Premiere",
+            "After Effects",
+            "Content Curation",
+            "Quality Control"
           ]
         },
         {
@@ -655,6 +1295,14 @@
           "sub_roles": [
             "Reporter",
             "Correspondent"
+          ],
+          "skills": [
+            "Reporting",
+            "Writing",
+            "Interviewing",
+            "Research",
+            "Fact-Checking",
+            "Editing"
           ]
         },
         {
@@ -662,6 +1310,14 @@
           "sub_roles": [
             "Videographer",
             "Cinematographer"
+          ],
+          "skills": [
+            "Camera Operation",
+            "Lighting",
+            "Composition",
+            "Shot Framing",
+            "Equipment Maintenance",
+            "Storytelling"
           ]
         },
         {
@@ -669,6 +1325,14 @@
           "sub_roles": [
             "Audio Technician",
             "Sound Designer"
+          ],
+          "skills": [
+            "Audio Mixing",
+            "Recording",
+            "Sound Design",
+            "Acoustics",
+            "DAWs",
+            "Equipment Setup"
           ]
         },
         {
@@ -676,6 +1340,14 @@
           "sub_roles": [
             "2D Animator",
             "3D Animator"
+          ],
+          "skills": [
+            "Animation",
+            "Storyboard",
+            "3D Modeling",
+            "Maya",
+            "Motion Graphics",
+            "Rendering"
           ]
         }
       ]
@@ -689,6 +1361,14 @@
             "Litigation Attorney",
             "Corporate Lawyer",
             "Public Defender"
+          ],
+          "skills": [
+            "Legal Research",
+            "Client Advocacy",
+            "Litigation",
+            "Contract Drafting",
+            "Negotiation",
+            "Regulatory Knowledge"
           ]
         },
         {
@@ -696,6 +1376,14 @@
           "sub_roles": [
             "Legal Assistant",
             "Legal Secretary"
+          ],
+          "skills": [
+            "Legal Research",
+            "Document Preparation",
+            "Case Management",
+            "Discovery",
+            "Client Communication",
+            "File Management"
           ]
         },
         {
@@ -703,6 +1391,14 @@
           "sub_roles": [
             "Court Clerk",
             "Law Clerk"
+          ],
+          "skills": [
+            "Record Keeping",
+            "Document Management",
+            "Data Entry",
+            "Scheduling",
+            "Customer Service",
+            "Compliance"
           ]
         },
         {
@@ -710,6 +1406,14 @@
           "sub_roles": [
             "Mediator",
             "Arbitrator"
+          ],
+          "skills": [
+            "Conflict Resolution",
+            "Negotiation",
+            "Facilitation",
+            "Legal Knowledge",
+            "Communication",
+            "Documentation"
           ]
         },
         {
@@ -717,6 +1421,14 @@
           "sub_roles": [
             "District Judge",
             "Magistrate"
+          ],
+          "skills": [
+            "Legal Analysis",
+            "Decision Making",
+            "Courtroom Management",
+            "Writing",
+            "Ethics",
+            "Case Management"
           ]
         }
       ]
@@ -730,6 +1442,14 @@
             "Legislator",
             "Mayor",
             "Council Member"
+          ],
+          "skills": [
+            "Public Speaking",
+            "Policy Development",
+            "Constituent Relations",
+            "Campaign Management",
+            "Negotiation",
+            "Media Relations"
           ]
         },
         {
@@ -737,6 +1457,14 @@
           "sub_roles": [
             "Policy Analyst",
             "Legislative Assistant"
+          ],
+          "skills": [
+            "Policy Analysis",
+            "Research",
+            "Stakeholder Engagement",
+            "Writing",
+            "Legislative Knowledge",
+            "Strategic Planning"
           ]
         },
         {
@@ -744,6 +1472,14 @@
           "sub_roles": [
             "City Manager",
             "County Administrator"
+          ],
+          "skills": [
+            "Program Management",
+            "Budgeting",
+            "Public Policy",
+            "Community Engagement",
+            "Leadership",
+            "Performance Measurement"
           ]
         },
         {
@@ -752,6 +1488,14 @@
             "Police Officer",
             "Sheriff",
             "Detective"
+          ],
+          "skills": [
+            "Criminal Investigation",
+            "Patrol Procedures",
+            "Community Policing",
+            "Report Writing",
+            "Firearms",
+            "Crisis Response"
           ]
         },
         {
@@ -759,6 +1503,14 @@
           "sub_roles": [
             "Public Welfare Officer",
             "Community Outreach Worker"
+          ],
+          "skills": [
+            "Case Management",
+            "Counseling",
+            "Advocacy",
+            "Assessment",
+            "Crisis Intervention",
+            "Documentation"
           ]
         },
         {
@@ -766,6 +1518,14 @@
           "sub_roles": [
             "Health Inspector",
             "Building Inspector"
+          ],
+          "skills": [
+            "Inspection",
+            "Compliance",
+            "Reporting",
+            "Regulations",
+            "Risk Assessment",
+            "Stakeholder Communication"
           ]
         }
       ]
@@ -778,6 +1538,14 @@
           "sub_roles": [
             "Residential Agent",
             "Commercial Broker"
+          ],
+          "skills": [
+            "Property Sales",
+            "Negotiation",
+            "Market Analysis",
+            "Client Relations",
+            "Contract Management",
+            "Lead Generation"
           ]
         },
         {
@@ -785,6 +1553,14 @@
           "sub_roles": [
             "Leasing Agent",
             "Facilities Manager"
+          ],
+          "skills": [
+            "Lease Administration",
+            "Maintenance Coordination",
+            "Budgeting",
+            "Tenant Relations",
+            "Vendor Management",
+            "Rent Collection"
           ]
         },
         {
@@ -792,6 +1568,14 @@
           "sub_roles": [
             "Real Estate Developer",
             "Land Developer"
+          ],
+          "skills": [
+            "Project Finance",
+            "Zoning",
+            "Feasibility Analysis",
+            "Construction Management",
+            "Negotiation",
+            "Market Research"
           ]
         },
         {
@@ -799,6 +1583,14 @@
           "sub_roles": [
             "Urban Planner",
             "Landscape Architect"
+          ],
+          "skills": [
+            "Architectural Design",
+            "AutoCAD",
+            "Revit",
+            "Building Codes",
+            "3D Modeling",
+            "Client Presentation"
           ]
         },
         {
@@ -806,6 +1598,14 @@
           "sub_roles": [
             "Building Superintendent",
             "Maintenance Technician"
+          ],
+          "skills": [
+            "Facility Maintenance",
+            "Preventive Maintenance",
+            "Electrical Repair",
+            "HVAC",
+            "Plumbing",
+            "Safety Procedures"
           ]
         }
       ]
@@ -818,6 +1618,14 @@
           "sub_roles": [
             "Control Room Operator",
             "Boiler Operator"
+          ],
+          "skills": [
+            "Plant Operations",
+            "Control Systems",
+            "Safety Protocols",
+            "Equipment Monitoring",
+            "Troubleshooting",
+            "Regulatory Compliance"
           ]
         },
         {
@@ -825,6 +1633,14 @@
           "sub_roles": [
             "Electric Lineworker",
             "Telecommunications Lineworker"
+          ],
+          "skills": [
+            "Line Maintenance",
+            "Electrical Systems",
+            "Climbing",
+            "Safety",
+            "Equipment Operation",
+            "Repair"
           ]
         },
         {
@@ -832,6 +1648,14 @@
           "sub_roles": [
             "Utility Meter Reader",
             "Smart Meter Technician"
+          ],
+          "skills": [
+            "Meter Reading",
+            "Data Entry",
+            "Route Planning",
+            "Customer Interaction",
+            "Reporting",
+            "Safety"
           ]
         },
         {
@@ -839,6 +1663,14 @@
           "sub_roles": [
             "Power Systems Engineer",
             "Transmission Engineer"
+          ],
+          "skills": [
+            "Circuit Design",
+            "Power Systems",
+            "CAD",
+            "Testing",
+            "Analysis",
+            "Project Management"
           ]
         },
         {
@@ -846,6 +1678,14 @@
           "sub_roles": [
             "Wastewater Operator",
             "Water Quality Technician"
+          ],
+          "skills": [
+            "Water Quality Testing",
+            "Equipment Operation",
+            "Chemical Handling",
+            "Process Monitoring",
+            "Maintenance",
+            "Safety"
           ]
         }
       ]
@@ -858,6 +1698,14 @@
           "sub_roles": [
             "Network Administrator",
             "Network Architect"
+          ],
+          "skills": [
+            "Routing",
+            "Switching",
+            "Network Security",
+            "Cisco",
+            "Firewalls",
+            "Troubleshooting"
           ]
         },
         {
@@ -865,6 +1713,14 @@
           "sub_roles": [
             "Telecom Software Developer",
             "VoIP Developer"
+          ],
+          "skills": [
+            "Programming",
+            "SDLC",
+            "Version Control",
+            "API Development",
+            "Testing",
+            "Documentation"
           ]
         },
         {
@@ -872,6 +1728,14 @@
           "sub_roles": [
             "Cable Technician",
             "Field Service Technician"
+          ],
+          "skills": [
+            "Installation",
+            "Maintenance",
+            "Troubleshooting",
+            "Customer Support",
+            "Testing",
+            "Documentation"
           ]
         },
         {
@@ -879,6 +1743,14 @@
           "sub_roles": [
             "Call Center Representative",
             "Technical Support Representative"
+          ],
+          "skills": [
+            "Customer Service",
+            "Ticketing Systems",
+            "Troubleshooting",
+            "Communication",
+            "Product Knowledge",
+            "Issue Resolution"
           ]
         },
         {
@@ -886,6 +1758,14 @@
           "sub_roles": [
             "Telecom Sales Executive",
             "Account Manager"
+          ],
+          "skills": [
+            "Sales",
+            "Prospecting",
+            "CRM",
+            "Negotiation",
+            "Lead Generation",
+            "Customer Relationship Management"
           ]
         },
         {
@@ -893,6 +1773,14 @@
           "sub_roles": [
             "Operations Manager",
             "Project Manager"
+          ],
+          "skills": [
+            "Telecom Operations",
+            "Project Management",
+            "Vendor Management",
+            "Budgeting",
+            "Network Planning",
+            "Team Leadership"
           ]
         }
       ]
@@ -905,6 +1793,14 @@
           "sub_roles": [
             "General Manager",
             "Assistant Manager"
+          ],
+          "skills": [
+            "Hotel Operations",
+            "Guest Experience",
+            "Staff Management",
+            "Revenue Management",
+            "Budgeting",
+            "Customer Service"
           ]
         },
         {
@@ -912,6 +1808,14 @@
           "sub_roles": [
             "Receptionist",
             "Reservation Agent"
+          ],
+          "skills": [
+            "Check-in",
+            "Reservations",
+            "Customer Service",
+            "Telephone Etiquette",
+            "Cash Handling",
+            "Problem Solving"
           ]
         },
         {
@@ -919,6 +1823,14 @@
           "sub_roles": [
             "Housekeeper",
             "Housekeeping Supervisor"
+          ],
+          "skills": [
+            "Cleaning",
+            "Inventory Management",
+            "Quality Standards",
+            "Time Management",
+            "Safety",
+            "Guest Requests"
           ]
         },
         {
@@ -928,6 +1840,14 @@
             "Bartender",
             "Banquet Server",
             "Chef"
+          ],
+          "skills": [
+            "Food Service",
+            "Beverage Service",
+            "POS Systems",
+            "Customer Service",
+            "Sanitation",
+            "Menu Knowledge"
           ]
         },
         {
@@ -935,6 +1855,14 @@
           "sub_roles": [
             "Guest Services Agent",
             "Tour Desk Clerk"
+          ],
+          "skills": [
+            "Guest Services",
+            "Local Knowledge",
+            "Reservations",
+            "Communication",
+            "Problem Solving",
+            "Upselling"
           ]
         },
         {
@@ -942,6 +1870,14 @@
           "sub_roles": [
             "Meeting Planner",
             "Wedding Planner"
+          ],
+          "skills": [
+            "Event Coordination",
+            "Vendor Negotiation",
+            "Budget Management",
+            "Logistics",
+            "Timeline Management",
+            "Client Relations"
           ]
         }
       ]
@@ -955,6 +1891,14 @@
             "Brand Manager",
             "Digital Marketing Manager",
             "Content Marketing Manager"
+          ],
+          "skills": [
+            "Marketing Strategy",
+            "Campaign Management",
+            "Budgeting",
+            "Team Leadership",
+            "Market Research",
+            "Analytics"
           ]
         },
         {
@@ -962,6 +1906,14 @@
           "sub_roles": [
             "SEO Specialist",
             "PPC Specialist"
+          ],
+          "skills": [
+            "SEO",
+            "SEM",
+            "Social Media Marketing",
+            "Analytics",
+            "Content Strategy",
+            "Email Campaigns"
           ]
         },
         {
@@ -969,6 +1921,14 @@
           "sub_roles": [
             "Content Writer",
             "Content Strategist"
+          ],
+          "skills": [
+            "Content Strategy",
+            "Copywriting",
+            "Editorial Planning",
+            "SEO",
+            "Analytics",
+            "Storytelling"
           ]
         },
         {
@@ -976,6 +1936,14 @@
           "sub_roles": [
             "Social Media Specialist",
             "Community Manager"
+          ],
+          "skills": [
+            "Social Media Strategy",
+            "Community Management",
+            "Content Creation",
+            "Analytics",
+            "Brand Voice",
+            "Paid Media"
           ]
         },
         {
@@ -983,6 +1951,14 @@
           "sub_roles": [
             "SEO Analyst",
             "Link Building Specialist"
+          ],
+          "skills": [
+            "Keyword Research",
+            "On-page SEO",
+            "Link Building",
+            "Analytics",
+            "Technical SEO",
+            "Content Optimization"
           ]
         },
         {
@@ -990,6 +1966,14 @@
           "sub_roles": [
             "Market Research Analyst",
             "Data Analyst"
+          ],
+          "skills": [
+            "Data Analysis",
+            "Marketing Analytics",
+            "Reporting",
+            "Segmentation",
+            "Forecasting",
+            "Visualization"
           ]
         },
         {
@@ -997,6 +1981,14 @@
           "sub_roles": [
             "Product Marketer",
             "Go-to-Market Specialist"
+          ],
+          "skills": [
+            "Go-to-Market",
+            "Positioning",
+            "Messaging",
+            "Sales Enablement",
+            "Market Research",
+            "Competitive Analysis"
           ]
         },
         {
@@ -1004,6 +1996,14 @@
           "sub_roles": [
             "Email Campaign Manager",
             "Lifecycle Marketing Specialist"
+          ],
+          "skills": [
+            "Email Campaigns",
+            "Automation",
+            "Segmentation",
+            "Copywriting",
+            "A/B Testing",
+            "Analytics"
           ]
         },
         {
@@ -1011,6 +2011,14 @@
           "sub_roles": [
             "Marketing Assistant",
             "Campaign Coordinator"
+          ],
+          "skills": [
+            "Campaign Support",
+            "Event Coordination",
+            "Content Creation",
+            "Reporting",
+            "CRM",
+            "Project Management"
           ]
         }
       ]
@@ -1024,6 +2032,14 @@
             "Certified Public Accountant",
             "Staff Accountant",
             "Cost Accountant"
+          ],
+          "skills": [
+            "General Ledger",
+            "Financial Reporting",
+            "Accounts Payable",
+            "Tax Preparation",
+            "SAP",
+            "Reconciliation"
           ]
         },
         {
@@ -1031,6 +2047,14 @@
           "sub_roles": [
             "Internal Auditor",
             "External Auditor"
+          ],
+          "skills": [
+            "Audit Planning",
+            "GAAP",
+            "Internal Controls",
+            "Risk Assessment",
+            "Data Analytics",
+            "Reporting"
           ]
         },
         {
@@ -1038,6 +2062,14 @@
           "sub_roles": [
             "Finance Director",
             "Chief Accounting Officer"
+          ],
+          "skills": [
+            "Financial Strategy",
+            "Executive Leadership",
+            "Capital Planning",
+            "Risk Management",
+            "Investor Relations",
+            "Financial Reporting"
           ]
         },
         {
@@ -1045,6 +2077,14 @@
           "sub_roles": [
             "Treasurer",
             "Finance Vice President"
+          ],
+          "skills": [
+            "Financial Reporting",
+            "Internal Controls",
+            "Budgeting",
+            "ERP Systems",
+            "Cash Management",
+            "Audit Coordination"
           ]
         },
         {
@@ -1052,6 +2092,14 @@
           "sub_roles": [
             "Bookkeeper",
             "Accounts Payable Clerk"
+          ],
+          "skills": [
+            "Accounts Payable",
+            "Accounts Receivable",
+            "Data Entry",
+            "Invoice Processing",
+            "Bank Reconciliations",
+            "ERP Systems"
           ]
         }
       ]

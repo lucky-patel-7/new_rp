@@ -10,7 +10,8 @@ import uuid
 import tempfile
 import re
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Set, Tuple
+from difflib import SequenceMatcher
 
 # Add the project root to the Python path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -132,16 +133,188 @@ def _extract_experience_years(payload: Dict[str, Any]) -> Optional[float]:
     return years_total if found_value else None
 
 
-def _candidate_meets_experience_requirement(payload: Dict[str, Any], minimum_years: int) -> bool:
-    """Determine if a candidate satisfies the minimum experience requirement."""
+def _candidate_meets_experience_requirement(
+    payload: Dict[str, Any],
+    minimum_years: Optional[int],
+    maximum_years: Optional[int]
+) -> bool:
+    """Determine if a candidate satisfies minimum and/or maximum experience requirements."""
     experience_years = _extract_experience_years(payload)
     if experience_years is None:
         return False
 
     try:
-        return experience_years >= float(minimum_years)
+        if minimum_years is not None and experience_years < float(minimum_years):
+            return False
+        if maximum_years is not None and experience_years > float(maximum_years):
+            return False
+        return True
     except (TypeError, ValueError):
         return False
+
+
+GENERIC_COMPANY_TOKENS: Set[str] = {
+    'inc', 'inc.', 'llc', 'llp', 'ltd', 'ltd.', 'pvt', 'pvt.', 'private', 'limited',
+    'technologies', 'technology', 'tech', 'solutions', 'solution', 'systems', 'system',
+    'software', 'services', 'service', 'corp', 'corp.', 'corporation', 'company',
+    'co', 'co.', 'group', 'india', 'global', 'international', 'it', 'p', 'plc'
+}
+
+
+def _normalize_company_text(name: str) -> str:
+    if not name or not isinstance(name, str):
+        return ''
+    # Replace punctuation with spaces and collapse whitespace
+    cleaned = re.sub(r'[^a-z0-9]+', ' ', name.lower())
+    return re.sub(r'\s+', ' ', cleaned).strip()
+
+
+def _company_token_set(name: str) -> Set[str]:
+    normalized = _normalize_company_text(name)
+    tokens = set(re.split(r'\s+', normalized))
+    return {token for token in tokens if token and token not in GENERIC_COMPANY_TOKENS}
+
+
+def _company_names_match(query_company: str, candidate_company: str) -> bool:
+    normalized_query = _normalize_company_text(query_company)
+    normalized_candidate = _normalize_company_text(candidate_company)
+
+    if not normalized_query or not normalized_candidate:
+        return False
+
+    if normalized_query == normalized_candidate:
+        return True
+
+    core_query_tokens = _company_token_set(query_company)
+    core_candidate_tokens = _company_token_set(candidate_company)
+
+    if core_query_tokens and core_candidate_tokens:
+        if core_query_tokens.issubset(core_candidate_tokens) or core_candidate_tokens.issubset(core_query_tokens):
+            return True
+
+        token_overlap = core_query_tokens & core_candidate_tokens
+        if any(len(token) >= 4 for token in token_overlap):
+            return True
+
+    # Check for strong substring match on normalized names while avoiding generic-only matches
+    if core_query_tokens and core_candidate_tokens:
+        if normalized_query in normalized_candidate or normalized_candidate in normalized_query:
+            if core_query_tokens <= core_candidate_tokens or core_candidate_tokens <= core_query_tokens:
+                return True
+
+    similarity = SequenceMatcher(None, normalized_query, normalized_candidate).ratio()
+    return similarity >= 0.78
+
+
+def _extract_candidate_companies(payload: Dict[str, Any]) -> List[str]:
+    companies: List[str] = []
+
+    current_employment = payload.get('current_employment')
+    if isinstance(current_employment, dict):
+        company = current_employment.get('company')
+        if company:
+            companies.append(company)
+
+    if payload.get('company'):
+        companies.append(payload.get('company'))
+
+    work_history = payload.get('work_history', [])
+    for job in work_history:
+        if isinstance(job, dict):
+            company = job.get('company')
+            if company:
+                companies.append(company)
+
+    # Remove duplicates while preserving order
+    seen: Set[str] = set()
+    unique_companies: List[str] = []
+    for company in companies:
+        normalized = _normalize_company_text(company)
+        if normalized and normalized not in seen:
+            seen.add(normalized)
+            unique_companies.append(company)
+
+    return unique_companies
+
+
+def _find_company_match(
+    payload: Dict[str, Any],
+    query_companies: List[str]
+) -> Tuple[bool, Optional[str], Optional[str]]:
+    if not query_companies:
+        return False, None, None
+
+    candidate_companies = _extract_candidate_companies(payload)
+    for candidate_company in candidate_companies:
+        for query_company in query_companies:
+            if _company_names_match(query_company, candidate_company):
+                return True, candidate_company, query_company
+
+    return False, None, None
+
+
+def _candidate_matches_company(payload: Dict[str, Any], query_companies: List[str]) -> bool:
+    match_found, _, _ = _find_company_match(payload, query_companies)
+    return match_found
+
+
+def _candidate_matches_forced_keywords(payload: Dict[str, Any], forced_keywords: List[str]) -> bool:
+    if not forced_keywords:
+        return True
+
+    from src.resume_parser.utils.search_intelligence import search_processor
+
+    try:
+        text = search_processor.extract_comprehensive_search_text(payload).lower()
+    except Exception:
+        text = ' '
+
+    for keyword in forced_keywords:
+        if keyword.lower() not in text:
+            return False
+    return True
+
+
+def _candidate_matches_education(
+    payload: Dict[str, Any],
+    required_degrees: List[str],
+    required_institutions: List[str]
+) -> bool:
+    if not required_degrees and not required_institutions:
+        return True
+
+    education = payload.get('education', [])
+    if not isinstance(education, list):
+        education = []
+
+    degrees_matched = not required_degrees
+    institutions_matched = not required_institutions
+
+    for edu in education:
+        if not isinstance(edu, dict):
+            continue
+        degree_val = (edu.get('degree') or '').lower()
+        field_val = (edu.get('field') or '').lower()
+        institution_val = (edu.get('institution') or '').lower()
+
+        if not degrees_matched and degree_val:
+            for required_degree in required_degrees:
+                req_lower = required_degree.lower()
+                if req_lower in degree_val or req_lower in field_val:
+                    degrees_matched = True
+                    break
+
+        if not institutions_matched and institution_val:
+            for required_institution in required_institutions:
+                req_inst_lower = required_institution.lower()
+                if req_inst_lower in institution_val:
+                    institutions_matched = True
+                    break
+
+        if degrees_matched and institutions_matched:
+            break
+
+    return degrees_matched and institutions_matched
 
 
 @app.on_event("startup")
@@ -571,26 +744,66 @@ async def search_resumes(
         limit = max(1, min(limit, 100))
         logger.info(f"📏 Result limit normalized to: {limit}")
 
+        effective_skills = parsed_query.effective_skills()
+        explicit_skill_count = len(parsed_query.skills)
+        effective_skill_count = len(effective_skills)
+        forced_keywords = parsed_query.forced_keywords
+        required_degrees = parsed_query.required_degrees
+        required_institutions = parsed_query.required_institutions
+
+        logger.info(f"🔧 Explicit skills detected: {parsed_query.skills[:5]}")
+        if parsed_query.role_inferred_skills:
+            logger.info(f"🔧 Role-inferred skills sample: {parsed_query.role_inferred_skills[:5]}")
+        if forced_keywords:
+            logger.info(f"🔑 Forced keywords: {forced_keywords[:5]}")
+        if required_degrees:
+            logger.info(f"🎓 Required degrees: {required_degrees[:5]}")
+        if required_institutions:
+            logger.info(f"🏛️ Required institutions: {required_institutions[:5]}")
+
         # Create comprehensive search text including all relevant terms
-        search_components = [query]
+        search_components: List[str] = []
+        seen_components: Set[str] = set()
+
+        def add_component(text: Optional[str]):
+            if not text or not isinstance(text, str):
+                return
+            cleaned = text.strip()
+            key = cleaned.lower()
+            if cleaned and key not in seen_components:
+                search_components.append(cleaned)
+                seen_components.add(key)
+
+        add_component(query)
 
         # Add detected role synonyms
         for role in parsed_query.job_roles:
             role_titles = search_processor.job_db.get_role_titles(role)
-            search_components.extend(role_titles[:3])  # Add top 3 role synonyms
+            for title in role_titles[:5]:
+                add_component(title)
 
-        # Add detected skills and related skills
-        search_components.extend(parsed_query.skills)
-        for role in parsed_query.job_roles:
-            role_skills = search_processor.job_db.get_role_skills(role)
-            search_components.extend(role_skills[:5])  # Add top 5 role-related skills
+        # Add explicit skills mentioned in the query
+        for skill in parsed_query.skills:
+            add_component(skill)
+
+        # Add inferred skills from configuration to enrich semantic search
+        for skill in parsed_query.role_inferred_skills[:40]:
+            add_component(skill)
+
+        for keyword in forced_keywords:
+            add_component(keyword)
+
+        for degree in required_degrees:
+            add_component(degree)
+        for institution in required_institutions:
+            add_component(institution)
 
         # Use expanded query for better semantic search
         search_text = ' '.join(search_components) if search_components else query
 
         # Log detailed embedding information
         logger.info(f"🔮 Creating embedding for search text: '{search_text}'")
-        logger.info(f"🔮 Search components: {search_components}")
+        logger.info(f"🔮 Search components count: {len(search_components)} | sample: {search_components[:10]}")
 
         query_vector = await _generate_embedding(search_text)
 
@@ -604,7 +817,8 @@ async def search_resumes(
 
         # Improved role filtering logic
         role_filters = search_processor.create_search_filters(parsed_query)
-        experience_filter_value = role_filters.pop('min_experience_years', None)
+        experience_min_filter_value = role_filters.pop('min_experience_years', None)
+        experience_max_filter_value = role_filters.pop('max_experience_years', None)
 
         # Always apply location/seniority filters even when no role detected
         location_filter_value = role_filters.pop('location', None)
@@ -617,12 +831,13 @@ async def search_resumes(
 
         # Apply role filters if we have clear role detection
         if parsed_query.job_roles:
+            skill_count_for_filter = explicit_skill_count if explicit_skill_count else effective_skill_count
             # For role-focused queries (like "HR manager"), always apply role filters
-            if len(parsed_query.skills) == 0 or len(parsed_query.job_roles) >= len(parsed_query.skills):
+            if skill_count_for_filter == 0 or len(parsed_query.job_roles) >= skill_count_for_filter:
                 filter_conditions.update(role_filters)
                 logger.info(f"🎯 Applying role filters for role-focused query: {role_filters}")
             # For skill-focused queries, be more flexible with role filters
-            elif len(parsed_query.skills) > len(parsed_query.job_roles):
+            elif skill_count_for_filter > len(parsed_query.job_roles):
                 # Only apply role filters if we have very specific role detection
                 if len(parsed_query.job_roles) == 1:
                     filter_conditions.update(role_filters)
@@ -635,19 +850,25 @@ async def search_resumes(
             filter_conditions["seniority"] = seniority_filter
 
         reported_filters = dict(filter_conditions)
-        if experience_filter_value is not None:
-            reported_filters['min_experience_years'] = experience_filter_value
+        if experience_min_filter_value is not None:
+            reported_filters['min_experience_years'] = experience_min_filter_value
+        if experience_max_filter_value is not None:
+            reported_filters['max_experience_years'] = experience_max_filter_value
 
         logger.info(
-            f"🎯 Search filters (Qdrant): {filter_conditions} | Python experience filter: {experience_filter_value}"
+            "🎯 Search filters (Qdrant): %s | Python experience filter: min=%s, max=%s",
+            filter_conditions,
+            experience_min_filter_value,
+            experience_max_filter_value
         )
         logger.info(f"📊 Detected roles: {parsed_query.job_roles}")
-        logger.info(f"🔧 Detected skills: {parsed_query.skills}")
+        logger.info(f"🔧 Effective skills used for search: {effective_skills[:10]}")
         logger.info(f"🗺️ Detected location: {parsed_query.location}")
-        logger.info(f"💡 Search strategy: {'skill-focused' if len(parsed_query.skills) > len(parsed_query.job_roles) else 'role-focused'}")
+        skill_focused = effective_skill_count > len(parsed_query.job_roles)
+        logger.info(f"💡 Search strategy: {'skill-focused' if skill_focused else 'role-focused'}")
 
         # Search strategy: For technical queries, cast a wider net
-        search_limit_multiplier = 4 if len(parsed_query.skills) > 0 else 3
+        search_limit_multiplier = 4 if effective_skill_count > 0 else 3
 
         # Check for unavailable roles using configuration system
         if parsed_query.unavailable_role_info:
@@ -657,7 +878,13 @@ async def search_resumes(
                 "parsed_query": {
                     "detected_roles": [],
                     "detected_skills": parsed_query.skills,
+                    "role_inferred_skills": parsed_query.role_inferred_skills,
+                    "forced_keywords": forced_keywords,
+                    "required_degrees": required_degrees,
+                    "required_institutions": required_institutions,
                     "experience_years": parsed_query.experience_years,
+                    "min_experience_years": parsed_query.min_experience_years,
+                    "max_experience_years": parsed_query.max_experience_years,
                     "seniority_level": parsed_query.seniority_level,
                     "location": parsed_query.location,
                     "intent": parsed_query.intent
@@ -673,15 +900,45 @@ async def search_resumes(
                 "results": []
             }
 
-        # Only search if we have proper role detection, skills, location, companies, OR keywords
-        if not parsed_query.job_roles and not parsed_query.skills and not parsed_query.location and not parsed_query.companies and not parsed_query.keywords:
+        # Check if this is a generic candidate search - allow these to proceed for general browsing
+        generic_keywords = ['candidate', 'candidates', 'people', 'person', 'resume', 'resumes', 'talent', 'profile', 'profiles']
+        has_generic_keywords = any(word in query.lower() for word in generic_keywords)
+        has_only_generic_keywords = (
+            parsed_query.keywords and
+            all(keyword.lower() in generic_keywords for keyword in parsed_query.keywords)
+        )
+
+        is_generic_search = (
+            not parsed_query.job_roles and
+            not parsed_query.skills and
+            not parsed_query.location and
+            not parsed_query.companies and
+            not forced_keywords and
+            not required_degrees and
+            not required_institutions and
+            (not parsed_query.keywords or has_only_generic_keywords) and
+            parsed_query.intent in ['find', 'search', 'hire', 'general'] and
+            has_generic_keywords
+        )
+
+
+        # Only search if we have proper criteria OR it's a generic candidate search
+        if (not parsed_query.job_roles and not parsed_query.skills and not parsed_query.location and not parsed_query.companies and
+                not forced_keywords and not required_degrees and not required_institutions and
+                (not parsed_query.keywords or has_only_generic_keywords) and not is_generic_search):
             logger.info("🚫 No roles, skills, location, companies, or keywords detected - returning empty results")
             return {
                 "query": query,
                 "parsed_query": {
                     "detected_roles": [],
                     "detected_skills": [],
+                    "role_inferred_skills": parsed_query.role_inferred_skills,
+                    "forced_keywords": forced_keywords,
+                    "required_degrees": required_degrees,
+                    "required_institutions": required_institutions,
                     "experience_years": parsed_query.experience_years,
+                    "min_experience_years": parsed_query.min_experience_years,
+                    "max_experience_years": parsed_query.max_experience_years,
                     "seniority_level": parsed_query.seniority_level,
                     "location": parsed_query.location,
                     "intent": parsed_query.intent
@@ -775,6 +1032,12 @@ async def search_resumes(
                 search_terms.extend(parsed_query.companies)
             if parsed_query.keywords:
                 search_terms.extend(parsed_query.keywords)
+            if forced_keywords:
+                search_terms.extend(forced_keywords)
+            if required_degrees:
+                search_terms.extend(required_degrees)
+            if required_institutions:
+                search_terms.extend(required_institutions)
 
             # Use these terms for semantic search
             word_search_query = " ".join(search_terms)
@@ -794,25 +1057,23 @@ async def search_resumes(
                     payload = result.get('payload', {})
                     candidate_name = payload.get('name', 'Unknown')
 
-                    # Check work history for company matches
-                    work_history = payload.get('work_history', [])
-                    company_match = False
-                    keyword_match = False
-
-                    for job in work_history:
-                        if isinstance(job, dict):
-                            company = job.get('company', '').lower()
-                            # Check if any of our search companies appear in work history
-                            for search_company in parsed_query.companies:
-                                if search_company.lower() in company:
-                                    company_match = True
-                                    logger.info(f"🎯 Company match found: {candidate_name} worked at '{company}' (matches '{search_company}')")
-                                    break
+                    company_match, matched_company, matched_query_company = _find_company_match(
+                        payload,
+                        parsed_query.companies
+                    )
+                    if company_match and matched_company and matched_query_company:
+                        logger.info(
+                            "🎯 Company match found: %s worked at '%s' (matches '%s')",
+                            candidate_name,
+                            matched_company,
+                            matched_query_company
+                        )
 
                     # Check for keyword matches in summary, skills, current position
                     summary = payload.get('summary', '').lower()
                     current_position = payload.get('current_position', '').lower()
                     skills = [s.lower() for s in payload.get('skills', [])]
+                    keyword_match = False
 
                     for keyword in parsed_query.keywords:
                         keyword_lower = keyword.lower()
@@ -823,18 +1084,60 @@ async def search_resumes(
                             logger.info(f"🎯 Keyword match found: {candidate_name} matches keyword '{keyword}'")
                             break
 
-                    # STRICT: If companies are specified, ONLY include candidates from those companies
+                    education_match = _candidate_matches_education(
+                        payload,
+                        required_degrees,
+                        required_institutions
+                    )
+
+                    forced_match = _candidate_matches_forced_keywords(payload, forced_keywords)
+
+                    include_candidate = False
                     if parsed_query.companies:
-                        # Company match is MANDATORY when companies are specified
-                        if company_match:
-                            matched_results.append(result)
+                        if company_match and forced_match and education_match:
+                            include_candidate = True
                     else:
-                        # If no companies specified, include based on company OR keyword matches
-                        if company_match or keyword_match:
-                            matched_results.append(result)
+                        if (keyword_match or company_match) and forced_match and education_match:
+                            include_candidate = True
+
+                    if include_candidate:
+                        matched_results.append(result)
 
                 results = matched_results
                 logger.info(f"🔍 Word-based search found {len(results)} matching candidates")
+
+        # Step 3.5: Generic candidate search for broad queries like "i need candidates"
+        if len(results) == 0 and is_generic_search:
+            logger.info(f"👥 Performing generic candidate search for query: '{query}'")
+
+            # For generic searches, return a diverse set of candidates ranked by relevance
+            generic_results = await qdrant_client.search_similar(
+                query_vector=query_vector,
+                limit=1000,  # Get ALL candidates for generic browsing
+                filter_conditions=None  # No filters - pure semantic matching
+            )
+
+            if generic_results:
+                # Sort by similarity score and diversify by role categories
+                seen_roles = set()
+                diverse_results = []
+
+                for result in generic_results:
+                    payload = result.get('payload', {})
+                    role_category = payload.get('role_category', 'Unknown')
+
+                    # Limit results per role category to ensure diversity
+                    role_count = sum(1 for r in diverse_results if r.get('payload', {}).get('role_category') == role_category)
+                    if role_count < 3:  # Max 3 candidates per role category
+                        diverse_results.append(result)
+                        seen_roles.add(role_category)
+
+                    # Stop once we have enough diverse candidates
+                    if len(diverse_results) >= 30:  # Return top 30 diverse candidates
+                        break
+
+                results = diverse_results
+                logger.info(f"👥 Generic search found {len(results)} diverse candidates across {len(seen_roles)} role categories")
 
         # Step 4: If still no results, return informative message
         if len(results) == 0:
@@ -846,7 +1149,13 @@ async def search_resumes(
                 "parsed_query": {
                     "detected_roles": parsed_query.job_roles,
                     "detected_skills": parsed_query.skills,
+                    "role_inferred_skills": parsed_query.role_inferred_skills,
+                    "forced_keywords": forced_keywords,
+                    "required_degrees": required_degrees,
+                    "required_institutions": required_institutions,
                     "experience_years": parsed_query.experience_years,
+                    "min_experience_years": parsed_query.min_experience_years,
+                    "max_experience_years": parsed_query.max_experience_years,
                     "seniority_level": parsed_query.seniority_level,
                     "location": parsed_query.location,
                     "companies": parsed_query.companies,
@@ -858,17 +1167,29 @@ async def search_resumes(
                     "message": f"No {detected_role_str} candidates found in database",
                     "filters_attempted": reported_filters if reported_filters else {},
                     "semantic_search_attempted": True,
-                    "available_roles": search_processor.job_db.get_database_roles()[:10]
+                    "available_roles": search_processor.job_db.get_database_roles()[:10],
+                    "forced_keyword_sample": forced_keywords[:10] if forced_keywords else [],
+                    "required_degree_sample": required_degrees[:5] if required_degrees else [],
+                    "required_institution_sample": required_institutions[:5] if required_institutions else [],
+                    "effective_skill_sample": effective_skills[:10] if effective_skills else []
                 },
                 "total_results": 0,
                 "results": []
             }
 
-            if experience_filter_value is not None:
-                response_payload["search_strategy"]["experience_requirement"] = {
-                    "minimum_years": experience_filter_value,
-                    "message": f"Filtered out candidates with less than {experience_filter_value} years experience"
-                }
+            if experience_min_filter_value is not None or experience_max_filter_value is not None:
+                experience_requirement = {"messages": []}
+                if experience_min_filter_value is not None:
+                    experience_requirement["minimum_years"] = experience_min_filter_value
+                    experience_requirement["messages"].append(
+                        f"Filtered out candidates with less than {experience_min_filter_value} years experience"
+                    )
+                if experience_max_filter_value is not None:
+                    experience_requirement["maximum_years"] = experience_max_filter_value
+                    experience_requirement["messages"].append(
+                        f"Filtered out candidates with more than {experience_max_filter_value} years experience"
+                    )
+                response_payload["search_strategy"]["experience_requirement"] = experience_requirement
 
             return response_payload
 
@@ -925,16 +1246,64 @@ async def search_resumes(
 
             logger.info(f"🗺️ Location filtering: {len(results)} -> {len(filtered_results)} results")
 
+        if parsed_query.companies:
+            pre_company_count = len(filtered_results)
+            filtered_results = [
+                result for result in filtered_results
+                if _candidate_matches_company(result.get('payload', {}), parsed_query.companies)
+            ]
+            logger.info(
+                "🏢 Company filtering: %s -> %s results for companies %s",
+                pre_company_count,
+                len(filtered_results),
+                parsed_query.companies
+            )
+
         # Apply experience filtering in Python to support legacy payloads without indexed fields
-        if experience_filter_value is not None:
+        if experience_min_filter_value is not None or experience_max_filter_value is not None:
             pre_filter_count = len(filtered_results)
             filtered_results = [
                 result for result in filtered_results
-                if _candidate_meets_experience_requirement(result.get('payload', {}), experience_filter_value)
+                if _candidate_meets_experience_requirement(
+                    result.get('payload', {}),
+                    experience_min_filter_value,
+                    experience_max_filter_value
+                )
             ]
             experience_filtered_out = pre_filter_count - len(filtered_results)
             logger.info(
-                f"⏳ Experience filtering: {pre_filter_count} -> {len(filtered_results)} candidates with ≥ {experience_filter_value} years"
+                "⏳ Experience filtering: %s -> %s candidates with requirements min=%s, max=%s",
+                pre_filter_count,
+                len(filtered_results),
+                experience_min_filter_value,
+                experience_max_filter_value
+            )
+
+        if forced_keywords:
+            pre_forced_count = len(filtered_results)
+            filtered_results = [
+                result for result in filtered_results
+                if _candidate_matches_forced_keywords(result.get('payload', {}), forced_keywords)
+            ]
+            logger.info(
+                "🔑 Forced keyword filtering: %s -> %s candidates for terms %s",
+                pre_forced_count,
+                len(filtered_results),
+                forced_keywords
+            )
+
+        if required_degrees or required_institutions:
+            pre_edu_count = len(filtered_results)
+            filtered_results = [
+                result for result in filtered_results
+                if _candidate_matches_education(result.get('payload', {}), required_degrees, required_institutions)
+            ]
+            logger.info(
+                "🎓 Education filtering: %s -> %s candidates for degrees %s institutions %s",
+                pre_edu_count,
+                len(filtered_results),
+                required_degrees,
+                required_institutions
             )
 
         # Remove duplicates based on name+email combination (keep the best score for each person)
@@ -957,12 +1326,35 @@ async def search_resumes(
         # Format results with comprehensive information and detailed selection reasons
         formatted_results = _format_search_results(limited_results, parsed_query)
 
+        # CRITICAL: Filter out candidates with 0.0 comprehensive scores (they don't meet requirements)
+        # This is essential for AI/ML queries where candidates must have specific skills
+        qualified_results = []
+        for result in formatted_results:
+            comprehensive_score = result.get('comprehensive_score', 0.0)
+            candidate_name = result.get('name', 'Unknown')
+
+            # Only include candidates with meaningful comprehensive scores
+            if comprehensive_score > 0.0:
+                qualified_results.append(result)
+                logger.info(f"✅ Including qualified candidate: {candidate_name} (comprehensive_score: {comprehensive_score})")
+            else:
+                logger.info(f"❌ Filtering out unqualified candidate: {candidate_name} (comprehensive_score: {comprehensive_score})")
+
+        # Use qualified results instead of all formatted results
+        formatted_results = qualified_results
+
         response_payload = {
             "query": query,
             "parsed_query": {
                 "detected_roles": parsed_query.job_roles,
                 "detected_skills": parsed_query.skills,
+                "role_inferred_skills": parsed_query.role_inferred_skills,
+                "forced_keywords": forced_keywords,
+                "required_degrees": required_degrees,
+                "required_institutions": required_institutions,
                 "experience_years": parsed_query.experience_years,
+                "min_experience_years": parsed_query.min_experience_years,
+                "max_experience_years": parsed_query.max_experience_years,
                 "seniority_level": parsed_query.seniority_level,
                 "location": parsed_query.location,
                 "companies": parsed_query.companies,
@@ -970,20 +1362,38 @@ async def search_resumes(
                 "intent": parsed_query.intent
             },
             "search_strategy": {
-                "type": "skill-focused" if len(parsed_query.skills) > len(parsed_query.job_roles) else "role-focused",
+                "type": "generic-candidate-search" if is_generic_search else ("skill-focused" if skill_focused else "role-focused"),
                 "filters_applied": reported_filters,
                 "total_candidates_analyzed": len(results),
-                "final_results_returned": len(formatted_results)
+                "final_results_returned": len(formatted_results),
+                "effective_skill_sample": effective_skills[:10] if effective_skills else [],
+                "forced_keyword_sample": forced_keywords[:10] if forced_keywords else [],
+                "required_degree_sample": required_degrees[:5] if required_degrees else [],
+                "required_institution_sample": required_institutions[:5] if required_institutions else [],
+                "search_approach": "Generic candidate browsing with role diversity" if is_generic_search else None
             },
             "total_results": len(formatted_results),
             "results": formatted_results
         }
 
-        if experience_filter_value is not None:
-            response_payload["search_strategy"]["experience_requirement"] = {
-                "minimum_years": experience_filter_value,
-                "filtered_out_candidates": max(experience_filtered_out, 0)
+        if experience_min_filter_value is not None or experience_max_filter_value is not None:
+            experience_requirement = {
+                "filtered_out_candidates": max(experience_filtered_out, 0),
+                "messages": []
             }
+            if experience_min_filter_value is not None:
+                experience_requirement["minimum_years"] = experience_min_filter_value
+                experience_requirement["messages"].append(
+                    f"Applied minimum experience requirement of {experience_min_filter_value} years"
+                )
+            if experience_max_filter_value is not None:
+                experience_requirement["maximum_years"] = experience_max_filter_value
+                experience_requirement["messages"].append(
+                    f"Applied maximum experience requirement of {experience_max_filter_value} years"
+                )
+            if not experience_requirement["messages"]:
+                experience_requirement.pop("messages")
+            response_payload["search_strategy"]["experience_requirement"] = experience_requirement
 
         return response_payload
 
@@ -1030,30 +1440,7 @@ def _rerank_with_role_matching(results: List[Dict], parsed_query, search_process
 
         # STRICT COMPANY FILTERING: If companies are specified, ONLY include candidates from those companies
         if parsed_query.companies:
-            work_history = payload.get('work_history', [])
-            company_match_found = False
-
-            for company_search in parsed_query.companies:
-                for job in work_history:
-                    if isinstance(job, dict):
-                        job_company = job.get('company', '').lower()
-                        company_search_lower = company_search.lower()
-
-                        # Same flexible matching logic
-                        company_match = (
-                            company_search_lower in job_company or
-                            job_company in company_search_lower or
-                            any(word in job_company for word in company_search_lower.split() if len(word) > 2) or
-                            any(word in company_search_lower for word in job_company.split() if len(word) > 2)
-                        )
-
-                        if company_match:
-                            company_match_found = True
-                            break
-                if company_match_found:
-                    break
-
-            # STRICT FILTER: Only include if company matches
+            company_match_found, _, _ = _find_company_match(payload, parsed_query.companies)
             if not company_match_found:
                 continue  # Skip this candidate entirely
 
@@ -1121,9 +1508,10 @@ def _rank_search_results(results: List[Dict], parsed_query) -> List[Dict]:
 
         # Boost for skill density (more skills = better match)
         candidate_skills = [s.lower() for s in payload.get('skills', [])]
-        matching_skills = len([s for s in parsed_query.skills if s.lower() in candidate_skills])
-        if matching_skills > 0 and parsed_query.skills:
-            skill_density = matching_skills / len(parsed_query.skills)
+        query_skills = parsed_query.skills if parsed_query.skills else parsed_query.role_inferred_skills
+        matching_skills = len([s for s in query_skills if s.lower() in candidate_skills])
+        if matching_skills > 0 and query_skills:
+            skill_density = matching_skills / len(query_skills)
             additional_boost += skill_density * 0.2
 
         # Boost for technology overlap in work history and projects
@@ -1136,7 +1524,7 @@ def _rank_search_results(results: List[Dict], parsed_query) -> List[Dict]:
                 technologies = job.get('technologies', [])
                 total_tech += len(technologies)
                 for tech in technologies:
-                    if any(skill.lower() in tech.lower() for skill in parsed_query.skills):
+                    if any(skill.lower() in tech.lower() for skill in query_skills):
                         tech_matches += 1
 
         # Check project technologies
@@ -1146,7 +1534,7 @@ def _rank_search_results(results: List[Dict], parsed_query) -> List[Dict]:
                 technologies = project.get('technologies', [])
                 total_tech += len(technologies)
                 for tech in technologies:
-                    if any(skill.lower() in tech.lower() for skill in parsed_query.skills):
+                    if any(skill.lower() in tech.lower() for skill in query_skills):
                         tech_matches += 1
 
         if total_tech > 0:
@@ -1205,31 +1593,25 @@ def _rank_search_results(results: List[Dict], parsed_query) -> List[Dict]:
 
         # MAJOR boost for company matches
         if parsed_query.companies:
-            work_history = payload.get('work_history', [])
-            for company_search in parsed_query.companies:
-                company_match_found = False
-                for job in work_history:
-                    if isinstance(job, dict):
-                        job_company = job.get('company', '').lower()
-                        company_search_lower = company_search.lower()
-
-                        # Flexible company matching
-                        company_match = (
-                            company_search_lower in job_company or
-                            job_company in company_search_lower or
-                            # Check for partial matches like "xyz startups" vs "startupxyz"
-                            any(word in job_company for word in company_search_lower.split() if len(word) > 2) or
-                            any(word in company_search_lower for word in job_company.split() if len(word) > 2)
-                        )
-
-                        if company_match:
-                            company_boost = 0.5  # HUGE boost for company match
-                            additional_boost += company_boost
-                            company_match_found = True
-                            logger.info(f"🎯 COMPANY MATCH FOUND for {payload.get('name', 'Unknown')}: Worked at '{job_company}' (matches '{company_search}') (boost: +{company_boost})")
-                            break
-                if company_match_found:
-                    break
+            company_match_found, matched_company, matched_query_company = _find_company_match(
+                payload,
+                parsed_query.companies
+            )
+            if company_match_found:
+                company_boost = 0.5  # HUGE boost for company match
+                additional_boost += company_boost
+                logger.info(
+                    "🎯 COMPANY MATCH FOUND for %s: Worked at '%s' (matches '%s') (boost: +%s)",
+                    payload.get('name', 'Unknown'),
+                    matched_company,
+                    matched_query_company,
+                    company_boost
+                )
+                match_details = result.setdefault('_match_details', {})
+                match_details['company'] = {
+                    'candidate_company': matched_company,
+                    'query_company': matched_query_company
+                }
 
         # Apply final score calculation
         result['adjusted_score'] = final_score + additional_boost
@@ -1268,6 +1650,9 @@ def _format_search_results(results: List[Dict], parsed_query) -> List[Dict]:
         # Import search processor for detailed analysis
         from src.resume_parser.utils.search_intelligence import search_processor
 
+        match_details = result.setdefault('_match_details', {})
+        effective_query_skills = parsed_query.effective_skills()
+
         # Location match reason
         if parsed_query.location:
             candidate_location = payload.get('location', '').lower()
@@ -1277,30 +1662,41 @@ def _format_search_results(results: List[Dict], parsed_query) -> List[Dict]:
 
         # Company match reason - PRIORITY
         if parsed_query.companies:
-            work_history = payload.get('work_history', [])
-            for company_search in parsed_query.companies:
-                company_match_found = False
-                for job in work_history:
-                    if isinstance(job, dict):
-                        job_company = job.get('company', '')
-                        job_title = job.get('title', 'Unknown Role')
-                        company_search_lower = company_search.lower()
-                        job_company_lower = job_company.lower()
-
-                        # Same flexible matching logic
-                        company_match = (
-                            company_search_lower in job_company_lower or
-                            job_company_lower in company_search_lower or
-                            any(word in job_company_lower for word in company_search_lower.split() if len(word) > 2) or
-                            any(word in company_search_lower for word in job_company_lower.split() if len(word) > 2)
-                        )
-
-                        if company_match:
-                            detailed_explanations.insert(0, f"🏢 Perfect Company Match: Currently working as {job_title} at {job_company}, which matches your search for {company_search}")
-                            company_match_found = True
-                            break
+            if match_details.get('company'):
+                matched_company = match_details['company'].get('candidate_company')
+                matched_query_company = match_details['company'].get('query_company')
+            else:
+                company_match_found, matched_company, matched_query_company = _find_company_match(
+                    payload,
+                    parsed_query.companies
+                )
                 if company_match_found:
-                    break
+                    match_details.setdefault('company', {})
+                    match_details['company']['candidate_company'] = matched_company
+                    match_details['company']['query_company'] = matched_query_company
+            matched_company = match_details.get('company', {}).get('candidate_company')
+            matched_query_company = match_details.get('company', {}).get('query_company')
+
+            if matched_company and matched_query_company:
+                current_employment = payload.get('current_employment')
+                current_title = None
+                if isinstance(current_employment, dict) and _company_names_match(
+                    matched_query_company,
+                    current_employment.get('company', '')
+                ):
+                    current_title = current_employment.get('position') or payload.get('current_position', 'Current Role')
+
+                if not current_title:
+                    for job in payload.get('work_history', []):
+                        if isinstance(job, dict) and _company_names_match(matched_query_company, job.get('company', '')):
+                            current_title = job.get('title', 'Role')
+                            break
+
+                role_phrase = f" as {current_title}" if current_title else ""
+                detailed_explanations.insert(
+                    0,
+                    f"🏢 Company Match: Experience{role_phrase} at {matched_company} aligns with your request for {matched_query_company}"
+                )
 
         # Detailed role matching explanation
         role_explanations = []
@@ -1356,7 +1752,7 @@ def _format_search_results(results: List[Dict], parsed_query) -> List[Dict]:
             detailed_explanations.extend(experience_explanations[:1])  # Top 1 experience match
 
         # Detailed skills analysis
-        if parsed_query.skills:
+        if effective_query_skills:
             skill_explanations = []
             candidate_skills = [s.lower() for s in payload.get('skills', [])]
             direct_skill_matches = []
@@ -1364,7 +1760,7 @@ def _format_search_results(results: List[Dict], parsed_query) -> List[Dict]:
             project_skill_matches = []
 
             # Check direct skills matches
-            for query_skill in parsed_query.skills:
+            for query_skill in effective_query_skills:
                 if query_skill.lower() in candidate_skills:
                     # Find the exact match in original case
                     original_skill = next((s for s in payload.get('skills', []) if s.lower() == query_skill.lower()), query_skill)
@@ -1378,7 +1774,7 @@ def _format_search_results(results: List[Dict], parsed_query) -> List[Dict]:
                     job_title = job.get('title', '')
                     company = job.get('company', '')
 
-                    for query_skill in parsed_query.skills:
+                    for query_skill in effective_query_skills:
                         # Check in technologies
                         tech_matches = [tech for tech in technologies if query_skill.lower() in tech.lower()]
                         if tech_matches:
@@ -1395,7 +1791,7 @@ def _format_search_results(results: List[Dict], parsed_query) -> List[Dict]:
                     technologies = project.get('technologies', [])
                     project_name = project.get('name', '')
 
-                    for query_skill in parsed_query.skills:
+                    for query_skill in effective_query_skills:
                         tech_matches = [tech for tech in technologies if query_skill.lower() in tech.lower()]
                         if tech_matches:
                             project_skill_matches.append(f"{query_skill} used in project '{project_name}' ({', '.join(tech_matches[:2])})")
@@ -1595,21 +1991,62 @@ async def search_resumes_advanced(
         # Override with explicit filters
         if must_have_roles:
             parsed_query.job_roles = must_have_roles
+            try:
+                role_skills = search_processor._aggregate_role_skills(parsed_query.job_roles)
+            except AttributeError:
+                role_skills = []
+            parsed_query.role_inferred_skills = role_skills
         if preferred_skills:
-            parsed_query.skills.extend(preferred_skills)
+            existing_skills = {skill.lower() for skill in parsed_query.skills}
+            for skill in preferred_skills:
+                if skill and isinstance(skill, str):
+                    skill_clean = skill.strip()
+                    if skill_clean and skill_clean.lower() not in existing_skills:
+                        parsed_query.skills.append(skill_clean)
+                        existing_skills.add(skill_clean.lower())
         if min_experience_years:
             parsed_query.experience_years = min_experience_years
+            parsed_query.min_experience_years = min_experience_years
         if location:
             parsed_query.location = location
 
-        # Generate enhanced search text
-        search_components = [query]
-        if must_have_roles:
-            search_components.extend(must_have_roles)
-        if preferred_skills:
-            search_components.extend(preferred_skills)
+        effective_skills = parsed_query.effective_skills()
+        forced_keywords = parsed_query.forced_keywords
 
-        search_text = ' '.join(search_components)
+        if forced_keywords:
+            logger.info(f"🔑 Forced keywords (advanced search): {forced_keywords[:5]}")
+
+        # Generate enhanced search text
+        search_components: List[str] = []
+        seen_components: Set[str] = set()
+
+        def add_component(text: Optional[str]):
+            if not text or not isinstance(text, str):
+                return
+            cleaned = text.strip()
+            key = cleaned.lower()
+            if cleaned and key not in seen_components:
+                search_components.append(cleaned)
+                seen_components.add(key)
+
+        add_component(query)
+        for role in parsed_query.job_roles:
+            role_titles = search_processor.job_db.get_role_titles(role)
+            for title in role_titles[:5]:
+                add_component(title)
+
+        for skill in parsed_query.skills:
+            add_component(skill)
+
+        for skill in parsed_query.role_inferred_skills[:40]:
+            add_component(skill)
+
+        for keyword in forced_keywords:
+            add_component(keyword)
+
+        search_text = ' '.join(search_components) if search_components else query
+        logger.info(f"🔧 Advanced search effective skills sample: {effective_skills[:10]}")
+        logger.info(f"🔮 Advanced search components count: {len(search_components)} | sample: {search_components[:10]}")
 
         # Create embedding
         from src.resume_parser.clients.azure_openai import azure_client
@@ -1652,6 +2089,20 @@ async def search_resumes_advanced(
 
         # Advanced ranking
         ranked_results = _advanced_rank_results(results, parsed_query, preferred_skills)
+
+        if forced_keywords:
+            pre_forced_count = len(ranked_results)
+            ranked_results = [
+                result for result in ranked_results
+                if _candidate_matches_forced_keywords(result.get('payload', {}), forced_keywords)
+            ]
+            logger.info(
+                "🔑 Advanced forced keyword filtering: %s -> %s results for terms %s",
+                pre_forced_count,
+                len(ranked_results),
+                forced_keywords
+            )
+
         final_results = ranked_results[:limit]
 
         response_data = {
@@ -1665,6 +2116,10 @@ async def search_resumes_advanced(
                 "parsed_query": {
                     "detected_roles": parsed_query.job_roles,
                     "detected_skills": parsed_query.skills,
+                    "role_inferred_skills": parsed_query.role_inferred_skills,
+                    "forced_keywords": forced_keywords,
+                    "required_degrees": parsed_query.required_degrees,
+                    "required_institutions": parsed_query.required_institutions,
                     "experience_years": parsed_query.experience_years,
                     "seniority_level": parsed_query.seniority_level,
                     "location": parsed_query.location,
@@ -1678,7 +2133,9 @@ async def search_resumes_advanced(
                     "skill_match_boost": 0.05,
                     "experience_match_boost": 0.15,
                     "seniority_match_boost": 0.15
-                }
+                },
+                "effective_skill_sample": effective_skills[:10] if effective_skills else [],
+                "forced_keyword_sample": forced_keywords[:10] if forced_keywords else []
             }
 
         return response_data
@@ -1705,9 +2162,10 @@ def _advanced_rank_results(results: List[Dict], parsed_query, preferred_skills: 
 
         # Skill matching
         candidate_skills = [s.lower() for s in payload.get('skills', [])]
+        effective_query_skills = parsed_query.skills if parsed_query.skills else parsed_query.role_inferred_skills
 
         # Regular skill matches
-        matching_skills = len([s for s in parsed_query.skills if s.lower() in candidate_skills])
+        matching_skills = len([s for s in effective_query_skills if s.lower() in candidate_skills])
         score += matching_skills * 0.05
 
         # Preferred skill matches (higher weight)

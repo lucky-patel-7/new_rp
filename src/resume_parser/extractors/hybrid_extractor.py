@@ -299,9 +299,20 @@ Respond with ONLY the calculated experience (e.g., "3 years 6 months"):
         # If no skills section, use pattern matching on full text
         if not skills:
             skill_patterns = {
-                'python', 'java', 'javascript', 'typescript', 'react', 'angular', 'vue',
-                'node.js', 'django', 'flask', 'spring', 'aws', 'docker', 'kubernetes',
-                'postgresql', 'mongodb', 'redis', 'git', 'jenkins'
+                # Programming Languages
+                'python', 'java', 'javascript', 'typescript', 'c++', 'c#', 'go', 'rust', 'scala', 'r',
+                # Web Technologies
+                'react', 'angular', 'vue', 'node.js', 'express', 'django', 'flask', 'spring', 'html', 'css',
+                # AI/ML Technologies
+                'tensorflow', 'pytorch', 'keras', 'scikit-learn', 'pandas', 'numpy', 'matplotlib', 'seaborn',
+                'machine learning', 'deep learning', 'neural networks', 'artificial intelligence', 'nlp',
+                'computer vision', 'opencv', 'xgboost', 'lightgbm', 'spark', 'kafka',
+                # Cloud & DevOps
+                'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'jenkins', 'terraform', 'ansible',
+                # Databases
+                'postgresql', 'mysql', 'mongodb', 'redis', 'elasticsearch', 'sql server', 'oracle',
+                # Tools & Others
+                'git', 'jira', 'confluence', 'tableau', 'power bi', 'excel', 'jupyter', 'google analytics'
             }
 
             for skill in skill_patterns:
