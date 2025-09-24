@@ -9,6 +9,7 @@ import sys
 import uuid
 import tempfile
 import re
+import time
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Set, Tuple
 from difflib import SequenceMatcher
@@ -932,7 +933,7 @@ async def upload_resume(file: UploadFile = File(...)):
 #             "success": False,
 #             "error": f"Intent analysis failed: {str(e)}",
 #             "query": query
-#         }
+#         }n
     
 @app.post("/analyze-query-intent")
 async def analyze_query_intent(query: str = Form(...)):
@@ -1301,9 +1302,12 @@ Return only the JSON object, no additional text or explanations.
                 all_locations = []
                 all_locations.extend(loc_req.get("current_locations", []))
                 all_locations.extend(loc_req.get("preferred_locations", []))
-                
-                if all_locations:
-                    qdrant_filters["location"] = all_locations
+
+                # Remove duplicates while preserving order
+                unique_locations = list(dict.fromkeys(all_locations))
+
+                if unique_locations:
+                    qdrant_filters["location"] = unique_locations
                 
                 if loc_req.get("geographic_regions"):
                     qdrant_filters["region"] = loc_req["geographic_regions"]
@@ -3107,8 +3111,16 @@ async def search_resumes_intent_based(
             from src.resume_parser.clients.azure_openai import azure_client
             client = azure_client.get_sync_client()
 
+            search_keywords_for_embedding = final_requirements.get("search_keywords", [])
+            if search_keywords_for_embedding:
+                keyword_snippet = ' '.join(search_keywords_for_embedding[:20])
+                embedding_input = f"{query}\n\nKeywords: {keyword_snippet}"
+                logger.info(f"dYZ_ Embedding enriched with intent keywords: {search_keywords_for_embedding[:5]}")
+            else:
+                embedding_input = query
+
             response = client.embeddings.create(
-                input=query,
+                input=embedding_input,
                 model=azure_client.get_embedding_deployment()
             )
 
@@ -3120,82 +3132,42 @@ async def search_resumes_intent_based(
                 detail="Failed to generate query embedding"
             )
 
-        # Step 3: Convert final_requirements to Qdrant filter format
-        qdrant_filters = final_requirements.get("qdrant_filters", {})
+        # Step 3: Prepare Qdrant filters (post-retrieval focus)
+        qdrant_filters = final_requirements.get("qdrant_filters", {}) or {}
 
-        # Build Qdrant-compatible filter conditions
+        # For hiring workflows we prefer a full semantic retrieval first, then apply filters manually
         filter_conditions = {}
+        post_retrieval_fields = set(qdrant_filters.keys())
 
-        # Map final_requirements fields to Qdrant collection fields
-        # Use minimal Qdrant filtering to avoid too restrictive searches
-        field_mapping = {
-            # Only use filters that are very likely to have matches:
-            "skills": "skills"
-            # Note: job_title, seniority, role_category, location, experience will be handled
-            # via post-retrieval filtering for more flexible matching
-        }
+        logger.info(f"dY<? Qdrant filters (post-processing): {qdrant_filters}")
+        if filter_conditions:
+            logger.info(f"dY<? Qdrant pre-filter conditions: {filter_conditions}")
+        else:
+            logger.info("dYZ_ Running full semantic search without pre-applied Qdrant filters")
 
-        # Fields that need post-retrieval filtering (not available in Qdrant or need flexible matching)
-        post_retrieval_fields = {
-            "min_experience", "max_experience", "location", "company", "education_level",
-            "field_of_study", "institution", "certifications", "job_title", "seniority_level", "role_category"
-        }
-
-        # Apply filters based on final requirements
-        for req_field, req_values in qdrant_filters.items():
-            if req_field in field_mapping:
-                qdrant_field = field_mapping[req_field]
-
-                # Handle different filter types
-                if isinstance(req_values, list):
-                    # For list values, use match any filter
-                    filter_conditions[qdrant_field] = req_values
-                else:
-                    # For single values
-                    filter_conditions[qdrant_field] = [req_values] if not isinstance(req_values, list) else req_values
-            elif req_field in post_retrieval_fields:
-                # Skip Qdrant filtering for post-retrieval fields
-                logger.info(f"📤 Skipping {req_field} for post-retrieval filtering")
-            else:
-                logger.warning(f"⚠️ Unknown field in qdrant_filters: {req_field} (not in field_mapping)")
-
-        logger.info(f"🔍 Qdrant filter conditions: {filter_conditions}")
-
-        # Step 4: Search Qdrant with filters
+        # Step 4: Search Qdrant using full semantic retrieval
         from src.resume_parser.database.qdrant_client import qdrant_client
 
-        # Check if we have post-retrieval filtering requirements
-        has_post_retrieval_filters = any(field in qdrant_filters for field in post_retrieval_fields)
+        has_post_retrieval_filters = bool(post_retrieval_fields)
 
-        results = []
-        if filter_conditions and not has_post_retrieval_filters:
-            # Only use strict Qdrant filters if we don't need post-retrieval filtering
-            logger.info("🎯 Searching with strict filters based on final requirements")
-            results = await qdrant_client.search_similar(
-                query_vector=query_vector,
-                limit=limit * 3,  # Get more for better ranking
-                filter_conditions=filter_conditions
-            )
-            logger.info(f"Found {len(results)} results with strict filtering")
-        else:
-            # Get broader results for post-retrieval filtering
-            if has_post_retrieval_filters:
-                logger.info("🌐 Getting broader results for post-retrieval filtering (location, experience, etc.)")
-                search_limit = limit * 10  # Get many more candidates for filtering
-            else:
-                logger.info("🔄 No Qdrant filters, using semantic search")
-                search_limit = limit * 2
+        base_multiplier = 10 if has_post_retrieval_filters else 4
+        if strict_matching:
+            base_multiplier = max(base_multiplier, 6)
 
-            results = await qdrant_client.search_similar(
-                query_vector=query_vector,
-                limit=search_limit,
-                filter_conditions=filter_conditions if filter_conditions else None
-            )
-            logger.info(f"Found {len(results)} results for post-filtering")
+        search_limit = max(limit * base_multiplier, limit)
+
+        results = await qdrant_client.search_similar(
+            query_vector=query_vector,
+            limit=search_limit,
+            filter_conditions=None  # Always perform full semantic search first
+        )
+        logger.info(f"dYZ_ Retrieved {len(results)} candidates from full semantic search (limit={search_limit})")
 
         # Step 4.5: Apply post-retrieval filtering for fields not available in Qdrant
         if results:
             filtered_results = []
+
+            critical_criteria = {"experience", "location", "job_title", "role_category", "company", "education"}
 
             # Helper function to check strict vs non-strict matching
             def should_exclude_candidate(criteria_matches: list, strict_mode: bool = False) -> bool:
@@ -3222,10 +3194,25 @@ async def search_resumes_intent_based(
                     failed_criteria = [match for match in required_criteria if not match[1]]  # has_match = False
                     return len(failed_criteria) > 0
                 else:
-                    # In non-strict mode, allow partial matches - at least 50% of criteria should match
-                    matched_criteria = [match for match in required_criteria if match[1]]  # has_match = True
-                    match_ratio = len(matched_criteria) / len(required_criteria) if required_criteria else 1.0
-                    return match_ratio < 0.5  # Exclude if less than 50% criteria match
+                    # In non-strict mode, enforce critical requirements but allow partial matches otherwise
+                    for criterion_name, has_match, _ in required_criteria:
+                        if not has_match and (criterion_name in critical_criteria):
+                            return True
+
+                    skill_matches = [match for match in required_criteria if match[0].startswith("skill_")]
+                    if skill_matches and not any(match[1] for match in skill_matches):
+                        return True
+
+                    non_skill_required = [match for match in required_criteria if not match[0].startswith("skill_")]
+                    matched_non_skill = [match for match in non_skill_required if match[1]]
+
+                    if non_skill_required:
+                        match_ratio = len(matched_non_skill) / len(non_skill_required)
+                    else:
+                        matched_total = len([match for match in required_criteria if match[1]])
+                        match_ratio = matched_total / len(required_criteria) if required_criteria else 1.0
+
+                    return match_ratio < 0.5  # Exclude if less than 50% of non-skill criteria match
 
             for result in results:
                 payload = result.get('payload', {})
@@ -3452,8 +3439,29 @@ async def search_resumes_intent_based(
             results = filtered_results
 
         # Helper function to generate selection reasons
-        def generate_selection_reason(payload: Dict[str, Any], match_details: Dict[str, bool], qdrant_filters: Dict[str, Any]) -> str:
+        def generate_selection_reason(payload: Dict[str, Any], match_details: Dict[str, bool], qdrant_filters: Dict[str, Any], search_keywords: List[str]) -> str:
             """Generate a detailed explanation of why this candidate was selected."""
+            candidate_name = payload.get('name', 'Unknown')
+            candidate_role = payload.get('current_position', 'Unknown')
+            candidate_location = payload.get('location', 'Unknown')
+
+            logger.info(f"[REASON_DEBUG] =========================")
+            logger.info(f"[REASON_DEBUG] Generating selection reason for: {candidate_name}")
+            logger.info(f"[REASON_DEBUG] Candidate role: {candidate_role}")
+            logger.info(f"[REASON_DEBUG] Candidate location: {candidate_location}")
+            logger.info(f"[REASON_DEBUG] Search keywords provided: {search_keywords}")
+            logger.info(f"[REASON_DEBUG] Qdrant filters applied: {list(qdrant_filters.keys()) if qdrant_filters else 'None'}")
+            logger.info(f"[REASON_DEBUG] Match details flags: {match_details}")
+            logger.info(f"[REASON_DEBUG] =========================")
+
+            # Validate inputs
+            if not search_keywords:
+                logger.warning(f"[REASON_DEBUG] WARNING: No search keywords provided for reason generation!")
+            if not qdrant_filters:
+                logger.warning(f"[REASON_DEBUG] WARNING: No qdrant filters provided for reason generation!")
+            if not any(match_details.values()):
+                logger.warning(f"[REASON_DEBUG] WARNING: No match details flags are True - this may indicate semantic-only matching!")
+
             reasons = []
 
             # Location match
@@ -3535,8 +3543,118 @@ async def search_resumes_intent_based(
                 if institution and education_info['university'] != 'N/A':
                     reasons.append(f"🏛️ Institution match: {education_info['university']}")
 
+            # Check for search keyword matches
+            keyword_matches = []
+            if search_keywords:
+                logger.info(f"[REASON_DEBUG] Starting keyword matching for candidate: {payload.get('name', 'Unknown')}")
+                logger.info(f"[REASON_DEBUG] Search keywords to match: {search_keywords}")
+
+                candidate_text_fields = {
+                    'role': payload.get('current_position', '').lower(),
+                    'name': payload.get('name', '').lower(),
+                    'location': payload.get('location', '').lower(),
+                    'summary': payload.get('summary', '').lower(),
+                    'skills': ' '.join(payload.get('skills', [])).lower(),
+                    'companies': ' '.join([job.get('company', '') for job in payload.get('work_history', [])]).lower()
+                }
+
+                logger.info(f"[REASON_DEBUG] Candidate text fields prepared: {list(candidate_text_fields.keys())}")
+
+                for keyword in search_keywords:
+                    keyword_lower = keyword.lower().strip()
+                    logger.info(f"[REASON_DEBUG] Processing keyword: '{keyword_lower}'")
+
+                    matched_fields = []
+                    field_match_details = {}
+
+                    for field_name, field_text in candidate_text_fields.items():
+                        if keyword_lower in field_text:
+                            matched_fields.append(field_name)
+                            # Extract context around the match
+                            match_index = field_text.find(keyword_lower)
+                            context_start = max(0, match_index - 20)
+                            context_end = min(len(field_text), match_index + len(keyword_lower) + 20)
+                            context = field_text[context_start:context_end]
+                            field_match_details[field_name] = context.strip()
+                            logger.info(f"[REASON_DEBUG] ✓ Keyword '{keyword_lower}' found in {field_name}: '...{context}...'")
+
+                    if matched_fields:
+                        keyword_matches.append({
+                            'keyword': keyword,
+                            'fields': matched_fields,
+                            'context': field_match_details
+                        })
+                        logger.info(f"[REASON_DEBUG] ✓ Keyword '{keyword_lower}' matched in fields: {matched_fields}")
+                    else:
+                        logger.info(f"[REASON_DEBUG] ✗ Keyword '{keyword_lower}' not found in any field")
+
+                # Generate detailed keyword match reasons
+                if keyword_matches:
+                    logger.info(f"[REASON_DEBUG] Total keyword matches found: {len(keyword_matches)}")
+                    logger.info(f"[REASON_DEBUG] Matched keywords summary: {[m['keyword'] for m in keyword_matches]}")
+
+                    # Check for multi-keyword matches across different categories
+                    role_keywords = []
+                    location_keywords = []
+                    skill_keywords = []
+
+                    for match in keyword_matches:
+                        keyword = match['keyword']
+                        fields = match['fields']
+
+                        if 'role' in fields or 'summary' in fields:
+                            role_keywords.append(keyword)
+                        if 'location' in fields:
+                            location_keywords.append(keyword)
+                        if 'skills' in fields:
+                            skill_keywords.append(keyword)
+
+                    logger.info(f"[REASON_DEBUG] Keyword categorization - Role: {role_keywords}, Location: {location_keywords}, Skills: {skill_keywords}")
+
+                    # Check for the specific case you mentioned (role + location combination)
+                    if role_keywords and location_keywords:
+                        role_keyword = role_keywords[0]
+                        location_keyword = location_keywords[0]
+                        reasons.append(f"🎯 Excellent match: Both '{role_keyword}' (role requirement) and '{location_keyword}' (location requirement) found in candidate profile")
+                        logger.info(f"[REASON_DEBUG] ★ PERFECT COMBO: Role keyword '{role_keyword}' + Location keyword '{location_keyword}' both matched!")
+
+                    # Create more specific reasons for keyword matches
+                    for match in keyword_matches[:3]:  # Show details for first 3 matches
+                        keyword = match['keyword']
+                        fields = match['fields']
+                        context = match.get('context', {})
+
+                        # Skip if already handled in combo above
+                        if role_keywords and location_keywords and (keyword in role_keywords[:1] or keyword in location_keywords[:1]):
+                            continue
+
+                        if 'role' in fields and 'location' in fields:
+                            # Both role and location match - most relevant case
+                            reasons.append(f"🎯 Perfect match: '{keyword}' found in both role ({payload.get('current_position', '')}) and location ({payload.get('location', '')})")
+                        elif 'role' in fields:
+                            reasons.append(f"💼 Role match: '{keyword}' matches current position '{payload.get('current_position', '')}'")
+                        elif 'location' in fields:
+                            reasons.append(f"🗺️ Location match: '{keyword}' matches candidate location '{payload.get('location', '')}'")
+                        elif 'skills' in fields:
+                            reasons.append(f"🛠️ Skills match: '{keyword}' found in technical skills")
+                        elif 'companies' in fields:
+                            reasons.append(f"🏢 Company match: '{keyword}' matches work experience")
+                        elif 'summary' in fields:
+                            reasons.append(f"📝 Profile match: '{keyword}' found in professional summary")
+                        else:
+                            # Fallback for other fields
+                            field_names = ', '.join(fields)
+                            reasons.append(f"🔍 Keyword match: '{keyword}' found in {field_names}")
+
+                    # Add summary if there are more matches
+                    if len(keyword_matches) > 3:
+                        additional_keywords = [m['keyword'] for m in keyword_matches[3:]]
+                        reasons.append(f"➕ Additional matches: {len(additional_keywords)} more keywords ({', '.join(additional_keywords[:2])}{'...' if len(additional_keywords) > 2 else ''})")
+                else:
+                    logger.info(f"[REASON_DEBUG] No keyword matches found for any search keywords")
+
             # If no specific matches but candidate was selected (semantic relevance)
-            if not any(match_details.values()) and len(reasons) == 0:
+            if not any(match_details.values()) and len(keyword_matches) == 0 and len(reasons) == 0:
                 candidate_role = payload.get('current_position', 'Unknown')
                 candidate_skills = payload.get('skills', [])
                 if candidate_skills:
@@ -3547,7 +3665,22 @@ async def search_resumes_intent_based(
                 else:
                     reasons.append(f"🔍 Semantic relevance: Profile '{candidate_role}' matches query context")
 
-            return " | ".join(reasons) if reasons else "Selected based on overall profile relevance"
+            final_reason = " | ".join(reasons) if reasons else "Selected based on overall profile relevance"
+
+            # Final logging summary
+            logger.info(f"[REASON_DEBUG] =========================")
+            logger.info(f"[REASON_DEBUG] FINAL REASON for {candidate_name}:")
+            logger.info(f"[REASON_DEBUG] Generated {len(reasons)} reason components:")
+            for i, reason in enumerate(reasons, 1):
+                logger.info(f"[REASON_DEBUG]   {i}. {reason}")
+            logger.info(f"[REASON_DEBUG] Combined reason: {final_reason}")
+            if keyword_matches:
+                logger.info(f"[REASON_DEBUG] Keywords that contributed to selection: {[m['keyword'] for m in keyword_matches]}")
+            else:
+                logger.info(f"[REASON_DEBUG] No search keywords matched - reason based on other criteria")
+            logger.info(f"[REASON_DEBUG] =========================")
+
+            return final_reason
 
         # Step 5: Enhanced ranking based on final requirements
         def calculate_intent_score(result: Dict[str, Any]) -> float:
@@ -3719,6 +3852,35 @@ async def search_resumes_intent_based(
         for result in results:
             result['intent_score'] = calculate_intent_score(result)
 
+        # Filter out candidates that don't meet location requirements if location is specified
+        if has_post_retrieval_filters:
+            location_requirements = qdrant_filters.get('location')
+            if location_requirements:
+                logger.info(f"Applying location filtering for: {location_requirements}")
+                filtered_results = []
+
+                for result in results:
+                    payload = result.get('payload', {})
+                    candidate_location = payload.get('location', '').lower()
+                    location_match = False
+
+                    if isinstance(location_requirements, list):
+                        for req_location in location_requirements:
+                            if req_location.lower() in candidate_location or candidate_location in req_location.lower():
+                                location_match = True
+                                break
+                    else:
+                        req_location = str(location_requirements).lower()
+                        location_match = req_location in candidate_location or candidate_location in req_location
+
+                    if location_match:
+                        filtered_results.append(result)
+                    else:
+                        logger.info(f"🚫 Excluding {payload.get('name', 'Unknown')} - location '{payload.get('location', '')}' doesn't match '{location_requirements}'")
+
+                results = filtered_results
+                logger.info(f"Location filtering: {len(results)} candidates remaining")
+
         # Sort by intent score
         results = sorted(results, key=lambda x: x.get('intent_score', 0), reverse=True)
 
@@ -3726,6 +3888,10 @@ async def search_resumes_intent_based(
         results = results[:limit]
 
         # Step 6: Format response with detailed analysis
+        # Extract search keywords from final requirements for reason generation
+        search_keywords = final_requirements.get("search_keywords", [])
+        logger.info(f"[REASON_DEBUG] Extracted search keywords for reason generation: {search_keywords}")
+
         formatted_results = []
         for result in results:
             payload = result.get('payload', {})
@@ -3733,7 +3899,10 @@ async def search_resumes_intent_based(
             match_details = result.get('match_details', {})
 
             # Generate selection reason
-            selection_reason = generate_selection_reason(payload, match_details, qdrant_filters)
+            logger.info(f"[REASON_DEBUG] About to generate selection reason for candidate {result.get('id')} (Score: {result.get('score', 0):.3f})")
+            logger.info(f"[REASON_DEBUG] Passing parameters - Keywords: {len(search_keywords)} items, Filters: {len(qdrant_filters)} types, Match flags: {sum(match_details.values())}/{len(match_details)} true")
+
+            selection_reason = generate_selection_reason(payload, match_details, qdrant_filters, search_keywords)
 
             formatted_result = {
                 'id': result.get('id'),
@@ -3773,21 +3942,21 @@ async def search_resumes_intent_based(
             "total_results": len(formatted_results),
             "intent_analysis": {
                 "final_requirements": final_requirements,
-                "filters_applied": filter_conditions,
+                "filters_applied": qdrant_filters,
                 "search_strategy": final_requirements.get("search_strategy", {})
             },
             "results": formatted_results,
             "processing_summary": {
                 "query_analyzed": True,
-                "filters_used": len(filter_conditions) > 0,
+                "filters_used": bool(qdrant_filters),
                 "post_retrieval_filtering_applied": has_post_retrieval_filters,
-                "semantic_fallback": len(filter_conditions) == 0,
+                "semantic_fallback": not bool(qdrant_filters),
                 "strict_matching_enabled": strict_matching,
                 "matching_mode": "strict" if strict_matching else "partial",
                 "candidates_before_filtering": len(results) if 'results' in locals() else 0,
                 "candidates_after_filtering": len(formatted_results),
                 "filter_types_applied": list(qdrant_filters.keys()),
-                "search_approach": "hybrid" if has_post_retrieval_filters else "qdrant_only" if filter_conditions else "semantic_only"
+                "search_approach": "hybrid" if has_post_retrieval_filters else "semantic_only"
             }
         }
 
@@ -3798,6 +3967,198 @@ async def search_resumes_intent_based(
         raise HTTPException(
             status_code=500,
             detail=f"Search failed: {str(e)}"
+        )
+
+
+async def llm_candidate_matcher(query: str, candidates: List[Dict], limit: int = 10) -> List[Dict]:
+    """
+    Use LLM to intelligently match candidates to query requirements.
+    Instead of strict filtering, uses AI to understand semantic similarity.
+    """
+    if not candidates:
+        return []
+
+    try:
+        # Create a summary of each candidate for LLM analysis
+        candidate_summaries = []
+        for i, candidate in enumerate(candidates):
+            payload = candidate.get('payload', {})
+            summary = {
+                'index': i,
+                'name': payload.get('name', 'Unknown'),
+                'role': payload.get('current_position', 'Unknown'),
+                'location': payload.get('location', 'Unknown'),
+                'skills': payload.get('skills', [])[:10],  # Top 10 skills
+                'experience': payload.get('total_experience', 'Unknown'),
+                'role_category': payload.get('role_category', 'Unknown'),
+                'summary': payload.get('summary', '')[:200] + '...' if payload.get('summary') else ''
+            }
+            candidate_summaries.append(summary)
+
+        # Create prompt for LLM to rank candidates
+        prompt = f"""
+You are an expert recruiter. Analyze these candidates and rank them based on how well they match this query: "{query}"
+
+Query: {query}
+
+Candidates:
+{chr(10).join([f"{i+1}. {c['name']} - {c['role']} from {c['location']} - Skills: {', '.join(c['skills'][:5])} - Experience: {c['experience']}" for i, c in enumerate(candidate_summaries)])}
+
+Instructions:
+1. Consider semantic similarity, not just exact matches
+2. For location: "Ahmedabad, Gujarat" matches "Ahmedabad", "Gujarat", etc.
+3. For skills: "AI/ML" matches "Machine Learning", "Deep Learning", "NLP", "TensorFlow", etc.
+4. For roles: "AI Developer" matches "AI Engineer", "ML Engineer", "Software Engineer (AI/ML)", etc.
+
+Return ONLY a JSON array of candidate indices (0-based) ranked by relevance, limited to top {limit}:
+[0, 2, 1]
+"""
+
+        # Get LLM response
+        client = azure_client.get_sync_client()
+        if not client:
+            logger.warning("Azure OpenAI not available, falling back to vector similarity")
+            return candidates[:limit]
+
+        response = client.chat.completions.create(
+            model=azure_client.get_chat_deployment(),
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=200,
+            temperature=0.1
+        )
+
+        # Parse LLM response
+        llm_response = response.choices[0].message.content.strip()
+
+        # Clean and parse JSON
+        import re, json
+        llm_response = re.sub(r"```json\s*([\s\S]*?)\s*```", r"\1", llm_response, flags=re.IGNORECASE)
+        llm_response = re.sub(r"`{3,}", "", llm_response)
+
+        try:
+            ranked_indices = json.loads(llm_response)
+            if not isinstance(ranked_indices, list):
+                raise ValueError("Response is not a list")
+
+            # Return candidates in ranked order
+            ranked_candidates = []
+            for idx in ranked_indices:
+                if 0 <= idx < len(candidates):
+                    ranked_candidates.append(candidates[idx])
+
+            logger.info(f"LLM ranked {len(ranked_candidates)} candidates for query: {query}")
+            return ranked_candidates[:limit]
+
+        except (json.JSONDecodeError, ValueError, KeyError) as e:
+            logger.warning(f"Failed to parse LLM ranking response: {e}. Response: {llm_response}")
+            return candidates[:limit]
+
+    except Exception as e:
+        logger.error(f"LLM candidate matching failed: {e}")
+        return candidates[:limit]
+
+
+@app.post("/search-resumes-smart")
+async def search_resumes_smart(
+    query: str = Form(...),
+    limit: int = Form(10)
+):
+    """
+    Smart LLM-based resume search using Azure OpenAI for intelligent matching.
+
+    Instead of strict filtering, this endpoint uses your Azure OpenAI deployment to:
+    - Understand semantic similarity between query and candidate data
+    - Match concepts (e.g., "AI/ML" matches "Machine Learning", "Deep Learning", etc.)
+    - Handle location variations (e.g., "Ahmedabad" matches "Ahmedabad, Gujarat")
+    - Provide intelligent ranking based on overall fit
+
+    Args:
+        query: Natural language query describing requirements
+        limit: Maximum number of results to return
+
+    Returns:
+        JSON response with intelligently matched candidates
+    """
+    try:
+        start_time = time.time()
+        logger.info(f"Smart search query: {query}")
+
+        # First, get all candidates from Qdrant using vector similarity
+        query_vector = await _generate_embedding(query)
+
+        if not query_vector:
+            return JSONResponse(
+                status_code=400,
+                content={"error": "Could not generate embedding for query"}
+            )
+
+        # Get more candidates for LLM to choose from
+        vector_candidates = await qdrant_client.search_similar(
+            query_vector=query_vector,
+            limit=min(50, limit * 5),  # Get 5x more candidates for LLM to filter
+            filter_conditions=None  # No strict filters, let LLM decide
+        )
+
+        if not vector_candidates:
+            return {
+                "success": True,
+                "query": query,
+                "total_results": 0,
+                "results": [],
+                "method": "smart_llm_search",
+                "processing_time": time.time() - start_time
+            }
+
+        # Use LLM to intelligently rank candidates
+        smart_results = await llm_candidate_matcher(query, vector_candidates, limit)
+
+        # Format results for response
+        formatted_results = []
+        for result in smart_results:
+            payload = result.get('payload', {})
+            formatted_result = {
+                "name": payload.get('name', 'Unknown'),
+                "email": payload.get('email', 'Unknown'),
+                "phone": payload.get('phone', 'Unknown'),
+                "current_position": payload.get('current_position', 'Unknown'),
+                "location": payload.get('location', 'Unknown'),
+                "total_experience": payload.get('total_experience', 'Unknown'),
+                "skills": payload.get('skills', [])[:15],  # Top 15 skills
+                "role_category": payload.get('role_category', 'Unknown'),
+                "summary": payload.get('summary', '')[:300] + '...' if payload.get('summary', '') else 'No summary available',
+                "semantic_score": result.get('score', 0.0),
+                "education": payload.get('education', []),
+                "recent_experience": [
+                    f"{job.get('title', 'Unknown')} at {job.get('company', 'Unknown')}"
+                    for job in payload.get('work_history', [])[:2]
+                ],
+                "key_projects": [
+                    f"{proj.get('name', 'Unknown')} ({', '.join(proj.get('technologies', [])[:3])})"
+                    for proj in payload.get('projects', [])[:3]
+                ],
+                "match_reason": "LLM-based intelligent matching"
+            }
+            formatted_results.append(formatted_result)
+
+        processing_time = time.time() - start_time
+        logger.info(f"Smart search completed: {len(formatted_results)} results in {processing_time:.2f}s")
+
+        return {
+            "success": True,
+            "query": query,
+            "total_results": len(formatted_results),
+            "results": formatted_results,
+            "method": "smart_llm_search",
+            "processing_time": processing_time,
+            "vector_candidates_analyzed": len(vector_candidates),
+            "llm_ranked_results": len(smart_results)
+        }
+
+    except Exception as e:
+        logger.error(f"Smart search error: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"Smart search failed: {str(e)}"}
         )
 
 
@@ -3831,3 +4192,12 @@ if __name__ == "__main__":
         reload=settings.app.debug,
         log_level=settings.app.log_level.lower()
     )
+
+
+
+
+
+
+
+
+
