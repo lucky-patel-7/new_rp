@@ -23,6 +23,132 @@ class HybridExtractor:
             logger.warning(f"LLM client initialization failed: {e}")
             self.client = None
 
+    def extract_basic_info(self, text: str) -> Dict[str, Any]:
+        """Extract basic information from resume text using hybrid approach"""
+
+        # Extract contact information
+        contact_info = self.extract_contact_info(text)
+
+        # Extract basic sections - use simple text parsing for fallback
+        basic_info = {
+            'name': contact_info.get('name', ''),
+            'email': contact_info.get('email', ''),
+            'phone': contact_info.get('phone', ''),
+            'linkedin': contact_info.get('linkedin', ''),
+            'summary': self._extract_summary_section(text),
+            'skills': self._extract_skills_basic(text),
+            'experience': self._extract_experience_basic(text),
+            'education': self._extract_education_basic(text),
+            'location': self._extract_location_basic(text)
+        }
+
+        return basic_info
+
+    def _extract_summary_section(self, text: str) -> str:
+        """Extract summary/objective section"""
+        summary_patterns = [
+            r'(?:summary|objective|about|profile|overview)[:\s]*([^\n]*(?:\n(?!\s*[A-Z\s]+:)[^\n]*)*)',
+            r'(?:professional\s+summary|career\s+objective)[:\s]*([^\n]*(?:\n(?!\s*[A-Z\s]+:)[^\n]*)*)'
+        ]
+
+        for pattern in summary_patterns:
+            match = re.search(pattern, text, re.IGNORECASE | re.MULTILINE)
+            if match:
+                summary = match.group(1).strip()
+                # Clean up and return first 500 characters
+                summary = re.sub(r'\s+', ' ', summary)
+                return summary[:500]
+
+        # If no summary section, return first few sentences
+        sentences = re.split(r'[.!?]+', text.strip())
+        if sentences and len(sentences[0]) > 50:
+            return sentences[0][:200] + "..."
+
+        return ""
+
+    def _extract_skills_basic(self, text: str) -> List[str]:
+        """Basic skills extraction using pattern matching"""
+        skills = []
+
+        # Look for skills section
+        skills_patterns = [
+            r'(?:skills?|technologies?|expertise)[:\s]*([^\n]*(?:\n(?!\s*[A-Z\s]+:)[^\n]*)*)',
+            r'(?:technical\s+skills?|core\s+competencies)[:\s]*([^\n]*(?:\n(?!\s*[A-Z\s]+:)[^\n]*)*)'
+        ]
+
+        for pattern in skills_patterns:
+            match = re.search(pattern, text, re.IGNORECASE | re.MULTILINE)
+            if match:
+                skills_text = match.group(1)
+                # Split by common separators
+                skill_items = re.split(r'[,;•▪▫◦|\n\r]+', skills_text)
+                for skill in skill_items:
+                    skill = skill.strip().strip('•▪▫◦-*').strip()
+                    if len(skill) > 2 and not re.match(r'^[:\-\s]+$', skill):
+                        skills.append(skill)
+                break
+
+        return skills[:20]  # Limit to 20 skills
+
+    def _extract_experience_basic(self, text: str) -> str:
+        """Basic experience extraction"""
+        # Look for explicit experience mentions
+        exp_patterns = [
+            r'(\d+(?:\.\d+)?)\+?\s*years?\s*(?:of\s*)?(?:work\s*)?experience',
+            r'(?:total\s*)?experience.*?(\d+(?:\.\d+)?)\+?\s*years?'
+        ]
+
+        for pattern in exp_patterns:
+            matches = re.findall(pattern, text.lower())
+            if matches:
+                max_exp = max([float(x) for x in matches])
+                if max_exp > 0:
+                    return f"{int(max_exp) if max_exp == int(max_exp) else max_exp} years"
+
+        return "Not specified"
+
+    def _extract_education_basic(self, text: str) -> List[Dict]:
+        """Basic education extraction"""
+        education = []
+
+        # Education patterns
+        degree_patterns = [
+            r'(bachelor|master|b\.?tech|m\.?tech|b\.?e\.?|m\.?e\.?|bca|mca|mba|phd|diploma)[^\n]*',
+            r'(computer science|software engineering|information technology|electrical engineering)[^\n]*'
+        ]
+
+        for pattern in degree_patterns:
+            matches = re.finditer(pattern, text, re.IGNORECASE)
+            for match in matches:
+                education.append({
+                    'degree': match.group(0).strip(),
+                    'institution': '',
+                    'year': '',
+                    'field': ''
+                })
+
+        return education[:3]  # Limit to 3 entries
+
+    def _extract_location_basic(self, text: str) -> str:
+        """Basic location extraction"""
+        # Look for common location patterns
+        location_patterns = [
+            r'(?:location|address|based\s+in|from)[:\s]*([^\n]+)',
+            r'\b([A-Za-z\s]+,\s*[A-Za-z\s]+,?\s*(?:India|USA|UK|Canada|Australia))\b',
+            r'\b([A-Za-z]+,\s*[A-Za-z]+)\b'
+        ]
+
+        for pattern in location_patterns:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                location = match.group(1).strip()
+                # Clean up common prefixes/suffixes
+                location = re.sub(r'^(at|in|from)\s+', '', location, flags=re.IGNORECASE)
+                if len(location) > 3 and ',' in location:
+                    return location
+
+        return ""
+
     def extract_contact_info(self, text: str) -> Dict[str, str]:
         """Hybrid contact extraction: regex first, then LLM validation/enhancement"""
 

@@ -16,6 +16,7 @@ from difflib import SequenceMatcher
 # Add the project root to the Python path
 sys.path.insert(0, str(Path(__file__).parent))
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, File, UploadFile, HTTPException, Depends, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -33,12 +34,34 @@ from config.settings import settings
 setup_logging()
 logger = get_logger(__name__)
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application lifecycle events."""
+    # Startup
+    logger.info(f"[STARTUP] Starting {settings.app.app_name}")
+    logger.info(f"[CONFIG] Upload directory: {upload_dir}")
+    logger.info(f"[CONFIG] Debug mode: {settings.app.debug}")
+
+    # Test Qdrant connection
+    try:
+        collection_info = qdrant_client.get_collection_info()
+        logger.info(f"[SUCCESS] Qdrant connected: {collection_info}")
+    except Exception as e:
+        logger.warning(f"[WARNING] Qdrant connection issue: {e}")
+
+    yield
+
+    # Shutdown
+    logger.info(f"[SHUTDOWN] Shutting down {settings.app.app_name}")
+
+
 # Initialize FastAPI app
 app = FastAPI(
     title=settings.app.app_name,
     description="A comprehensive resume parsing API with Azure OpenAI integration",
     version="1.0.0",
-    debug=settings.app.debug
+    debug=settings.app.debug,
+    lifespan=lifespan
 )
 
 # Configure CORS
@@ -430,26 +453,6 @@ def _candidate_matches_education(
     return degrees_matched and institutions_matched
 
 
-@app.on_event("startup")
-async def startup_event():
-    """Initialize application on startup."""
-    logger.info(f"🚀 Starting {settings.app.app_name}")
-    logger.info(f"📁 Upload directory: {upload_dir}")
-    logger.info(f"🔧 Debug mode: {settings.app.debug}")
-
-    # Test Qdrant connection
-    try:
-        collection_info = qdrant_client.get_collection_info()
-        logger.info(f"✅ Qdrant connected: {collection_info}")
-    except Exception as e:
-        logger.warning(f"⚠️ Qdrant connection issue: {e}")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Clean up on application shutdown."""
-    logger.info(f"🛑 Shutting down {settings.app.app_name}")
-
 
 @app.get("/")
 async def root():
@@ -519,7 +522,7 @@ async def upload_resume(file: UploadFile = File(...)):
         file_content = await file.read()
         file_size = len(file_content)
 
-        logger.info(f"📊 File size: {file_size} bytes")
+        logger.info(f"[INFO] File size: {file_size} bytes")
 
         # Validate file size
         if file_size > settings.max_file_size_bytes:
@@ -603,7 +606,7 @@ async def upload_resume(file: UploadFile = File(...)):
                     embedding_vector=embedding_vector,
                     payload=payload
                 )
-                logger.info(f"✅ Stored in Qdrant with ID: {point_id}")
+                logger.info(f"[SUCCESS] Stored in Qdrant with ID: {point_id}")
             except Exception as e:
                 logger.error(f"❌ Failed to store in Qdrant: {e}")
                 # Continue without failing the request
@@ -617,7 +620,7 @@ async def upload_resume(file: UploadFile = File(...)):
             "message": "Resume processed successfully"
         }
 
-        logger.info(f"✅ Resume processing completed for user: {user_id}")
+        logger.info(f"[SUCCESS] Resume processing completed for user: {user_id}")
         return JSONResponse(content=response_data)
 
     except HTTPException:
@@ -1445,7 +1448,7 @@ async def bulk_upload_resumes(files: List[UploadFile] = File(...)):
                 # Get file content and size
                 content = await file.read()
                 file_size = len(content)
-                logger.info(f"📊 File size: {file_size} bytes")
+                logger.info(f"[INFO] File size: {file_size} bytes")
 
                 # Create temporary file with proper suffix
                 file_suffix = Path(file.filename).suffix.lower()
@@ -1527,7 +1530,7 @@ async def bulk_upload_resumes(files: List[UploadFile] = File(...)):
                             embedding_vector=embedding_vector,
                             payload=payload
                         )
-                        logger.info(f"✅ Stored resume {i+1} in Qdrant with ID: {point_id}")
+                        logger.info(f"[SUCCESS] Stored resume {i+1} in Qdrant with ID: {point_id}")
                     except Exception as e:
                         logger.error(f"❌ Failed to store resume {i+1} in Qdrant: {e}")
                         # Continue without failing the request
@@ -1544,7 +1547,7 @@ async def bulk_upload_resumes(files: List[UploadFile] = File(...)):
                 }
                 results["successful_uploads"] += 1
 
-                logger.info(f"✅ Successfully processed file {i+1}: {file.filename}")
+                logger.info(f"[SUCCESS] Successfully processed file {i+1}: {file.filename}")
 
             finally:
                 # Cleanup temporary file
@@ -1718,7 +1721,7 @@ async def search_resumes(
             experience_min_filter_value,
             experience_max_filter_value
         )
-        logger.info(f"📊 Detected roles: {parsed_query.job_roles}")
+        logger.info(f"[INFO] Detected roles: {parsed_query.job_roles}")
         logger.info(f"🔧 Effective skills used for search: {effective_skills[:10]}")
         logger.info(f"🗺️ Detected location: {parsed_query.location}")
         skill_focused = effective_skill_count > len(parsed_query.job_roles)

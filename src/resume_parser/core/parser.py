@@ -50,8 +50,8 @@ class ResumeParser:
             self.embedding_deployment = azure_client.get_embedding_deployment()
             logger.info("✅ Azure OpenAI client initialized successfully")
         except Exception as e:
-            logger.warning(f"⚠️ Failed to initialize Azure OpenAI: {e}")
-            logger.info("📋 Will use fallback parsing only")
+            logger.warning(f"[WARNING] Failed to initialize Azure OpenAI: {e}")
+            logger.info("[INFO] Will use fallback parsing only")
             self.azure_client = None
 
     async def process_resume_file(

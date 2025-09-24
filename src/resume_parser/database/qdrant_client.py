@@ -21,13 +21,33 @@ class QdrantVectorClient:
 
     def __init__(self):
         """Initialize Qdrant client."""
-        self.client = QdrantClient(
-            host=settings.qdrant.host,
-            port=settings.qdrant.port
-        )
+        self.client = None
         self.collection_name = settings.qdrant.collection_name
         self.vector_size = settings.qdrant.vector_size
-        self._ensure_collection_exists()
+        self._connected = False
+        self._connect()
+
+    def _connect(self):
+        """Connect to Qdrant and ensure collection exists."""
+        try:
+            logger.info(f"Attempting to connect to Qdrant at {settings.qdrant.host}:{settings.qdrant.port}")
+
+            # Add timeout to avoid hanging
+            self.client = QdrantClient(
+                host=settings.qdrant.host,
+                port=settings.qdrant.port,
+                timeout=10  # 10 second timeout
+            )
+
+            logger.info("Client created, checking collection...")
+            self._ensure_collection_exists()
+            self._connected = True
+            logger.info("Successfully connected to Qdrant")
+        except Exception as e:
+            logger.warning(f"Could not connect to Qdrant: {e}")
+            logger.warning("Vector search functionality will be disabled")
+            self._connected = False
+            self.client = None
 
     def _ensure_collection_exists(self):
         """Ensure the collection exists, create if it doesn't."""
@@ -69,6 +89,10 @@ class QdrantVectorClient:
         Returns:
             str: Point ID in Qdrant
         """
+        if not self._connected:
+            logger.warning("Qdrant not connected, skipping embedding storage")
+            return user_id
+
         try:
             # Create point with user_id as the point ID
             point = PointStruct(
@@ -107,6 +131,10 @@ class QdrantVectorClient:
         Returns:
             List of similar resumes with scores
         """
+        if not self._connected:
+            logger.warning("Qdrant not connected, returning empty search results")
+            return []
+
         try:
             # Prepare filter if provided
             search_filter = None
@@ -245,6 +273,10 @@ class QdrantVectorClient:
         Returns:
             Resume data if found, None otherwise
         """
+        if not self._connected:
+            logger.warning("Qdrant not connected, cannot retrieve resume")
+            return None
+
         try:
             points = self.client.retrieve(
                 collection_name=self.collection_name,
@@ -271,6 +303,10 @@ class QdrantVectorClient:
         Returns:
             True if successful, False otherwise
         """
+        if not self._connected:
+            logger.warning("Qdrant not connected, skipping resume deletion")
+            return False
+
         try:
             self.client.delete(
                 collection_name=self.collection_name,
@@ -285,6 +321,9 @@ class QdrantVectorClient:
 
     def get_collection_info(self) -> Dict[str, Any]:
         """Get information about the collection."""
+        if not self._connected:
+            return {"error": "Qdrant not connected"}
+
         try:
             info = self.client.get_collection(self.collection_name)
             return {

@@ -44,15 +44,37 @@ class AzureOpenAIClient:
                 if not all([settings.azure_openai.api_key, settings.azure_openai.endpoint]):
                     raise ValueError("Azure OpenAI API key and endpoint are required")
 
+                # Try creating client with minimal parameters first
                 self._sync_client = AzureOpenAI(
                     api_key=settings.azure_openai.api_key,
                     api_version=settings.azure_openai.api_version,
                     azure_endpoint=settings.azure_openai.endpoint
                 )
                 logger.info("Synchronous Azure OpenAI client created successfully")
+            except TypeError as e:
+                if "proxies" in str(e):
+                    # Handle proxies parameter issue with older httpx versions
+                    logger.warning(f"Proxies parameter issue: {e}. Trying alternative initialization...")
+                    try:
+                        import httpx
+                        # Create a basic httpx client without proxy configuration
+                        http_client = httpx.Client(timeout=30.0)
+                        self._sync_client = AzureOpenAI(
+                            api_key=settings.azure_openai.api_key,
+                            api_version=settings.azure_openai.api_version,
+                            azure_endpoint=settings.azure_openai.endpoint,
+                            http_client=http_client
+                        )
+                        logger.info("Synchronous Azure OpenAI client created with custom http client")
+                    except Exception as e2:
+                        logger.error(f"Failed alternative Azure OpenAI client creation: {e2}")
+                        self._sync_client = None  # Set to None so we can continue without LLM
+                else:
+                    logger.error(f"Failed to create synchronous Azure OpenAI client: {e}")
+                    self._sync_client = None
             except Exception as e:
                 logger.error(f"Failed to create synchronous Azure OpenAI client: {e}")
-                raise
+                self._sync_client = None
 
         return self._sync_client
 
@@ -65,6 +87,10 @@ class AzureOpenAIClient:
         """
         if self._async_client is None:
             try:
+                if not all([settings.azure_openai.api_key, settings.azure_openai.endpoint]):
+                    raise ValueError("Azure OpenAI API key and endpoint are required")
+
+                # Try creating client with minimal parameters first
                 self._async_client = AsyncAzureOpenAI(
                     api_key=settings.azure_openai.api_key,
                     api_version=settings.azure_openai.api_version,
@@ -72,9 +98,30 @@ class AzureOpenAIClient:
                     timeout=30.0
                 )
                 logger.info("Asynchronous Azure OpenAI client created successfully")
+            except TypeError as e:
+                if "proxies" in str(e):
+                    # Handle proxies parameter issue with older httpx versions
+                    logger.warning(f"Proxies parameter issue: {e}. Trying alternative initialization...")
+                    try:
+                        import httpx
+                        # Create a basic async httpx client without proxy configuration
+                        http_client = httpx.AsyncClient(timeout=30.0)
+                        self._async_client = AsyncAzureOpenAI(
+                            api_key=settings.azure_openai.api_key,
+                            api_version=settings.azure_openai.api_version,
+                            azure_endpoint=settings.azure_openai.endpoint,
+                            http_client=http_client
+                        )
+                        logger.info("Asynchronous Azure OpenAI client created with custom http client")
+                    except Exception as e2:
+                        logger.error(f"Failed alternative async Azure OpenAI client creation: {e2}")
+                        self._async_client = None  # Set to None so we can continue without LLM
+                else:
+                    logger.error(f"Failed to create asynchronous Azure OpenAI client: {e}")
+                    self._async_client = None
             except Exception as e:
                 logger.error(f"Failed to create asynchronous Azure OpenAI client: {e}")
-                raise
+                self._async_client = None
 
         return self._async_client
 
