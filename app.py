@@ -230,6 +230,83 @@ def _company_names_match(query_company: str, candidate_company: str) -> bool:
     return similarity >= 0.78
 
 
+def _extract_identifier_filters_from_query(query: str) -> Dict[str, List[str]]:
+    """Extract name, email, and phone filters directly from the raw query text."""
+    identifiers: Dict[str, List[str]] = {}
+
+    if not query:
+        return identifiers
+
+    # Email addresses
+    email_pattern = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
+    email_matches = email_pattern.findall(query)
+    if email_matches:
+        normalized_emails: List[str] = []
+        for raw_email in email_matches:
+            cleaned_email = raw_email.strip().lower()
+            if cleaned_email and cleaned_email not in normalized_emails:
+                normalized_emails.append(cleaned_email)
+        if normalized_emails:
+            identifiers["email"] = normalized_emails
+
+    # Phone numbers (store both digit-only and lightly formatted variants)
+    phone_pattern = re.compile(r"(\+?\d[\d\s\-()]{6,}\d)")
+    phone_matches = phone_pattern.findall(query)
+    if phone_matches:
+        phone_values: List[str] = []
+        for raw_phone in phone_matches:
+            candidate = raw_phone.strip()
+            if not candidate:
+                continue
+            condensed = re.sub(r"\s+", " ", candidate)
+            digits_only = re.sub(r"\D", "", candidate)
+            for variant in (condensed, digits_only):
+                if variant and variant not in phone_values:
+                    phone_values.append(variant)
+        if phone_values:
+            identifiers["phone"] = phone_values
+
+    # Candidate names mentioned explicitly
+    name_patterns = [
+        r"(?:named|name is|called)\s+([A-Za-z][A-Za-z.'\- ]{1,60})",
+        r"(?:candidate|applicant)\s+named\s+([A-Za-z][A-Za-z.'\- ]{1,60})",
+    ]
+name_candidates: List[str] = []
+seen_names: Set[str] = set()
+for pattern in name_patterns:
+    matches = re.findall(pattern, query, flags=re.IGNORECASE)
+    for raw_match in matches:
+        base_name = raw_match.strip().strip('"').strip("'")
+
+        def _add_name_variant(value: str) -> None:
+            normalized = value.strip() if value else ''
+            if not normalized:
+                return
+            key = normalized.lower()
+            if key not in seen_names:
+                name_candidates.append(normalized)
+                seen_names.add(key)
+
+        if not base_name:
+            continue
+
+        _add_name_variant(base_name)
+
+        truncated = base_name
+        for separator in [',', ' with ', ' who ', ' that ', ' which ', ' and ', '?', '.', '!']:
+            idx = truncated.lower().find(separator)
+            if idx != -1:
+                truncated = truncated[:idx].strip()
+                break
+        truncated = truncated.strip('"').strip("'")
+        _add_name_variant(truncated)
+
+if name_candidates:
+    identifiers["name"] = name_candidates
+
+    return identifiers
+
+
 def _extract_candidate_companies(payload: Dict[str, Any]) -> List[str]:
     companies: List[str] = []
 
@@ -1207,6 +1284,29 @@ Return only the JSON object, no additional text or explanations.
             qdrant_filters = {}
             search_keywords = []
             
+            identifier_filters = _extract_identifier_filters_from_query(query)
+            for field, values in identifier_filters.items():
+                if not values:
+                    continue
+                existing = qdrant_filters.get(field)
+                combined_values: List[str] = []
+
+                if isinstance(existing, list):
+                    combined_values.extend([str(v).strip() for v in existing if str(v).strip()])
+                elif existing is not None:
+                    existing_str = str(existing).strip()
+                    if existing_str:
+                        combined_values.append(existing_str)
+
+                for value in values:
+                    value_str = str(value).strip()
+                    if value_str and value_str not in combined_values:
+                        combined_values.append(value_str)
+
+                if combined_values:
+                    qdrant_filters[field] = combined_values
+                    search_keywords.extend(combined_values)
+
             # Education filters
             if components.get("education_requirements", {}).get("has_requirement", False):
                 edu_req = components["education_requirements"]
@@ -3136,7 +3236,19 @@ async def search_resumes_intent_based(
         qdrant_filters = final_requirements.get("qdrant_filters", {}) or {}
 
         # For hiring workflows we prefer a full semantic retrieval first, then apply filters manually
+        pre_filter_fields = {"name", "email", "phone"}
         filter_conditions = {}
+
+        for field in pre_filter_fields:
+            field_value = qdrant_filters.get(field)
+            if field_value:
+                if isinstance(field_value, list):
+                    normalized_values = [str(v).strip() for v in field_value if str(v).strip()]
+                else:
+                    normalized_values = [str(field_value).strip()]
+                if normalized_values:
+                    filter_conditions[field] = normalized_values
+
         post_retrieval_fields = set(qdrant_filters.keys())
 
         logger.info(f"dY<? Qdrant filters (post-processing): {qdrant_filters}")
@@ -3159,7 +3271,7 @@ async def search_resumes_intent_based(
         results = await qdrant_client.search_similar(
             query_vector=query_vector,
             limit=search_limit,
-            filter_conditions=None  # Always perform full semantic search first
+            filter_conditions=filter_conditions if filter_conditions else None  # Apply strict filters only when provided
         )
         logger.info(f"dYZ_ Retrieved {len(results)} candidates from full semantic search (limit={search_limit})")
 
@@ -3167,7 +3279,7 @@ async def search_resumes_intent_based(
         if results:
             filtered_results = []
 
-            critical_criteria = {"experience", "location", "job_title", "role_category", "company", "education"}
+            critical_criteria = {"experience", "location", "job_title", "role_category", "company", "education", "name", "email", "phone"}
 
             # Helper function to check strict vs non-strict matching
             def should_exclude_candidate(criteria_matches: list, strict_mode: bool = False) -> bool:
@@ -3218,6 +3330,12 @@ async def search_resumes_intent_based(
                 payload = result.get('payload', {})
                 should_include = True
                 criteria_matches = []
+
+                def _normalize_filter_values(value):
+                    if isinstance(value, list):
+                        return [str(v).lower().strip() for v in value if str(v).strip()]
+                    value_str = str(value).lower().strip()
+                    return [value_str] if value_str else []
 
                 # Experience filtering
                 min_experience = qdrant_filters.get('min_experience')
@@ -3290,6 +3408,56 @@ async def search_resumes_intent_based(
 
                     if not title_match:
                         logger.info(f"🚫 Job title mismatch for {payload.get('name', 'Unknown')} - '{candidate_position}' doesn't match '{job_title_requirements}'")
+
+                # Name filtering (exact or substring match)
+                name_requirements = qdrant_filters.get('name')
+                if name_requirements:
+                    candidate_name = str(payload.get('name', '')).lower().strip()
+                    name_match = False
+
+                    for req_name in _normalize_filter_values(name_requirements):
+                        if req_name and req_name in candidate_name:
+                            name_match = True
+                            break
+
+                    criteria_matches.append(("name", name_match, True))
+
+                    if not name_match:
+                        logger.info(f"dYs_ Name mismatch for {payload.get('name', 'Unknown')} - does not contain required name '{name_requirements}'")
+
+                # Email filtering (exact match)
+                email_requirements = qdrant_filters.get('email')
+                if email_requirements:
+                    candidate_email = str(payload.get('email', '')).lower().strip()
+                    email_match = False
+
+                    for req_email in _normalize_filter_values(email_requirements):
+                        if req_email and req_email == candidate_email:
+                            email_match = True
+                            break
+
+                    criteria_matches.append(("email", email_match, True))
+
+                    if not email_match:
+                        logger.info(f"dYs_ Email mismatch for {payload.get('name', 'Unknown')} - email '{candidate_email}' doesn't match '{email_requirements}'")
+
+                # Phone filtering (digits only match)
+                phone_requirements = qdrant_filters.get('phone')
+                if phone_requirements:
+                    candidate_phone = str(payload.get('phone', '')).strip()
+                    candidate_phone_digits = re.sub(r"\D", "", candidate_phone)
+                    phone_match = False
+
+                    for req_phone in _normalize_filter_values(phone_requirements):
+                        req_digits = re.sub(r"\D", "", req_phone)
+                        if req_digits and req_digits == candidate_phone_digits:
+                            phone_match = True
+                            break
+
+                    criteria_matches.append(("phone", phone_match, True))
+
+                    if not phone_match:
+                        logger.info(f"dYs_ Phone mismatch for {payload.get('name', 'Unknown')} - phone '{candidate_phone}' doesn't match '{phone_requirements}'")
 
                 # Role category filtering (flexible matching with LLM semantic similarity)
                 role_category_requirements = qdrant_filters.get('role_category')
