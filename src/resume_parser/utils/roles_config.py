@@ -27,9 +27,9 @@ class RolesConfig:
         if config_path is None:
             # Default path relative to project root
             project_root = Path(__file__).parents[3]
-            config_path = project_root / "config" / "sectorWiseRoles.json"
+            config_path = project_root / "config" / "sectorWiseRoles.json"# type: ignore
 
-        self.config_path = Path(config_path)
+        self.config_path = Path(config_path)# type: ignore
         self.config = self._load_config()
         self._processed_roles = self._process_roles_data()
 

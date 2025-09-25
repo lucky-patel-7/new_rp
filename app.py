@@ -18,7 +18,7 @@ from difflib import SequenceMatcher
 sys.path.insert(0, str(Path(__file__).parent))
 
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, File, UploadFile, HTTPException, Depends, Form
+from fastapi import FastAPI, File, UploadFile, HTTPException, Depends, Form, Body, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import asyncio
@@ -27,8 +27,10 @@ import asyncio
 from src.resume_parser.core.parser import ResumeParser
 from src.resume_parser.core.models import ProcessingResult, ResumeData
 from src.resume_parser.database.qdrant_client import qdrant_client
+from src.resume_parser.database.postgres_client import pg_client
 from src.resume_parser.utils.logging import setup_logging, get_logger
 from src.resume_parser.utils.file_handler import FileHandler
+from src.resume_parser.clients.azure_openai import azure_client
 from config.settings import settings
 
 # Setup logging
@@ -157,24 +159,7 @@ def _extract_experience_years(payload: Dict[str, Any]) -> Optional[float]:
     return years_total if found_value else None
 
 
-def _candidate_meets_experience_requirement(
-    payload: Dict[str, Any],
-    minimum_years: Optional[int],
-    maximum_years: Optional[int]
-) -> bool:
-    """Determine if a candidate satisfies minimum and/or maximum experience requirements."""
-    experience_years = _extract_experience_years(payload)
-    if experience_years is None:
-        return False
-
-    try:
-        if minimum_years is not None and experience_years < float(minimum_years):
-            return False
-        if maximum_years is not None and experience_years > float(maximum_years):
-            return False
-        return True
-    except (TypeError, ValueError):
-        return False
+    
 
 
 GENERIC_COMPANY_TOKENS: Set[str] = {
@@ -266,43 +251,104 @@ def _extract_identifier_filters_from_query(query: str) -> Dict[str, List[str]]:
         if phone_values:
             identifiers["phone"] = phone_values
 
-    # Candidate names mentioned explicitly
+    # Candidate names mentioned explicitly (common prompt patterns)
+    # Examples: "give me lucky patel's resume", "i need dhruv rana profile", "resume of John Doe", "profile of Jane D."
     name_patterns = [
         r"(?:named|name is|called)\s+([A-Za-z][A-Za-z.'\- ]{1,60})",
         r"(?:candidate|applicant)\s+named\s+([A-Za-z][A-Za-z.'\- ]{1,60})",
+        r"\b([A-Za-z][A-Za-z.'\- ]{1,60})'?s\s+(?:resume|cv|profile)\b",
+        r"\b(?:resume|cv|profile)\s+of\s+([A-Za-z][A-Za-z.'\- ]{1,60})\b",
+        r"\b(?:give me|show me|get|find|need|i need|looking for)\s+([A-Za-z][A-Za-z.'\- ]{1,60})\s+(?:resume|cv|profile)\b"
     ]
-name_candidates: List[str] = []
-seen_names: Set[str] = set()
-for pattern in name_patterns:
-    matches = re.findall(pattern, query, flags=re.IGNORECASE)
-    for raw_match in matches:
-        base_name = raw_match.strip().strip('"').strip("'")
+    name_candidates: List[str] = []
+    seen_names: Set[str] = set()
+    for pattern in name_patterns:
+        matches = re.findall(pattern, query, flags=re.IGNORECASE)
+        for raw_match in matches:
+            base_name = raw_match.strip().strip('"').strip("'")
 
-        def _add_name_variant(value: str) -> None:
-            normalized = value.strip() if value else ''
-            if not normalized:
-                return
-            key = normalized.lower()
-            if key not in seen_names:
-                name_candidates.append(normalized)
-                seen_names.add(key)
+            # Clean possessives and trailing qualifiers
+            if base_name.lower().endswith("'s"):
+                base_name = base_name[:-2].strip()
 
-        if not base_name:
-            continue
+            def _add_name_variant(value: str) -> None:
+                normalized = value.strip() if value else ''
+                if not normalized:
+                    return
+                key = normalized.lower()
+                if key not in seen_names:
+                    name_candidates.append(normalized)
+                    seen_names.add(key)
 
-        _add_name_variant(base_name)
+            if not base_name:
+                continue
 
-        truncated = base_name
-        for separator in [',', ' with ', ' who ', ' that ', ' which ', ' and ', '?', '.', '!']:
-            idx = truncated.lower().find(separator)
-            if idx != -1:
-                truncated = truncated[:idx].strip()
-                break
-        truncated = truncated.strip('"').strip("'")
-        _add_name_variant(truncated)
+            _add_name_variant(base_name)
 
-if name_candidates:
-    identifiers["name"] = name_candidates
+            truncated = base_name
+            for separator in ["'s", ',', ' with ', ' who ', ' that ', ' which ', ' and ', ' or ', ' for ', ' from ', '?', '.', '!', ' resume', ' cv', ' profile']:
+                idx = truncated.lower().find(separator)
+                if idx != -1:
+                    truncated = truncated[:idx].strip()
+                    break
+            truncated = truncated.strip('"').strip("'")
+            _add_name_variant(truncated)
+
+    if name_candidates:
+        # Post-filter and normalize names: remove directives, possessives, artifacts
+        def _strip_directives(text: str) -> str:
+            tl = text.strip()
+            directives = [
+                'give me ', 'show me ', 'get ', 'find ', 'need ', 'i need ', 'looking for ',
+                'please ', 'kindly '
+            ]
+            tl_lower = tl.lower()
+            for d in directives:
+                if tl_lower.startswith(d):
+                    tl = tl[len(d):].strip()
+                    tl_lower = tl.lower()
+                    break
+            return tl
+
+        seen_out: Set[str] = set()
+        cleaned: List[str] = []
+        BAD = {'resume', 'cv', 'profile', 'candidate', 'applicant', 'email', 'phone', 'number'}
+        ROLE_WORDS = {
+            'engineer','developer','manager','analyst','designer','consultant','architect','scientist','tester','qa',
+            'hr','recruiter','marketing','sales','executive','lead','principal','senior','junior','intern','assistant',
+            'devops','full','stack','frontend','backend','data','machine','learning','ml','ai','nlp','doctor','nurse',
+            'teacher','accountant','supervisor','director','officer','administrator','operator','specialist'
+        }
+        def _looks_like_role(text: str) -> bool:
+            tl = text.lower()
+            # exact multi-word role indicators
+            if 'full stack' in tl or 'human resources' in tl:
+                return True
+            tokens = [t for t in re.split(r"\s+", tl) if t]
+            return any(t in ROLE_WORDS for t in tokens)
+        for raw in name_candidates:
+            name = _strip_directives(raw)
+            # Remove trailing artifacts
+            name = re.sub(r"\b(?:resume|cv|profile)\b$", "", name, flags=re.IGNORECASE).strip()
+            # Remove trailing possessive if any leftover
+            name = re.sub(r"'s\b$", "", name, flags=re.IGNORECASE).strip()
+            # Trim extra punctuation
+            name = name.strip(' .,!?:;"\'')
+
+            tokens = [t for t in name.split() if t]
+            if not tokens:
+                continue
+            if any(t.lower() in BAD for t in tokens):
+                continue
+            # Keep 1-4 token names and skip obvious role phrases
+            if 1 <= len(tokens) <= 4 and not _looks_like_role(name):
+                key = name.lower()
+                if key not in seen_out:
+                    cleaned.append(name)
+                    seen_out.add(key)
+
+        if cleaned:
+            identifiers["name"] = cleaned
 
     return identifiers
 
@@ -451,6 +497,108 @@ async def _llm_semantic_similarity(query_term: str, candidate_term: str) -> bool
         return query_term.lower().strip() == candidate_term.lower().strip()
 
 
+def _llm_refine_final_requirements(query: str, final_requirements: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Use LLM to refine and normalize final requirements (filters + keywords).
+
+    The model should:
+    - Normalize job titles (e.g., 'full stack developer' -> 'Full Stack Developer')
+    - Confirm person names (exclude role phrases like 'software engineer')
+    - Keep emails lowercased; provide digits-only phone alongside formatted if available
+    - Avoid adding requirements not clearly present
+    - Return JSON with keys: {"qdrant_filters": {...}, "search_keywords": [...], "primary_intent": "..."}
+    """
+    try:
+        from src.resume_parser.clients.azure_openai import azure_client
+        import json as _json
+
+        client = azure_client.get_sync_client()
+        chat_deployment = azure_client.get_chat_deployment()
+
+        fr_json = _json.dumps(final_requirements, ensure_ascii=False)
+        system = (
+            "You refine search intents for a resume search engine. "
+            "Return precise, minimal filters with normalized values. Do not invent data."
+        )
+        user = f"""
+Query: {query}
+
+Current final_requirements JSON:
+{fr_json}
+
+Refine and normalize the filters and keywords for vector + metadata search. Rules:
+- Normalize job titles to Title Case; include common synonym if obvious (avoid overgeneralization)
+- If a 'name' is present, ensure it is a person name (not a role phrase); remove directive words (e.g., 'give me')
+- Keep emails lowercased; phones may include formatted form, and provide a digits-only variant if evident
+- Do not add filters that are not clearly requested
+- Prefer compact lists (max 3 items per key)
+- Provide primary_intent among: role | person_name | contact_information | company | location | hybrid
+
+Return ONLY JSON with keys: qdrant_filters, search_keywords, primary_intent.
+"""
+
+        response = client.chat.completions.create(
+            model=chat_deployment,
+            messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
+            max_tokens=600,
+            temperature=0.05
+        )
+        content = response.choices[0].message.content if response.choices else None
+        if not content:
+            return None
+
+        content = content.strip()
+        if content.startswith("```json"):
+            content = content[7:]
+        if content.startswith("```"):
+            content = content[3:]
+        if content.endswith("```"):
+            content = content[:-3]
+        content = content.strip()
+
+        refined = _json.loads(content)
+
+        # Basic validation
+        if not isinstance(refined, dict) or 'qdrant_filters' not in refined:
+            return None
+
+        # Ensure lists and strings are well-typed
+        qf = refined.get('qdrant_filters') or {}
+        if not isinstance(qf, dict):
+            return None
+        for k, v in list(qf.items()):
+            if v is None:
+                del qf[k]
+                continue
+            if isinstance(v, (str, int)):
+                qf[k] = [str(v)]
+            elif isinstance(v, list):
+                qf[k] = [str(x).strip() for x in v if str(x).strip()]
+            else:
+                # Remove unexpected types
+                del qf[k]
+
+        refined['qdrant_filters'] = qf
+
+        # Sanitize keywords
+        kw = refined.get('search_keywords') or []
+        if isinstance(kw, str):
+            kw = [kw]
+        if isinstance(kw, list):
+            refined['search_keywords'] = [str(x).strip().lower() for x in kw if str(x).strip()]
+        else:
+            refined['search_keywords'] = []
+
+        # primary_intent optional normalization
+        pi = refined.get('primary_intent')
+        if pi and not isinstance(pi, str):
+            refined['primary_intent'] = str(pi)
+
+        return refined
+    except Exception as _e:
+        logger.info(f"[INTENT_LLM] Refinement skipped due to error: {_e}")
+        return None
+
+
 def _find_company_match(
     payload: Dict[str, Any],
     query_companies: List[str]
@@ -483,9 +631,21 @@ def _candidate_matches_forced_keywords(payload: Dict[str, Any], forced_keywords:
     except Exception:
         text = ' '
 
+    candidate_name = payload.get('name', 'UNKNOWN')
+    # Only log a small snippet to avoid noisy logs
+    text_snippet = text[:160].replace('\n', ' ')
+
     for keyword in forced_keywords:
-        if keyword.lower() not in text:
+        kw = keyword.lower()
+        if kw not in text:
+            logger.info(
+                f"🔎 Forced keyword MISS for '{candidate_name}': '{keyword}' not found in text snippet: '{text_snippet}...'"
+            )
             return False
+
+    logger.info(
+        f"🔎 Forced keyword HIT for '{candidate_name}': all terms matched: {forced_keywords}"
+    )
     return True
 
 
@@ -577,7 +737,7 @@ async def health_check():
 
 
 @app.post("/upload-resume")
-async def upload_resume(file: UploadFile = File(...)):
+async def upload_resume(file: UploadFile = File(...), user_id: Optional[str] = Form(None)):
     """
     Upload and parse a resume file.
 
@@ -589,8 +749,15 @@ async def upload_resume(file: UploadFile = File(...)):
     if not file.filename:
         raise HTTPException(status_code=400, detail="No file provided")
 
-    # Generate unique user ID
-    user_id = str(uuid.uuid4())
+    # Check user resume upload limit before processing
+    if user_id:
+        can_upload, limit_info = await pg_client.check_user_resume_limit(user_id, 1)
+        if not can_upload:
+            error_detail = f"Resume upload limit exceeded. You have uploaded {limit_info['current_resumes']}/{limit_info['resume_limit']} resumes. Available slots: {limit_info['available_slots']}"
+            raise HTTPException(status_code=429, detail=error_detail)
+
+    # Generate unique resume ID (point id)
+    resume_id = str(uuid.uuid4())
 
     # Create temporary file
     temp_file = None
@@ -618,7 +785,7 @@ async def upload_resume(file: UploadFile = File(...)):
         # Process the resume
         result: ProcessingResult = await resume_parser.process_resume_file(
             file_path=temp_file_path,
-            user_id=user_id,
+            user_id=resume_id,
             file_size=file_size
         )
 
@@ -651,8 +818,11 @@ async def upload_resume(file: UploadFile = File(...)):
         payload = {
             "user_id": getattr(resume_data, 'user_id', None),
             "name": getattr(resume_data, 'name', None),
+            "name_lc": (getattr(resume_data, 'name', '') or '').strip().lower(),
             "email": getattr(resume_data, 'email', None),
+            "email_lc": (getattr(resume_data, 'email', '') or '').strip().lower(),
             "phone": getattr(resume_data, 'phone', ''),
+            "phone_digits": re.sub(r"\D", "", str(getattr(resume_data, 'phone', ''))) if getattr(resume_data, 'phone', None) else "",
             "location": getattr(resume_data, 'location', None),
             "linkedin_url": getattr(resume_data, 'linkedin_url', ''),
             "current_position": getattr(resume_data, 'current_position', None),
@@ -670,7 +840,8 @@ async def upload_resume(file: UploadFile = File(...)):
             "role_classification": safe_role_classification,
             "original_filename": file.filename,
             "extraction_statistics": safe_extraction_statistics,
-            "upload_timestamp": upload_timestamp
+            "upload_timestamp": upload_timestamp,
+            "owner_user_id": user_id
         }
 
         # Create embedding and store in Qdrant
@@ -680,11 +851,21 @@ async def upload_resume(file: UploadFile = File(...)):
             # Store in Qdrant
             try:
                 point_id = await qdrant_client.store_embedding(
-                    user_id=user_id,
+                    user_id=resume_id,
                     embedding_vector=embedding_vector,
                     payload=payload
                 )
                 logger.info(f"[SUCCESS] Stored in Qdrant with ID: {point_id}")
+                # Mirror to PostgreSQL (best-effort)
+                try:
+                    await pg_client.upsert_parsed_resume(
+                        resume_id=resume_id,
+                        payload=payload,
+                        embedding_model=azure_client.get_embedding_deployment(),
+                        vector_id=str(point_id)
+                    )
+                except Exception as e:
+                    logger.info(f"[PG] Skipped mirroring to Postgres: {e}")
             except Exception as e:
                 logger.error(f"❌ Failed to store in Qdrant: {e}")
                 # Continue without failing the request
@@ -692,11 +873,16 @@ async def upload_resume(file: UploadFile = File(...)):
         # Prepare response
         response_data = {
             "success": True,
-            "user_id": user_id,
+            "user_id": resume_id,
             "processing_time": result.processing_time,
             "resume_data": resume_data.model_dump(mode='json') if hasattr(resume_data, 'model_dump') else (resume_data.dict() if hasattr(resume_data, 'dict') else {}),
             "message": "Resume processed successfully"
         }
+
+        # Increment user's resume count after successful processing
+        if user_id:
+            tokens_used = getattr(result, 'tokens_used', 0) if result else 0
+            await pg_client.increment_user_resume_count(user_id, 1, tokens_used)
 
         logger.info(f"[SUCCESS] Resume processing completed for user: {user_id}")
         return JSONResponse(content=response_data)
@@ -714,6 +900,148 @@ async def upload_resume(file: UploadFile = File(...)):
                 FileHandler.cleanup_file(temp_file_path)
         except Exception:
             pass
+
+@app.get("/user-limits/{user_id}")
+async def get_user_limits(user_id: str):
+    """
+    Get user's current resume upload limits and usage.
+
+    Args:
+        user_id: User identifier
+
+    Returns:
+        Dict containing current usage, limits, and available slots
+    """
+    try:
+        limits = await pg_client.get_user_resume_limits(user_id)
+
+        if not limits:
+            # Initialize limits for new user
+            await pg_client.init_user_resume_limits(user_id)
+            limits = await pg_client.get_user_resume_limits(user_id)
+
+        return {
+            "success": True,
+            "data": limits
+        }
+    except Exception as e:
+        logger.error(f"❌ Error fetching user limits for {user_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch user limits: {str(e)}")
+
+
+@app.post("/user-limits/{user_id}/decrement")
+async def decrement_user_resume_count(
+    user_id: str,
+    count: int = 1,
+    tokens_used: int = 0
+):
+    """
+    Decrease user's resume count (e.g., when resumes are deleted).
+
+    Args:
+        user_id: User identifier
+        count: Number of resumes to subtract (default: 1)
+        tokens_used: Tokens to subtract from usage (default: 0)
+
+    Returns:
+        Dict with success status and updated limits
+    """
+    try:
+        success = await pg_client.decrement_user_resume_count(user_id, count, tokens_used)
+
+        if not success:
+            raise HTTPException(status_code=400, detail="Failed to decrement resume count")
+
+        # Get updated limits
+        limits = await pg_client.get_user_resume_limits(user_id)
+
+        return {
+            "success": True,
+            "message": f"Decremented resume count by {count} and tokens by {tokens_used}",
+            "data": limits
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error decrementing user resume count for {user_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to decrement resume count: {str(e)}")
+
+
+@app.post("/user-limits/{user_id}/reset")
+async def reset_user_resume_count(
+    user_id: str,
+    new_count: int = 0,
+    new_tokens: int = 0
+):
+    """
+    Reset user's resume count and token usage to specific values.
+
+    Args:
+        user_id: User identifier
+        new_count: New resume count (default: 0)
+        new_tokens: New token count (default: 0)
+
+    Returns:
+        Dict with success status and updated limits
+    """
+    try:
+        success = await pg_client.reset_user_resume_count(user_id, new_count, new_tokens)
+
+        if not success:
+            raise HTTPException(status_code=400, detail="Failed to reset resume count")
+
+        # Get updated limits
+        limits = await pg_client.get_user_resume_limits(user_id)
+
+        return {
+            "success": True,
+            "message": f"Reset resume count to {new_count} and tokens to {new_tokens}",
+            "data": limits
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error resetting user resume count for {user_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to reset resume count: {str(e)}")
+
+
+@app.post("/user-limits/{user_id}/increment")
+async def manual_increment_user_resume_count(
+    user_id: str,
+    count: int = 1,
+    tokens_used: int = 0
+):
+    """
+    Manually increment user's resume count (for admin purposes).
+
+    Args:
+        user_id: User identifier
+        count: Number of resumes to add (default: 1)
+        tokens_used: Tokens to add to usage (default: 0)
+
+    Returns:
+        Dict with success status and updated limits
+    """
+    try:
+        success = await pg_client.increment_user_resume_count(user_id, count, tokens_used)
+
+        if not success:
+            raise HTTPException(status_code=400, detail="Failed to increment resume count")
+
+        # Get updated limits
+        limits = await pg_client.get_user_resume_limits(user_id)
+
+        return {
+            "success": True,
+            "message": f"Incremented resume count by {count} and tokens by {tokens_used}",
+            "data": limits
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error incrementing user resume count for {user_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to increment resume count: {str(e)}")
+
 
 # Add this route to your app.py
 
@@ -1013,7 +1341,7 @@ async def upload_resume(file: UploadFile = File(...)):
 #         }n
     
 @app.post("/analyze-query-intent")
-async def analyze_query_intent(query: str = Form(...)):
+async def analyze_query_intent(query: str = Form(...), user_id: Optional[str] = Form(None)):
     """
     Enhanced query intent analyzer capable of handling very complex multi-dimensional queries.
     
@@ -1438,6 +1766,13 @@ Return only the JSON object, no additional text or explanations.
                 if kw and kw.strip() and len(kw.strip()) > 1
             ]))
             
+            # Determine primary intent override based on identifiers
+            override_primary_intent = None
+            if qdrant_filters.get('email') or qdrant_filters.get('phone'):
+                override_primary_intent = 'contact_information'
+            elif qdrant_filters.get('name'):
+                override_primary_intent = 'person_name'
+
             # Create final requirements structure
             final_requirements = {
                 "qdrant_filters": qdrant_filters,
@@ -1445,12 +1780,35 @@ Return only the JSON object, no additional text or explanations.
                 "filter_count": len(qdrant_filters),
                 "has_strict_requirements": len(qdrant_filters) > 0,
                 "search_strategy": {
-                    "primary_intent": intent_data.get("query_metadata", {}).get("primary_intent", "hybrid"),
+                    "primary_intent": override_primary_intent or intent_data.get("query_metadata", {}).get("primary_intent", "hybrid"),
                     "recommended_approach": intent_data.get("search_strategy", {}).get("recommended_approach", "semantic_search"),
                     "complexity": intent_data.get("search_strategy", {}).get("search_complexity", "single_pass")
                 }
             }
-            
+
+            # LLM refinement pass for better filters/keywords
+            try:
+                refined = _llm_refine_final_requirements(query, final_requirements)
+            except Exception as _e:
+                refined = None
+                logger.info(f"[INTENT_LLM] Skipping refinement: {_e}")
+
+            if refined:
+                # Merge refined back (prefer refined values)
+                fr_qf = refined.get('qdrant_filters') or {}
+                fr_kw = refined.get('search_keywords') or []
+                fr_pi = refined.get('primary_intent')
+
+                if isinstance(fr_qf, dict):
+                    final_requirements['qdrant_filters'] = fr_qf
+                    final_requirements['filter_count'] = len(fr_qf)
+                if isinstance(fr_kw, list):
+                    final_requirements['search_keywords'] = fr_kw
+                if fr_pi:
+                    final_requirements['search_strategy']['primary_intent'] = fr_pi
+
+                logger.info(f"[INTENT_LLM] Refined final requirements: {final_requirements}")
+
             # Add final requirements to the response
             intent_data["final_requirements"] = final_requirements
             # ============= END OF NEW ADDITION =============
@@ -1458,6 +1816,7 @@ Return only the JSON object, no additional text or explanations.
             return {
                 "success": True,
                 "query": query,
+                "user_id": user_id,
                 "intent_analysis": intent_data,
                 "processing_time": "enhanced_analysis_complete"
             }
@@ -1466,7 +1825,8 @@ Return only the JSON object, no additional text or explanations.
             return {
                 "success": False,
                 "error": "No response from AI service",
-                "query": query
+                "query": query,
+                "user_id": user_id
             }
             
     except json.JSONDecodeError as e: # type: ignore
@@ -1483,11 +1843,12 @@ Return only the JSON object, no additional text or explanations.
         return {
             "success": False,
             "error": f"Intent analysis failed: {str(e)}",
-            "query": query
+            "query": query,
+            "user_id": user_id
         }
 
 @app.post("/bulk-upload-resumes")
-async def bulk_upload_resumes(files: List[UploadFile] = File(...)):
+async def bulk_upload_resumes(files: List[UploadFile] = File(...), user_id: Optional[str] = Form(None)):
     """
     Upload and parse multiple resume files (up to 5).
 
@@ -1515,6 +1876,13 @@ async def bulk_upload_resumes(files: List[UploadFile] = File(...)):
             detail="No files provided"
         )
 
+    # Check user resume upload limit before processing bulk upload
+    if user_id:
+        can_upload, limit_info = await pg_client.check_user_resume_limit(user_id, len(files))
+        if not can_upload:
+            error_detail = f"Bulk upload rejected. You want to upload {len(files)} resumes but only have {limit_info['available_slots']} slots remaining. Current usage: {limit_info['current_resumes']}/{limit_info['resume_limit']}"
+            raise HTTPException(status_code=429, detail=error_detail)
+
     results = {
         "total_files": len(files),
         "successful_uploads": 0,
@@ -1541,8 +1909,8 @@ async def bulk_upload_resumes(files: List[UploadFile] = File(...)):
 
             # Call the same upload logic as the single file upload
             # This is essentially what the upload_resume function does
-            user_id = str(uuid.uuid4())
-            file_result["user_id"] = user_id
+            resume_id = str(uuid.uuid4())
+            file_result["user_id"] = resume_id
 
             # Create temporary file
             temp_file = None
@@ -1569,7 +1937,7 @@ async def bulk_upload_resumes(files: List[UploadFile] = File(...)):
                 # Process the resume using the same logic as single upload
                 result = await resume_parser.process_resume_file(
                     file_path=temp_file_path,
-                    user_id=user_id,
+                    user_id=resume_id,
                     file_size=file_size
                 )
 
@@ -1620,7 +1988,8 @@ async def bulk_upload_resumes(files: List[UploadFile] = File(...)):
                     "role_classification": safe_role_classification,
                     "original_filename": file.filename,
                     "extraction_statistics": safe_extraction_statistics,
-                    "upload_timestamp": upload_timestamp
+                    "upload_timestamp": upload_timestamp,
+                    "owner_user_id": user_id
                 }
 
                 # Create embedding and store in Qdrant (same as single upload)
@@ -1630,11 +1999,21 @@ async def bulk_upload_resumes(files: List[UploadFile] = File(...)):
                     # Store in Qdrant
                     try:
                         point_id = await qdrant_client.store_embedding(
-                            user_id=user_id,
+                            user_id=resume_id,
                             embedding_vector=embedding_vector,
                             payload=payload
                         )
                         logger.info(f"[SUCCESS] Stored resume {i+1} in Qdrant with ID: {point_id}")
+                        # Mirror to PostgreSQL (best-effort)
+                        try:
+                            await pg_client.upsert_parsed_resume(
+                                resume_id=resume_id,
+                                payload=payload,
+                                embedding_model=azure_client.get_embedding_deployment(),
+                                vector_id=str(point_id)
+                            )
+                        except Exception as e:
+                            logger.info(f"[PG] Skipped mirroring to Postgres (bulk): {e}")
                     except Exception as e:
                         logger.error(f"❌ Failed to store resume {i+1} in Qdrant: {e}")
                         # Continue without failing the request
@@ -1650,6 +2029,11 @@ async def bulk_upload_resumes(files: List[UploadFile] = File(...)):
                     "best_role": getattr(resume_data, 'best_role', None)
                 }
                 results["successful_uploads"] += 1
+
+                # Increment user's resume count for each successful upload
+                if user_id:
+                    tokens_used = getattr(result, 'tokens_used', 0) if result else 0
+                    await pg_client.increment_user_resume_count(user_id, 1, tokens_used)
 
                 logger.info(f"[SUCCESS] Successfully processed file {i+1}: {file.filename}")
 
@@ -1679,691 +2063,415 @@ async def bulk_upload_resumes(files: List[UploadFile] = File(...)):
     return results
 
 
-@app.post("/search-resumes")
-async def search_resumes(
-    query: str = Form(...),
-    limit: int = Form(10),
-    role_filter: Optional[str] = Form(None),
-    seniority_filter: Optional[str] = Form(None)
+@app.post("/bulk-upload-folder")
+async def bulk_upload_folder(
+    folder_path: Optional[str] = Form(None),
+    recursive: bool = Form(False),
+    limit: int = Form(0),
+    user_id: Optional[str] = Form(None),
+    json_body: Optional[Dict[str, Any]] = Body(None)
 ):
     """
-    Search for similar resumes using intelligent semantic search.
+    Process and upload all resumes from a local folder path.
+
+    Accepts either form-encoded fields or JSON body with keys: folder_path, recursive, limit.
 
     Args:
-        query: Natural language query (e.g., "I need an HR manager with 5+ years experience")
-        limit: Maximum number of results
-        role_filter: Optional manual role filter override
-        seniority_filter: Optional manual seniority filter override
+        folder_path: Absolute or relative path to a folder on the server machine
+        recursive: Whether to recurse into subdirectories
+        limit: Optional max number of files to process (0 = no limit)
+        json_body: Optional JSON body with the same keys
+
+    Returns:
+        Summary with counts and per-file results
     """
-    try:
-        # Import intelligent search processor
-        from src.resume_parser.utils.search_intelligence import search_processor
-
-        logger.info(f"🔍 Processing search query: {query}")
-
-        # Parse the query intelligently
-        parsed_query = search_processor.parse_query(query)
-
-        # Clamp limit to prevent overly large responses or negative numbers
-        limit = max(1, min(limit, 100))
-        logger.info(f"📏 Result limit normalized to: {limit}")
-
-        effective_skills = parsed_query.effective_skills()
-        explicit_skill_count = len(parsed_query.skills)
-        effective_skill_count = len(effective_skills)
-        forced_keywords = parsed_query.forced_keywords
-        required_degrees = parsed_query.required_degrees
-        required_institutions = parsed_query.required_institutions
-
-        logger.info(f"🔧 Explicit skills detected: {parsed_query.skills[:5]}")
-        if parsed_query.role_inferred_skills:
-            logger.info(f"🔧 Role-inferred skills sample: {parsed_query.role_inferred_skills[:5]}")
-        if forced_keywords:
-            logger.info(f"🔑 Forced keywords: {forced_keywords[:5]}")
-        if required_degrees:
-            logger.info(f"🎓 Required degrees: {required_degrees[:5]}")
-        if required_institutions:
-            logger.info(f"🏛️ Required institutions: {required_institutions[:5]}")
-
-        # Create comprehensive search text including all relevant terms
-        search_components: List[str] = []
-        seen_components: Set[str] = set()
-
-        def add_component(text: Optional[str]):
-            if not text or not isinstance(text, str):
-                return
-            cleaned = text.strip()
-            key = cleaned.lower()
-            if cleaned and key not in seen_components:
-                search_components.append(cleaned)
-                seen_components.add(key)
-
-        add_component(query)
-
-        # Add detected role synonyms
-        for role in parsed_query.job_roles:
-            role_titles = search_processor.job_db.get_role_titles(role)
-            for title in role_titles[:5]:
-                add_component(title)
-
-        # Add explicit skills mentioned in the query
-        for skill in parsed_query.skills:
-            add_component(skill)
-
-        # Add inferred skills from configuration to enrich semantic search
-        for skill in parsed_query.role_inferred_skills[:40]:
-            add_component(skill)
-
-        for keyword in forced_keywords:
-            add_component(keyword)
-
-        for degree in required_degrees:
-            add_component(degree)
-        for institution in required_institutions:
-            add_component(institution)
-
-        # Use expanded query for better semantic search
-        search_text = ' '.join(search_components) if search_components else query
-
-        # Log detailed embedding information
-        logger.info(f"🔮 Creating embedding for search text: '{search_text}'")
-        logger.info(f"🔮 Search components count: {len(search_components)} | sample: {search_components[:10]}")
-
-        query_vector = await _generate_embedding(search_text)
-
-        # Log embedding vector details
-        logger.info(f"🔮 Generated embedding vector with {len(query_vector)} dimensions")
-        logger.info(f"🔮 First 10 embedding values: {query_vector[:10]}")
-        logger.info(f"🔮 Embedding magnitude: {sum(x*x for x in query_vector)**0.5:.4f}")
-
-        # Create intelligent filters with proper role detection
-        filter_conditions: Dict[str, Any] = {}
-
-        # Improved role filtering logic
-        role_filters = search_processor.create_search_filters(parsed_query)
-        experience_min_filter_value = role_filters.pop('min_experience_years', None)
-        experience_max_filter_value = role_filters.pop('max_experience_years', None)
-
-        # Always apply location/seniority filters even when no role detected
-        location_filter_value = role_filters.pop('location', None)
-        if location_filter_value:
-            filter_conditions['location'] = location_filter_value
-
-        seniority_filter_value = role_filters.pop('seniority', None)
-        if seniority_filter_value and 'seniority' not in filter_conditions:
-            filter_conditions['seniority'] = seniority_filter_value
-
-        # Apply role filters if we have clear role detection
-        if parsed_query.job_roles:
-            skill_count_for_filter = explicit_skill_count if explicit_skill_count else effective_skill_count
-            # For role-focused queries (like "HR manager"), always apply role filters
-            if skill_count_for_filter == 0 or len(parsed_query.job_roles) >= skill_count_for_filter:
-                filter_conditions.update(role_filters)
-                logger.info(f"🎯 Applying role filters for role-focused query: {role_filters}")
-            # For skill-focused queries, be more flexible with role filters
-            elif skill_count_for_filter > len(parsed_query.job_roles):
-                # Only apply role filters if we have very specific role detection
-                if len(parsed_query.job_roles) == 1:
-                    filter_conditions.update(role_filters)
-                    logger.info(f"🎯 Applying role filters for skill+role query: {role_filters}")
-
-        # Apply manual overrides if provided (only if they're valid filters, not placeholder strings)
-        if role_filter and role_filter.lower() not in ['none', 'null', '', 'string']:
-            filter_conditions["role_category"] = role_filter
-        if seniority_filter and seniority_filter.lower() not in ['none', 'null', '', 'string']:
-            filter_conditions["seniority"] = seniority_filter
-
-        reported_filters = dict(filter_conditions)
-        if experience_min_filter_value is not None:
-            reported_filters['min_experience_years'] = experience_min_filter_value
-        if experience_max_filter_value is not None:
-            reported_filters['max_experience_years'] = experience_max_filter_value
-
-        logger.info(
-            "🎯 Search filters (Qdrant): %s | Python experience filter: min=%s, max=%s",
-            filter_conditions,
-            experience_min_filter_value,
-            experience_max_filter_value
-        )
-        logger.info(f"[INFO] Detected roles: {parsed_query.job_roles}")
-        logger.info(f"🔧 Effective skills used for search: {effective_skills[:10]}")
-        logger.info(f"🗺️ Detected location: {parsed_query.location}")
-        skill_focused = effective_skill_count > len(parsed_query.job_roles)
-        logger.info(f"💡 Search strategy: {'skill-focused' if skill_focused else 'role-focused'}")
-
-        # Search strategy: For technical queries, cast a wider net
-        search_limit_multiplier = 4 if effective_skill_count > 0 else 3
-
-        # Check for unavailable roles using configuration system
-        if parsed_query.unavailable_role_info:
-            unavailable_info = parsed_query.unavailable_role_info
-            return {
-                "query": query,
-                "parsed_query": {
-                    "detected_roles": [],
-                    "detected_skills": parsed_query.skills,
-                    "role_inferred_skills": parsed_query.role_inferred_skills,
-                    "forced_keywords": forced_keywords,
-                    "required_degrees": required_degrees,
-                    "required_institutions": required_institutions,
-                    "experience_years": parsed_query.experience_years,
-                    "min_experience_years": parsed_query.min_experience_years,
-                    "max_experience_years": parsed_query.max_experience_years,
-                    "seniority_level": parsed_query.seniority_level,
-                    "location": parsed_query.location,
-                    "intent": parsed_query.intent
-                },
-                "search_strategy": {
-                    "type": "unavailable_role",
-                    "role": unavailable_info.get("role"),
-                    "message": unavailable_info.get("message"),
-                    "suggestions": unavailable_info.get("suggestions", []),
-                    "available_roles": search_processor.job_db.get_database_roles()
-                },
-                "total_results": 0,
-                "results": []
-            }
-
-        # Check if this is a generic candidate search - allow these to proceed for general browsing
-        generic_keywords = ['candidate', 'candidates', 'people', 'person', 'resume', 'resumes', 'talent', 'profile', 'profiles']
-        has_generic_keywords = any(word in query.lower() for word in generic_keywords)
-        has_only_generic_keywords = (
-            parsed_query.keywords and
-            all(keyword.lower() in generic_keywords for keyword in parsed_query.keywords)
-        )
-
-        is_generic_search = (
-            not parsed_query.job_roles and
-            not parsed_query.skills and
-            not parsed_query.location and
-            not parsed_query.companies and
-            not forced_keywords and
-            not required_degrees and
-            not required_institutions and
-            (not parsed_query.keywords or has_only_generic_keywords) and
-            parsed_query.intent in ['find', 'search', 'hire', 'general'] and
-            has_generic_keywords
-        )
-
-
-        # Only search if we have proper criteria OR it's a generic candidate search
-        if (not parsed_query.job_roles and not parsed_query.skills and not parsed_query.location and not parsed_query.companies and
-                not forced_keywords and not required_degrees and not required_institutions and
-                (not parsed_query.keywords or has_only_generic_keywords) and not is_generic_search):
-            logger.info("🚫 No roles, skills, location, companies, or keywords detected - returning empty results")
-            return {
-                "query": query,
-                "parsed_query": {
-                    "detected_roles": [],
-                    "detected_skills": [],
-                    "role_inferred_skills": parsed_query.role_inferred_skills,
-                    "forced_keywords": forced_keywords,
-                    "required_degrees": required_degrees,
-                    "required_institutions": required_institutions,
-                    "experience_years": parsed_query.experience_years,
-                    "min_experience_years": parsed_query.min_experience_years,
-                    "max_experience_years": parsed_query.max_experience_years,
-                    "seniority_level": parsed_query.seniority_level,
-                    "location": parsed_query.location,
-                    "intent": parsed_query.intent
-                },
-                "search_strategy": {
-                    "type": "no_match",
-                    "message": "No specific roles or skills detected in query",
-                    "available_roles": search_processor.job_db.get_database_roles()[:20],  # Show first 20 roles as examples
-                    "suggestion": "Please specify a role (e.g., 'Software Engineer', 'Marketing Manager') or skills (e.g., 'Python developer')"
-                },
-                "total_results": 0,
-                "results": []
-            }
-
-        # Hybrid approach: First try with strict role filters, then fall back to semantic search with re-ranking
-        results = []
-
-        # Step 1: Try strict role filtering if we have role detection
-        if filter_conditions:
-            logger.info(f"🎯 Step 1: Searching with strict role/skill filters: {filter_conditions}")
-            results = await qdrant_client.search_similar(
-                query_vector=query_vector,
-                limit=1000,  # Get ALL candidates for comprehensive matching
-                filter_conditions=filter_conditions
-            )
-            logger.info(f"🔍 Found {len(results)} results with strict filtering")
-
-        # Step 2: If no results with strict filters, try semantic search without role filters but with re-ranking
-        if len(results) == 0 and parsed_query.job_roles:
-            logger.info("🔄 No results with strict filters, trying semantic search with re-ranking")
-            # Get semantic results without strict role filters
-            semantic_results = await qdrant_client.search_similar(
-                query_vector=query_vector,
-                limit=1000,  # Get ALL candidates for comprehensive re-ranking
-                filter_conditions=None  # No filters - pure semantic matching
-            )
-
-            if len(semantic_results) > 0:
-                # Re-rank based on comprehensive relevance and role matching
-                logger.info(f"🎯 Re-ranking {len(semantic_results)} semantic results for role relevance")
-                has_location_filter = 'location' in filter_conditions
-                results = _rerank_with_role_matching(semantic_results, parsed_query, search_processor, has_location_filter)
-
-        # Step 2.5: If no results and only location was provided, do location-only search
-        if len(results) == 0 and parsed_query.location and not parsed_query.job_roles and not parsed_query.skills:
-            logger.info(f"🗺️ Doing location-only search for: {parsed_query.location}")
-            # Get all candidates and filter by location only
-            location_results = await qdrant_client.search_similar(
-                query_vector=query_vector,
-                limit=1000,  # Get ALL candidates for location filtering
-                filter_conditions=None  # No role/skill filters, just semantic matching
-            )
-
-            # STRICT location filtering for location-only searches
-            location_query = parsed_query.location.lower()
-            query_city = location_query.split(',')[0].strip()
-
-            strictly_filtered_results = []
-            for result in location_results:
-                payload = result.get('payload', {})
-                candidate_location = payload.get('location', '').lower()
-
-                if candidate_location:
-                    candidate_city = candidate_location.split(',')[0].strip()
-
-                    # Strict matching: exact city match or contains the city name
-                    location_match = (
-                        location_query in candidate_location or
-                        candidate_location in location_query or
-                        query_city == candidate_city or
-                        (len(query_city) > 3 and query_city in candidate_city) or
-                        (len(candidate_city) > 3 and candidate_city in query_city)
-                    )
-
-                    if location_match:
-                        strictly_filtered_results.append(result)
-                        logger.info(f"✅ Location match: '{candidate_location}' matches query '{location_query}'")
-                    else:
-                        logger.info(f"❌ Location rejected: '{candidate_location}' doesn't match query '{location_query}'")
-
-            results = strictly_filtered_results
-            logger.info(f"🗺️ After strict location filtering: {len(results)} candidates from {parsed_query.location}")
-
-        # Step 3: Word-based fallback search using keywords/companies
-        if len(results) == 0 and (parsed_query.companies or parsed_query.keywords):
-            logger.info(f"🔍 No specific intent found - performing word-based search using companies: {parsed_query.companies} and keywords: {parsed_query.keywords}")
-
-            # Create search terms from companies and keywords
-            search_terms = []
-            if parsed_query.companies:
-                search_terms.extend(parsed_query.companies)
-            if parsed_query.keywords:
-                search_terms.extend(parsed_query.keywords)
-            if forced_keywords:
-                search_terms.extend(forced_keywords)
-            if required_degrees:
-                search_terms.extend(required_degrees)
-            if required_institutions:
-                search_terms.extend(required_institutions)
-
-            # Use these terms for semantic search
-            word_search_query = " ".join(search_terms)
-            logger.info(f"🔍 Word-based search query: '{word_search_query}'")
-
-            word_query_vector = await _generate_embedding(word_search_query)
-            if word_query_vector:
-                word_results = await qdrant_client.search_similar(
-                    query_vector=word_query_vector,
-                    limit=1000,  # Get ALL candidates for word-based matching
-                    filter_conditions=None
-                )
-
-                # Filter results based on word matches in work history and companies
-                matched_results = []
-                for result in word_results:
-                    payload = result.get('payload', {})
-                    candidate_name = payload.get('name', 'Unknown')
-
-                    company_match, matched_company, matched_query_company = _find_company_match(
-                        payload,
-                        parsed_query.companies
-                    )
-                    if company_match and matched_company and matched_query_company:
-                        logger.info(
-                            "🎯 Company match found: %s worked at '%s' (matches '%s')",
-                            candidate_name,
-                            matched_company,
-                            matched_query_company
-                        )
-
-                    # Check for keyword matches in summary, skills, current position
-                    summary = payload.get('summary', '').lower()
-                    current_position = payload.get('current_position', '').lower()
-                    skills = [s.lower() for s in payload.get('skills', [])]
-                    keyword_match = False
-
-                    for keyword in parsed_query.keywords:
-                        keyword_lower = keyword.lower()
-                        if (keyword_lower in summary or
-                            keyword_lower in current_position or
-                            any(keyword_lower in skill for skill in skills)):
-                            keyword_match = True
-                            logger.info(f"🎯 Keyword match found: {candidate_name} matches keyword '{keyword}'")
-                            break
-
-                    education_match = _candidate_matches_education(
-                        payload,
-                        required_degrees,
-                        required_institutions
-                    )
-
-                    forced_match = _candidate_matches_forced_keywords(payload, forced_keywords)
-
-                    include_candidate = False
-                    if parsed_query.companies:
-                        if company_match and forced_match and education_match:
-                            include_candidate = True
-                    else:
-                        if (keyword_match or company_match) and forced_match and education_match:
-                            include_candidate = True
-
-                    if include_candidate:
-                        matched_results.append(result)
-
-                results = matched_results
-                logger.info(f"🔍 Word-based search found {len(results)} matching candidates")
-
-        # Step 3.5: Generic candidate search for broad queries like "i need candidates"
-        if len(results) == 0 and is_generic_search:
-            logger.info(f"👥 Performing generic candidate search for query: '{query}'")
-
-            # For generic searches, return a diverse set of candidates ranked by relevance
-            generic_results = await qdrant_client.search_similar(
-                query_vector=query_vector,
-                limit=1000,  # Get ALL candidates for generic browsing
-                filter_conditions=None  # No filters - pure semantic matching
-            )
-
-            if generic_results:
-                # Sort by similarity score and diversify by role categories
-                seen_roles = set()
-                diverse_results = []
-
-                for result in generic_results:
-                    payload = result.get('payload', {})
-                    role_category = payload.get('role_category', 'Unknown')
-
-                    # Limit results per role category to ensure diversity
-                    role_count = sum(1 for r in diverse_results if r.get('payload', {}).get('role_category') == role_category)
-                    if role_count < 3:  # Max 3 candidates per role category
-                        diverse_results.append(result)
-                        seen_roles.add(role_category)
-
-                    # Stop once we have enough diverse candidates
-                    if len(diverse_results) >= 30:  # Return top 30 diverse candidates
-                        break
-
-                results = diverse_results
-                logger.info(f"👥 Generic search found {len(results)} diverse candidates across {len(seen_roles)} role categories")
-
-        # Step 4: If still no results, return informative message
-        if len(results) == 0:
-            logger.info("🚫 No relevant candidates found - returning empty results")
-            detected_role_str = ", ".join(parsed_query.job_roles) if parsed_query.job_roles else "Unknown"
-
-            response_payload = {
-                "query": query,
-                "parsed_query": {
-                    "detected_roles": parsed_query.job_roles,
-                    "detected_skills": parsed_query.skills,
-                    "role_inferred_skills": parsed_query.role_inferred_skills,
-                    "forced_keywords": forced_keywords,
-                    "required_degrees": required_degrees,
-                    "required_institutions": required_institutions,
-                    "experience_years": parsed_query.experience_years,
-                    "min_experience_years": parsed_query.min_experience_years,
-                    "max_experience_years": parsed_query.max_experience_years,
-                    "seniority_level": parsed_query.seniority_level,
-                    "location": parsed_query.location,
-                    "companies": parsed_query.companies,
-                    "keywords": parsed_query.keywords,
-                    "intent": parsed_query.intent
-                },
-                "search_strategy": {
-                    "type": "no_candidates_found",
-                    "message": f"No {detected_role_str} candidates found in database",
-                    "filters_attempted": reported_filters if reported_filters else {},
-                    "semantic_search_attempted": True,
-                    "available_roles": search_processor.job_db.get_database_roles()[:10],
-                    "forced_keyword_sample": forced_keywords[:10] if forced_keywords else [],
-                    "required_degree_sample": required_degrees[:5] if required_degrees else [],
-                    "required_institution_sample": required_institutions[:5] if required_institutions else [],
-                    "effective_skill_sample": effective_skills[:10] if effective_skills else []
-                },
-                "total_results": 0,
-                "results": []
-            }
-
-            if experience_min_filter_value is not None or experience_max_filter_value is not None:
-                experience_requirement = {"messages": []}
-                if experience_min_filter_value is not None:
-                    experience_requirement["minimum_years"] = experience_min_filter_value
-                    experience_requirement["messages"].append(
-                        f"Filtered out candidates with less than {experience_min_filter_value} years experience"
-                    )
-                if experience_max_filter_value is not None:
-                    experience_requirement["maximum_years"] = experience_max_filter_value
-                    experience_requirement["messages"].append(
-                        f"Filtered out candidates with more than {experience_max_filter_value} years experience"
-                    )
-                response_payload["search_strategy"]["experience_requirement"] = experience_requirement
-
-            return response_payload
-
-        logger.info(f"✅ Found {len(results)} total results for final ranking")
-
-        experience_filtered_out = 0
-
-        # Apply Python-based location filtering if location filter was requested
-        filtered_results = results
-        if 'location' in filter_conditions:
-            location_query = filter_conditions['location'].lower()
-            logger.info(f"🗺️ Applying Python location filter for: {location_query}")
-
-            # Check if this is a location-only search (no roles or skills specified)
-            is_location_only = not parsed_query.job_roles and not parsed_query.skills
-            logger.info(f"🗺️ Location-only search: {is_location_only}")
-
-            filtered_results = []
-            for result in results:
-                payload = result.get('payload', {})
-                candidate_name = payload.get('name', 'NO_NAME')
-                candidate_location = payload.get('location', '').lower()
-
-                logger.info(f"🗺️ Checking {candidate_name}: query='{location_query}' vs candidate='{candidate_location}'")
-
-                # Check if location query matches candidate location
-                # Extract city names for comparison
-                query_city = location_query.split(',')[0].strip().lower()
-                candidate_city = candidate_location.split(',')[0].strip().lower()
-
-                # For location-only searches, be STRICT - only show candidates from that location
-                if is_location_only:
-                    # STRICT matching for location-only searches
-                    location_match = (
-                        query_city == candidate_city or
-                        (len(query_city) > 3 and query_city in candidate_city) or
-                        (len(candidate_city) > 3 and candidate_city in query_city)
-                    )
-                else:
-                    # More flexible matching for role+location searches
-                    location_match = (
-                        location_query in candidate_location or
-                        candidate_location in location_query or
-                        query_city == candidate_city or
-                        (len(query_city) > 3 and query_city in candidate_city) or
-                        (len(candidate_city) > 3 and candidate_city in query_city)
-                    )
-
-                if location_match:
-                    filtered_results.append(result)
-                    logger.info(f"🗺️ ✅ Location match: '{location_query}' matches '{candidate_location}'")
-                else:
-                    logger.info(f"🗺️ ❌ Location rejected: '{location_query}' vs '{candidate_location}'")
-
-            logger.info(f"🗺️ Location filtering: {len(results)} -> {len(filtered_results)} results")
-
-        if parsed_query.companies:
-            pre_company_count = len(filtered_results)
-            filtered_results = [
-                result for result in filtered_results
-                if _candidate_matches_company(result.get('payload', {}), parsed_query.companies)
-            ]
-            logger.info(
-                "🏢 Company filtering: %s -> %s results for companies %s",
-                pre_company_count,
-                len(filtered_results),
-                parsed_query.companies
-            )
-
-        # Apply experience filtering in Python to support legacy payloads without indexed fields
-        if experience_min_filter_value is not None or experience_max_filter_value is not None:
-            pre_filter_count = len(filtered_results)
-            filtered_results = [
-                result for result in filtered_results
-                if _candidate_meets_experience_requirement(
-                    result.get('payload', {}),
-                    experience_min_filter_value,
-                    experience_max_filter_value
-                )
-            ]
-            experience_filtered_out = pre_filter_count - len(filtered_results)
-            logger.info(
-                "⏳ Experience filtering: %s -> %s candidates with requirements min=%s, max=%s",
-                pre_filter_count,
-                len(filtered_results),
-                experience_min_filter_value,
-                experience_max_filter_value
-            )
-
-        if forced_keywords:
-            pre_forced_count = len(filtered_results)
-            filtered_results = [
-                result for result in filtered_results
-                if _candidate_matches_forced_keywords(result.get('payload', {}), forced_keywords)
-            ]
-            logger.info(
-                "🔑 Forced keyword filtering: %s -> %s candidates for terms %s",
-                pre_forced_count,
-                len(filtered_results),
-                forced_keywords
-            )
-
-        if required_degrees or required_institutions:
-            pre_edu_count = len(filtered_results)
-            filtered_results = [
-                result for result in filtered_results
-                if _candidate_matches_education(result.get('payload', {}), required_degrees, required_institutions)
-            ]
-            logger.info(
-                "🎓 Education filtering: %s -> %s candidates for degrees %s institutions %s",
-                pre_edu_count,
-                len(filtered_results),
-                required_degrees,
-                required_institutions
-            )
-
-        # Remove duplicates based on name+email combination (keep the best score for each person)
-        unique_results = {}
-        for result in filtered_results:
-            payload = result.get('payload', {})
-            # Create unique key from name and email
-            unique_key = f"{payload.get('name', 'Unknown')}_{payload.get('email', 'Unknown')}"
-            if unique_key not in unique_results or result.get('score', 0) > unique_results[unique_key].get('score', 0):
-                unique_results[unique_key] = result
-
-        deduplicated_results = list(unique_results.values())
-
-        # Post-process results with comprehensive ranking using ALL available data
-        ranked_results = _rank_search_results(deduplicated_results, parsed_query)
-
-        # Limit to requested number
-        limited_results = ranked_results[:limit]
-
-        # Format results with comprehensive information and detailed selection reasons
-        formatted_results = _format_search_results(limited_results, parsed_query)
-
-        # CRITICAL: Filter out candidates with 0.0 comprehensive scores (they don't meet requirements)
-        # This is essential for AI/ML queries where candidates must have specific skills
-        qualified_results = []
-        for result in formatted_results:
-            comprehensive_score = result.get('comprehensive_score', 0.0)
-            candidate_name = result.get('name', 'Unknown')
-
-            # Only include candidates with meaningful comprehensive scores
-            if comprehensive_score > 0.0:
-                qualified_results.append(result)
-                logger.info(f"✅ Including qualified candidate: {candidate_name} (comprehensive_score: {comprehensive_score})")
-            else:
-                logger.info(f"❌ Filtering out unqualified candidate: {candidate_name} (comprehensive_score: {comprehensive_score})")
-
-        # Use qualified results instead of all formatted results
-        formatted_results = qualified_results
-
-        response_payload = {
-            "query": query,
-            "parsed_query": {
-                "detected_roles": parsed_query.job_roles,
-                "detected_skills": parsed_query.skills,
-                "role_inferred_skills": parsed_query.role_inferred_skills,
-                "forced_keywords": forced_keywords,
-                "required_degrees": required_degrees,
-                "required_institutions": required_institutions,
-                "experience_years": parsed_query.experience_years,
-                "min_experience_years": parsed_query.min_experience_years,
-                "max_experience_years": parsed_query.max_experience_years,
-                "seniority_level": parsed_query.seniority_level,
-                "location": parsed_query.location,
-                "companies": parsed_query.companies,
-                "keywords": parsed_query.keywords,
-                "intent": parsed_query.intent
-            },
-            "search_strategy": {
-                "type": "generic-candidate-search" if is_generic_search else ("skill-focused" if skill_focused else "role-focused"),
-                "filters_applied": reported_filters,
-                "total_candidates_analyzed": len(results),
-                "final_results_returned": len(formatted_results),
-                "effective_skill_sample": effective_skills[:10] if effective_skills else [],
-                "forced_keyword_sample": forced_keywords[:10] if forced_keywords else [],
-                "required_degree_sample": required_degrees[:5] if required_degrees else [],
-                "required_institution_sample": required_institutions[:5] if required_institutions else [],
-                "search_approach": "Generic candidate browsing with role diversity" if is_generic_search else None
-            },
-            "total_results": len(formatted_results),
-            "results": formatted_results
+    # Allow JSON body as an alternative to form fields
+    if not folder_path and json_body:
+        folder_path = json_body.get("folder_path")
+        recursive = bool(json_body.get("recursive", recursive))
+        limit = int(json_body.get("limit", limit))
+        user_id = json_body.get("user_id", user_id)
+
+    if not folder_path or not str(folder_path).strip():
+        raise HTTPException(status_code=400, detail="folder_path is required")
+
+    folder = Path(folder_path).expanduser().resolve()
+    if not folder.exists() or not folder.is_dir():
+        raise HTTPException(status_code=400, detail=f"Folder not found or not a directory: {folder}")
+
+    # Allowed file types from settings
+    allowed = set((settings.app.allowed_file_types or []))
+    allowed = {str(ext).lower().lstrip('.') for ext in allowed}
+    if not allowed:
+        allowed = {"pdf", "doc", "docx", "txt"}
+
+    # Build file list
+    pattern = "**/*" if recursive else "*"
+    all_paths = [p for p in folder.glob(pattern) if p.is_file()]
+    file_paths = [p for p in all_paths if p.suffix.lower().lstrip('.') in allowed]
+
+    if not file_paths:
+        return {
+            "success": True,
+            "folder": str(folder),
+            "total_found": 0,
+            "processed": 0,
+            "skipped": 0,
+            "results": []
         }
 
-        if experience_min_filter_value is not None or experience_max_filter_value is not None:
-            experience_requirement = {
-                "filtered_out_candidates": max(experience_filtered_out, 0),
-                "messages": []
+    if limit and limit > 0:
+        file_paths = file_paths[:limit]
+
+    # Check user resume upload limit before processing folder upload
+    if user_id:
+        can_upload, limit_info = await pg_client.check_user_resume_limit(user_id, len(file_paths))
+        if not can_upload:
+            error_detail = f"Folder upload rejected. Found {len(file_paths)} resume files but only have {limit_info['available_slots']} slots remaining. Current usage: {limit_info['current_resumes']}/{limit_info['resume_limit']}"
+            raise HTTPException(status_code=429, detail=error_detail)
+
+    logger.info(f"📁 Bulk folder upload: folder={folder} files={len(file_paths)} recursive={recursive} limit={limit}")
+
+    results_summary: Dict[str, Any] = {
+        "success": True,
+        "folder": str(folder),
+        "total_found": len(file_paths),
+        "processed": 0,
+        "skipped": 0,
+        "results": []
+    }
+
+    for idx, path in enumerate(file_paths, 1):
+        r: Dict[str, Any] = {
+            "index": idx,
+            "file": str(path),
+            "status": "processing",
+            "user_id": None,
+            "error": None
+        }
+        try:
+            if not path.exists() or not path.is_file():
+                raise ValueError("File not found or not a regular file")
+
+            user_id = str(uuid.uuid4())
+            r["user_id"] = user_id
+
+            file_size = path.stat().st_size
+
+            # Process the resume directly from disk
+            result: ProcessingResult = await resume_parser.process_resume_file(
+                file_path=path,
+                user_id=user_id,
+                file_size=file_size
+            )
+
+            if not result.success:
+                raise ValueError(result.error_message or "Resume parsing failed")
+
+            resume_data = result.resume_data
+            if not resume_data:
+                raise ValueError("No resume data returned")
+
+            # Prepare payload (aligned with /upload-resume)
+            safe_projects: List[Dict[str, Any]] = []
+            for project in getattr(resume_data, 'projects', []):
+                proj_dict = project.dict() if hasattr(project, 'dict') else dict(project)
+                if 'description' not in proj_dict:
+                    proj_dict['description'] = ''
+                safe_projects.append(proj_dict)
+
+            safe_work_history = [job.dict() if hasattr(job, 'dict') else dict(job) for job in getattr(resume_data, 'work_history', [])]
+            safe_education = [edu.dict() if hasattr(edu, 'dict') else dict(edu) for edu in getattr(resume_data, 'education', [])]
+            safe_role_classification = resume_data.role_classification.dict() if getattr(resume_data, 'role_classification', None) and hasattr(resume_data.role_classification, 'dict') else getattr(resume_data, 'role_classification', {})
+            safe_extraction_statistics = resume_data.extraction_statistics.dict() if getattr(resume_data, 'extraction_statistics', None) and hasattr(resume_data.extraction_statistics, 'dict') else getattr(resume_data, 'extraction_statistics', {})  # type: ignore
+            safe_current_employment = resume_data.current_employment.dict() if getattr(resume_data, 'current_employment', None) and hasattr(resume_data.current_employment, 'dict') else getattr(resume_data, 'current_employment', None)  # type: ignore
+            safe_created_at = getattr(resume_data, 'created_at', None)
+            upload_timestamp = safe_created_at.isoformat() if safe_created_at else None
+
+            payload = {
+                "user_id": getattr(resume_data, 'user_id', None),
+                "name": getattr(resume_data, 'name', None),
+                "name_lc": (getattr(resume_data, 'name', '') or '').strip().lower(),
+                "email": getattr(resume_data, 'email', None),
+                "email_lc": (getattr(resume_data, 'email', '') or '').strip().lower(),
+                "phone": getattr(resume_data, 'phone', ''),
+                "phone_digits": re.sub(r"\D", "", str(getattr(resume_data, 'phone', ''))) if getattr(resume_data, 'phone', None) else "",
+                "location": getattr(resume_data, 'location', None),
+                "linkedin_url": getattr(resume_data, 'linkedin_url', ''),
+                "current_position": getattr(resume_data, 'current_position', None),
+                "skills": getattr(resume_data, 'skills', []),
+                "total_experience": getattr(resume_data, 'total_experience', None),
+                "role_category": getattr(resume_data.role_classification, 'primary_category', None) if getattr(resume_data, 'role_classification', None) else None,
+                "seniority": getattr(resume_data.role_classification, 'seniority', None) if getattr(resume_data, 'role_classification', None) else None,
+                "best_role": getattr(resume_data, 'best_role', None),
+                "summary": getattr(resume_data, 'summary', ''),
+                "recommended_roles": getattr(resume_data, 'recommended_roles', []),
+                "work_history": safe_work_history,
+                "current_employment": safe_current_employment,
+                "projects": safe_projects,
+                "education": safe_education,
+                "role_classification": safe_role_classification,
+                "original_filename": path.name,
+                "extraction_statistics": safe_extraction_statistics,
+                "upload_timestamp": upload_timestamp,
+                "owner_user_id": user_id
             }
-            if experience_min_filter_value is not None:
-                experience_requirement["minimum_years"] = experience_min_filter_value
-                experience_requirement["messages"].append(
-                    f"Applied minimum experience requirement of {experience_min_filter_value} years"
-                )
-            if experience_max_filter_value is not None:
-                experience_requirement["maximum_years"] = experience_max_filter_value
-                experience_requirement["messages"].append(
-                    f"Applied maximum experience requirement of {experience_max_filter_value} years"
-                )
-            if not experience_requirement["messages"]:
-                experience_requirement.pop("messages")
-            response_payload["search_strategy"]["experience_requirement"] = experience_requirement
 
-        return response_payload
+            # Create embedding and store in Qdrant
+            embedding_vector = await resume_parser.create_embedding(resume_data)
+            if embedding_vector:
+                try:
+                    point_id = await qdrant_client.store_embedding(
+                        user_id=resume_id,
+                        embedding_vector=embedding_vector,
+                        payload=payload
+                    )
+                    try:
+                        await pg_client.upsert_parsed_resume(
+                            resume_id=resume_id,
+                            payload=payload,
+                            embedding_model=azure_client.get_embedding_deployment(),
+                            vector_id=str(point_id)
+                        )
+                    except Exception as e:
+                        logger.info(f"[PG] Skipped mirroring to Postgres (folder): {e}")
+                except Exception as e:
+                    logger.error(f"❌ Failed to store in Qdrant for file {path.name}: {e}")
 
+            r["status"] = "success"
+            r["resume_data"] = {
+                "name": getattr(resume_data, 'name', None),
+                "email": getattr(resume_data, 'email', None),
+                "current_position": getattr(resume_data, 'current_position', None),
+                "total_experience": getattr(resume_data, 'total_experience', None),
+                "skills_count": len(getattr(resume_data, 'skills', [])),
+                "best_role": getattr(resume_data, 'best_role', None)
+            }
+            # Increment user's resume count for each successful folder upload
+            if user_id:
+                tokens_used = getattr(result, 'tokens_used', 0) if result else 0
+                await pg_client.increment_user_resume_count(user_id, 1, tokens_used)
+
+            results_summary["processed"] += 1
+
+        except Exception as e:
+            r["status"] = "failed"
+            r["error"] = str(e)
+            results_summary["skipped"] += 1
+
+        results_summary["results"].append(r)
+
+    logger.info(
+        f"📋 Folder upload complete: processed={results_summary['processed']} skipped={results_summary['skipped']} folder={folder}"
+    )
+
+    return results_summary
+
+
+@app.post("/admin/dump-qdrant-to-postgres")
+async def dump_qdrant_to_postgres(
+    limit: int = Form(0),
+    batch_size: int = Form(256),
+    dry_run: bool = Form(False),
+    json_body: Optional[Dict[str, Any]] = Body(None)
+):
+    """
+    Mirror all Qdrant points into PostgreSQL table qdrant_resumes.
+
+    Accepts form fields or JSON body with keys: limit, batch_size, dry_run.
+    - limit: 0 for all points, or a positive number to cap processing
+    - batch_size: Qdrant scroll batch size (default 256)
+    - dry_run: if true, do not write to Postgres; only count
+    """
+    # Allow JSON override
+    if json_body:
+        try:
+            limit = int(json_body.get("limit", limit))
+        except Exception:
+            pass
+        try:
+            batch_size = int(json_body.get("batch_size", batch_size))
+        except Exception:
+            pass
+        dry_run = bool(json_body.get("dry_run", dry_run))
+
+    # Validate Qdrant connection
+    try:
+        collection_info = qdrant_client.get_collection_info()
+        if collection_info.get("error"):
+            raise RuntimeError(collection_info.get("error"))
     except Exception as e:
-        logger.error(f"Error in resume search: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=503, detail=f"Qdrant not available: {e}")
+
+    # Validate Postgres availability (best-effort; we still can dry-run)
+    if not dry_run:
+        ok = await pg_client.connect()
+        if not ok:
+            raise HTTPException(status_code=503, detail="PostgreSQL not configured or unavailable")
+
+    client = qdrant_client.client  # underlying qdrant_client.QdrantClient
+    collection = qdrant_client.collection_name
+
+    scanned = 0
+    mirrored = 0
+    failed = 0
+    offset = None
+
+    logger.info(f"[DUMP] Starting dump from Qdrant '{collection}' to Postgres (limit={limit}, batch={batch_size}, dry_run={dry_run})")
+
+    # Iterate via scroll
+    while True:
+        this_limit = batch_size
+        if limit and limit > 0:
+            remaining = limit - scanned
+            if remaining <= 0:
+                break
+            this_limit = min(this_limit, remaining)
+
+        points, offset = client.scroll(
+            collection_name=collection,
+            with_payload=True,
+            with_vectors=False,
+            limit=this_limit,
+            offset=offset,
+        )
+
+        if not points:
+            break
+
+        for p in points:
+            scanned += 1
+            payload = p.payload or {}
+            resume_id = str(p.id)
+
+            if dry_run:
+                mirrored += 1
+                continue
+
+            try:
+                await pg_client.upsert_parsed_resume(
+                    resume_id=resume_id,
+                    payload=payload,
+                    embedding_model=azure_client.get_embedding_deployment(),
+                    vector_id=resume_id,
+                )
+                mirrored += 1
+            except Exception as e:
+                failed += 1
+                logger.info(f"[DUMP] Failed to mirror {resume_id}: {e}")
+
+        if offset is None:
+            break
+
+    logger.info(f"[DUMP] Completed: scanned={scanned}, mirrored={mirrored}, failed={failed}")
+
+    return {
+        "success": True,
+        "collection": collection,
+        "limit": limit,
+        "batch_size": batch_size,
+        "dry_run": dry_run,
+        "scanned": scanned,
+        "mirrored": mirrored,
+        "failed": failed,
+    }
+
+
+@app.post("/admin/assign-owner-all")
+async def assign_owner_all(
+    request: Request,
+    owner_user_id: Optional[str] = Form(None),
+    batch_size: int = Form(512),
+    json_body: Optional[Dict[str, Any]] = Body(None)
+):
+    """
+    Assign the same owner_user_id to all resumes in both Postgres and Qdrant.
+
+    Body (form or JSON):
+    - owner_user_id (required)
+    - batch_size (optional, for Qdrant scrolling)
+    """
+    # Merge JSON if provided (root-level or nested json_body)
+    payload: Optional[Dict[str, Any]] = None
+    try:
+        if request.headers.get("content-type", "").startswith("application/json"):
+            payload = await request.json()
+    except Exception:
+        payload = None
+    if isinstance(payload, dict):
+        # Accept both owner_user_id and user_id (alias)
+        owner_user_id = payload.get("owner_user_id", payload.get("user_id", owner_user_id))
+        if "batch_size" in payload:
+            try:
+                batch_size = int(payload.get("batch_size", batch_size))
+            except Exception:
+                pass
+    elif json_body and isinstance(json_body, dict):
+        owner_user_id = json_body.get("owner_user_id", json_body.get("user_id", owner_user_id))
+        try:
+            batch_size = int(json_body.get("batch_size", batch_size))
+        except Exception:
+            pass
+
+    if not owner_user_id or not str(owner_user_id).strip():
+        raise HTTPException(status_code=400, detail="owner_user_id is required (or provide user_id)")
+
+    owner_user_id = str(owner_user_id).strip()
+
+    # Update Postgres
+    pg_updated = 0
+    if await pg_client.connect():
+        assert pg_client._pool is not None  # type: ignore[attr-defined]
+        sql = f"UPDATE {pg_client._table} SET owner_user_id = $1 WHERE owner_user_id IS DISTINCT FROM $1"  # type: ignore[attr-defined]
+        try:
+            async with pg_client._pool.acquire() as conn:  # type: ignore[attr-defined]
+                status = await conn.execute(sql, owner_user_id)
+                # status like 'UPDATE 42'
+                try:
+                    pg_updated = int(status.split()[-1])
+                except Exception:
+                    pg_updated = 0
+        except Exception as e:
+            logger.error(f"[ADMIN] Failed to update Postgres owner_user_id: {e}")
+
+    # Update Qdrant payloads
+    q_updated = 0
+    try:
+        client = qdrant_client.client
+        collection = qdrant_client.collection_name
+        offset = None
+        while True:
+            points, offset = client.scroll(
+                collection_name=collection,
+                with_payload=False,
+                with_vectors=False,
+                limit=batch_size,
+                offset=offset,
+            )
+            if not points:
+                break
+            ids = [p.id for p in points]
+            if ids:
+                client.set_payload(
+                    collection_name=collection,
+                    payload={"owner_user_id": owner_user_id},
+                    points=ids,
+                )
+                q_updated += len(ids)
+            if offset is None:
+                break
+    except Exception as e:
+        logger.error(f"[ADMIN] Failed to update Qdrant owner_user_id: {e}")
+
+    return {
+        "success": True,
+        "owner_user_id": owner_user_id,
+        "postgres_updated_rows": pg_updated,
+        "qdrant_updated_points": q_updated,
+        "batch_size": batch_size,
+    }
+
+
 
 
 def _rerank_with_role_matching(results: List[Dict], parsed_query, search_processor, has_location_filter: bool = False) -> List[Dict]:
@@ -2922,249 +3030,14 @@ def _format_search_results(results: List[Dict], parsed_query) -> List[Dict]:
     return formatted_results
 
 
-@app.post("/search-resumes-advanced")
-async def search_resumes_advanced(
-    query: str,
-    limit: int = 10,
-    must_have_roles: Optional[List[str]] = None,
-    preferred_skills: Optional[List[str]] = None,
-    min_experience_years: Optional[int] = None,
-    location: Optional[str] = None,
-    include_analysis: bool = True
-):
-    """
-    Advanced resume search with explicit filters and detailed analysis.
-
-    Args:
-        query: Natural language search query
-        limit: Maximum number of results
-        must_have_roles: Required role categories
-        preferred_skills: Skills to prioritize in ranking
-        min_experience_years: Minimum years of experience
-        location: Location requirement
-        include_analysis: Include detailed search analysis
-    """
-    try:
-        from src.resume_parser.utils.search_intelligence import search_processor
-
-        logger.info(f"🔍 Advanced search query: {query}")
-
-        # Parse the query
-        parsed_query = search_processor.parse_query(query)
-
-        # Override with explicit filters
-        if must_have_roles:
-            parsed_query.job_roles = must_have_roles
-            try:
-                role_skills = search_processor._aggregate_role_skills(parsed_query.job_roles)
-            except AttributeError:
-                role_skills = []
-            parsed_query.role_inferred_skills = role_skills
-        if preferred_skills:
-            existing_skills = {skill.lower() for skill in parsed_query.skills}
-            for skill in preferred_skills:
-                if skill and isinstance(skill, str):
-                    skill_clean = skill.strip()
-                    if skill_clean and skill_clean.lower() not in existing_skills:
-                        parsed_query.skills.append(skill_clean)
-                        existing_skills.add(skill_clean.lower())
-        if min_experience_years:
-            parsed_query.experience_years = min_experience_years
-            parsed_query.min_experience_years = min_experience_years
-        if location:
-            parsed_query.location = location
-
-        effective_skills = parsed_query.effective_skills()
-        forced_keywords = parsed_query.forced_keywords
-
-        if forced_keywords:
-            logger.info(f"🔑 Forced keywords (advanced search): {forced_keywords[:5]}")
-
-        # Generate enhanced search text
-        search_components: List[str] = []
-        seen_components: Set[str] = set()
-
-        def add_component(text: Optional[str]):
-            if not text or not isinstance(text, str):
-                return
-            cleaned = text.strip()
-            key = cleaned.lower()
-            if cleaned and key not in seen_components:
-                search_components.append(cleaned)
-                seen_components.add(key)
-
-        add_component(query)
-        for role in parsed_query.job_roles:
-            role_titles = search_processor.job_db.get_role_titles(role)
-            for title in role_titles[:5]:
-                add_component(title)
-
-        for skill in parsed_query.skills:
-            add_component(skill)
-
-        for skill in parsed_query.role_inferred_skills[:40]:
-            add_component(skill)
-
-        for keyword in forced_keywords:
-            add_component(keyword)
-
-        search_text = ' '.join(search_components) if search_components else query
-        logger.info(f"🔧 Advanced search effective skills sample: {effective_skills[:10]}")
-        logger.info(f"🔮 Advanced search components count: {len(search_components)} | sample: {search_components[:10]}")
-
-        # Create embedding
-        from src.resume_parser.clients.azure_openai import azure_client
-        async_client = azure_client.get_async_client()
-        response = await async_client.embeddings.create(
-            model=azure_client.get_embedding_deployment(),
-            input=search_text
-        )
-        query_vector = response.data[0].embedding
-
-        # Create advanced filters
-        filter_conditions = {}
-        if must_have_roles:
-            # Map role names to categories stored in Qdrant
-            role_mappings = {
-                'hr': ['HR Manager', 'Human Resources', 'People Manager', 'Talent Acquisition'],
-                'software': ['Software Engineer', 'Developer', 'Programmer', 'Full Stack'],
-                'data': ['Data Scientist', 'Data Analyst', 'ML Engineer', 'Analytics'],
-                'product': ['Product Manager', 'Product Owner', 'Product Marketing'],
-                'marketing': ['Marketing Manager', 'Digital Marketing', 'Brand Manager'],
-                'sales': ['Sales Manager', 'Account Manager', 'Business Development']
-            }
-
-            categories = []
-            for role in must_have_roles:
-                role_lower = role.lower()
-                for key, values in role_mappings.items():
-                    if key in role_lower or any(v.lower() in role_lower for v in values):
-                        categories.extend(values)
-
-            if categories:
-                filter_conditions['role_category'] = categories
-
-        # Search with filters
-        results = await qdrant_client.search_similar(
-            query_vector=query_vector,
-            limit=limit * 3,  # Get more for better filtering
-            filter_conditions=filter_conditions if filter_conditions else None
-        )
-
-        # Advanced ranking
-        ranked_results = _advanced_rank_results(results, parsed_query, preferred_skills)
-
-        if forced_keywords:
-            pre_forced_count = len(ranked_results)
-            ranked_results = [
-                result for result in ranked_results
-                if _candidate_matches_forced_keywords(result.get('payload', {}), forced_keywords)
-            ]
-            logger.info(
-                "🔑 Advanced forced keyword filtering: %s -> %s results for terms %s",
-                pre_forced_count,
-                len(ranked_results),
-                forced_keywords
-            )
-
-        final_results = ranked_results[:limit]
-
-        response_data = {
-            "query": query,
-            "total_results": len(final_results),
-            "results": final_results
-        }
-
-        if include_analysis:
-            response_data["search_analysis"] = {
-                "parsed_query": {
-                    "detected_roles": parsed_query.job_roles,
-                    "detected_skills": parsed_query.skills,
-                    "role_inferred_skills": parsed_query.role_inferred_skills,
-                    "forced_keywords": forced_keywords,
-                    "required_degrees": parsed_query.required_degrees,
-                    "required_institutions": parsed_query.required_institutions,
-                    "experience_years": parsed_query.experience_years,
-                    "seniority_level": parsed_query.seniority_level,
-                    "location": parsed_query.location,
-                    "companies": parsed_query.companies,
-                    "keywords": parsed_query.keywords,
-                    "intent": parsed_query.intent
-                },
-                "applied_filters": filter_conditions,
-                "ranking_factors": {
-                    "role_match_boost": 0.1,
-                    "skill_match_boost": 0.05,
-                    "experience_match_boost": 0.15,
-                    "seniority_match_boost": 0.15
-                },
-                "effective_skill_sample": effective_skills[:10] if effective_skills else [],
-                "forced_keyword_sample": forced_keywords[:10] if forced_keywords else []
-            }
-
-        return response_data
-
-    except Exception as e:
-        logger.error(f"Error in advanced resume search: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-def _advanced_rank_results(results: List[Dict], parsed_query, preferred_skills: Optional[List[str]] = None) -> List[Dict]:
-    """Advanced ranking with additional factors."""
-    if not results:
-        return results
-
-    for result in results:
-        score = result.get('score', 0.0)
-        payload = result.get('payload', {})
-
-        # Role matching (higher weight)
-        role_category = payload.get('role_category', '').lower()
-        for detected_role in parsed_query.job_roles:
-            if detected_role.replace('_', ' ') in role_category:
-                score += 0.2  # Higher boost for role match
-
-        # Skill matching
-        candidate_skills = [s.lower() for s in payload.get('skills', [])]
-        effective_query_skills = parsed_query.skills if parsed_query.skills else parsed_query.role_inferred_skills
-
-        # Regular skill matches
-        matching_skills = len([s for s in effective_query_skills if s.lower() in candidate_skills])
-        score += matching_skills * 0.05
-
-        # Preferred skill matches (higher weight)
-        if preferred_skills:
-            preferred_matches = len([s for s in preferred_skills if s.lower() in candidate_skills])
-            score += preferred_matches * 0.1
-
-        # Experience matching
-        if parsed_query.experience_years:
-            candidate_experience = payload.get('total_experience', '0 years')
-            # Extract years from string like "5 years 3 months"
-            exp_match = re.search(r'(\d+)', candidate_experience)
-            if exp_match:
-                candidate_years = int(exp_match.group(1))
-                if candidate_years >= parsed_query.experience_years:
-                    score += 0.15
-                elif candidate_years >= parsed_query.experience_years * 0.8:  # Close match
-                    score += 0.1
-
-        # Seniority matching
-        if parsed_query.seniority_level:
-            candidate_seniority = payload.get('seniority', '').lower()
-            if parsed_query.seniority_level in candidate_seniority:
-                score += 0.15
-
-        result['final_score'] = score
-
-    return sorted(results, key=lambda x: x.get('final_score', x.get('score', 0)), reverse=True)
 
 
 @app.post("/search-resumes-intent-based")
 async def search_resumes_intent_based(
     query: str = Form(...),
     limit: int = Form(10),
-    strict_matching: bool = Form(False)
+    strict_matching: bool = Form(False),
+    user_id: Optional[str] = Form(None)
 ):
     """
     Enhanced resume search using analyze-query-intent to find exact candidates based on final requirements.
@@ -3186,7 +3059,7 @@ async def search_resumes_intent_based(
         logger.info(f"🎯 Intent-based search for: {query}")
 
         # Step 1: Analyze the query to get final requirements
-        intent_result = await analyze_query_intent(query)
+        intent_result = await analyze_query_intent(query, user_id)
 
         if not intent_result.get("success"):
             raise HTTPException(
@@ -3239,6 +3112,87 @@ async def search_resumes_intent_based(
         pre_filter_fields = {"name", "email", "phone"}
         filter_conditions = {}
 
+        def _expand_name_variants(values: List[str]) -> List[str]:
+            variants = set()
+            for v in values:
+                if not isinstance(v, str):
+                    continue
+                s = ' '.join(v.strip().split())  # collapse whitespace
+                if not s:
+                    continue
+                # Common case variants
+                variants.add(s)
+                variants.add(s.lower())
+                variants.add(s.title())
+                # Preserve original token casing per word (capitalize)
+                variants.add(' '.join(w.capitalize() for w in s.split(' ')))
+            return list(variants)
+
+        def _expand_phone_variants(values: List[str]) -> List[str]:
+            """Generate elastic variants for phone numbers across country codes and formats.
+
+            Strategy:
+            - Preserve raw, digits-only, and +digits
+            - Generate last-10-digit form (NSN) and common groupings
+            - Prepend common country codes for NSN: +<cc><nsn>, +<cc> <nsn>, <cc><nsn>, 00<cc><nsn>, 0<nsn>
+            Note: This is best-effort without libphonenumber; we keep variants bounded.
+            """
+            import re as _re
+            out: set[str] = set()
+            COMMON_DIAL_CODES = [
+                '1','20','27','30','31','32','33','34','36','39','40','41','43','44','45','46','47','48','49',
+                '52','55','56','57','58','60','61','62','63','64','65','66','81','82','84','86','90','91','92','93','94','95','98',
+                '971','972','973','974','975','976','977','966','968','970','380','351','353','354','358'
+            ]
+            MAX_VARIANTS = 50
+
+            for v in values:
+                if not isinstance(v, str):
+                    continue
+                raw = v.strip()
+                if not raw:
+                    continue
+                digits = ''.join(_re.findall(r'\d+', raw))
+                if not digits:
+                    continue
+
+                # Base forms
+                out.add(raw)
+                out.add(digits)
+                out.add('+' + digits)
+
+                # National significant number (last 10 as a common heuristic)
+                nsn = digits[-10:] if len(digits) >= 10 else digits
+                if len(nsn) >= 7:
+                    out.add(nsn)
+                    # Common groupings
+                    if len(nsn) == 10:
+                        out.add(nsn[:5] + ' ' + nsn[5:])  # 5-5 split
+                        out.add(nsn[:4] + ' ' + nsn[4:7] + ' ' + nsn[7:])  # 4-3-3 split
+                        out.add(nsn[:3] + ' ' + nsn[3:6] + ' ' + nsn[6:])  # 3-3-4 split
+                        out.add(nsn[:2] + ' ' + nsn[2:6] + ' ' + nsn[6:])  # 2-4-4 split
+
+                    # Local trunk prefix form
+                    out.add('0' + nsn)
+
+                    # Add variants with common dial codes
+                    for cc in COMMON_DIAL_CODES:
+                        out.add(cc + nsn)
+                        out.add('+' + cc + nsn)
+                        out.add('+' + cc + ' ' + nsn)
+                        out.add('00' + cc + nsn)
+                        if len(out) >= MAX_VARIANTS:
+                            break
+
+                # If looks like already includes a country code (length >= 11)
+                if len(digits) >= 11:
+                    out.add(digits)
+                    out.add('+' + digits)
+
+            # Bound the output deterministically
+            variants = sorted(out)
+            return variants[:MAX_VARIANTS]
+
         for field in pre_filter_fields:
             field_value = qdrant_filters.get(field)
             if field_value:
@@ -3247,7 +3201,21 @@ async def search_resumes_intent_based(
                 else:
                     normalized_values = [str(field_value).strip()]
                 if normalized_values:
-                    filter_conditions[field] = normalized_values
+                    # For names, add case/whitespace variants to handle exact-match behavior in Qdrant
+                    if field == 'name':
+                        expanded = _expand_name_variants(normalized_values)
+                        filter_conditions[field] = expanded
+                        logger.info(f"dYt Name filter expanded to variants: {expanded}")
+                    elif field == 'phone':
+                        expanded_p = _expand_phone_variants(normalized_values)
+                        filter_conditions[field] = expanded_p
+                        logger.info(f"dYt Phone filter expanded to variants: {expanded_p}")
+                    else:
+                        filter_conditions[field] = normalized_values
+
+        # Always restrict to this user's resumes when user_id is provided
+        if user_id:
+            filter_conditions['owner_user_id'] = str(user_id).strip()
 
         post_retrieval_fields = set(qdrant_filters.keys())
 
@@ -3275,14 +3243,29 @@ async def search_resumes_intent_based(
         )
         logger.info(f"dYZ_ Retrieved {len(results)} candidates from full semantic search (limit={search_limit})")
 
+        # Fallback: if strict identifier pre-filters yielded no results, rerun without pre-filter
+        if not results and any(key in filter_conditions for key in ('name', 'phone', 'email')):
+            logger.info("dY! No results with pre-applied identifier filter(s). Retrying semantic search without pre-filter for post-filtering.")
+            # Keep owner filter even in fallback
+            owner_only_filter = {'owner_user_id': str(user_id).strip()} if user_id else None
+            results = await qdrant_client.search_similar(
+                query_vector=query_vector,
+                limit=max(search_limit, 200),
+                filter_conditions=owner_only_filter
+            )
+            logger.info(f"dY! Unfiltered semantic search returned {len(results)} candidates; will apply identifier filters in post-processing")
+
         # Step 4.5: Apply post-retrieval filtering for fields not available in Qdrant
         if results:
             filtered_results = []
 
             critical_criteria = {"experience", "location", "job_title", "role_category", "company", "education", "name", "email", "phone"}
+            soft_criteria = {"job_title", "role_category", "skills"}
+            top_semantic_score = max((r.get('score', 0.0) for r in results), default=0.0)
+            margin_ratio = 0.90
 
             # Helper function to check strict vs non-strict matching
-            def should_exclude_candidate(criteria_matches: list, strict_mode: bool = False) -> bool:
+            def should_exclude_candidate(criteria_matches: list, strict_mode: bool = False, cand_sem_score: float = 0.0) -> bool:
                 """
                 Determine if candidate should be excluded based on matching criteria.
 
@@ -3307,8 +3290,15 @@ async def search_resumes_intent_based(
                     return len(failed_criteria) > 0
                 else:
                     # In non-strict mode, enforce critical requirements but allow partial matches otherwise
+                    allow_soft = cand_sem_score >= (top_semantic_score * margin_ratio)
+                    soft_fail_budget = 1 if allow_soft else 0
+                    soft_fail_used = 0
+
                     for criterion_name, has_match, _ in required_criteria:
                         if not has_match and (criterion_name in critical_criteria):
+                            if criterion_name in soft_criteria and soft_fail_used < soft_fail_budget:
+                                soft_fail_used += 1
+                                continue
                             return True
 
                     skill_matches = [match for match in required_criteria if match[0].startswith("skill_")]
@@ -3326,10 +3316,34 @@ async def search_resumes_intent_based(
 
                     return match_ratio < 0.5  # Exclude if less than 50% of non-skill criteria match
 
+            # Helper: digits-only and elastic equality for phone numbers
+            def _digits_only(val: str) -> str:
+                return re.sub(r"\D", "", str(val or ""))
+
+            def _phone_digits_match(cand_digits: str, req_digits: str) -> bool:
+                if not cand_digits or not req_digits:
+                    return False
+                if cand_digits == req_digits:
+                    return True
+                # Accept suffix/prefix matches to account for country/trunk codes
+                MIN_LEN = 7
+                if len(req_digits) >= MIN_LEN and cand_digits.endswith(req_digits):
+                    return True
+                if len(cand_digits) >= MIN_LEN and req_digits.endswith(cand_digits):
+                    return True
+                return False
+
             for result in results:
                 payload = result.get('payload', {})
                 should_include = True
                 criteria_matches = []
+
+                # Enforce owner filter in post-processing as a safety net
+                if user_id:
+                    owner = str(payload.get('owner_user_id', '')).strip()
+                    if owner != str(user_id).strip():
+                        # Skip candidates not owned by the requesting user
+                        continue
 
                 def _normalize_filter_values(value):
                     if isinstance(value, list):
@@ -3345,7 +3359,6 @@ async def search_resumes_intent_based(
                     candidate_exp_str = payload.get('total_experience', '0')
 
                     # Parse experience from strings like "2 years 8 months"
-                    import re
                     years_match = re.search(r'(\d+)\s*years?', candidate_exp_str)
                     months_match = re.search(r'(\d+)\s*months?', candidate_exp_str)
 
@@ -3441,16 +3454,16 @@ async def search_resumes_intent_based(
                     if not email_match:
                         logger.info(f"dYs_ Email mismatch for {payload.get('name', 'Unknown')} - email '{candidate_email}' doesn't match '{email_requirements}'")
 
-                # Phone filtering (digits only match)
+                # Phone filtering (elastic digits-only match)
                 phone_requirements = qdrant_filters.get('phone')
                 if phone_requirements:
                     candidate_phone = str(payload.get('phone', '')).strip()
-                    candidate_phone_digits = re.sub(r"\D", "", candidate_phone)
+                    candidate_phone_digits = _digits_only(candidate_phone)
                     phone_match = False
 
                     for req_phone in _normalize_filter_values(phone_requirements):
-                        req_digits = re.sub(r"\D", "", req_phone)
-                        if req_digits and req_digits == candidate_phone_digits:
+                        req_digits = _digits_only(req_phone)
+                        if _phone_digits_match(candidate_phone_digits, req_digits):
                             phone_match = True
                             break
 
@@ -3593,7 +3606,7 @@ async def search_resumes_intent_based(
                         logger.info(f"🚫 Education mismatch for {payload.get('name', 'Unknown')} - education: {education_info}, required: {education_requirements}")
 
                 # Final decision: Apply strict vs non-strict matching logic
-                should_exclude = should_exclude_candidate(criteria_matches, strict_matching)
+                should_exclude = should_exclude_candidate(criteria_matches, strict_matching, result.get('score', 0.0))
 
                 if not should_exclude:
                     filtered_results.append(result)
@@ -3631,6 +3644,25 @@ async def search_resumes_intent_based(
                 logger.warning(f"[REASON_DEBUG] WARNING: No match details flags are True - this may indicate semantic-only matching!")
 
             reasons = []
+
+            # Identifier matches first for clarity
+            email_req = qdrant_filters.get('email')
+            if email_req and match_details.get('email_match'):
+                candidate_email = payload.get('email', 'Unknown')
+                if candidate_email:
+                    reasons.append(f"📧 Exact email match: {candidate_email}")
+
+            phone_req = qdrant_filters.get('phone')
+            if phone_req and match_details.get('phone_match'):
+                candidate_phone = payload.get('phone', 'Unknown')
+                if candidate_phone:
+                    reasons.append(f"📞 Exact phone match: {candidate_phone}")
+
+            name_req = qdrant_filters.get('name')
+            if name_req and match_details.get('name_match'):
+                candidate_full_name = payload.get('name', 'Unknown')
+                req_name_display = name_req[0] if isinstance(name_req, list) and name_req else str(name_req)
+                reasons.append(f"🧑 Name match: '{candidate_full_name}' matches requested '{req_name_display}'")
 
             # Location match
             if match_details.get('location_match'):
@@ -3864,8 +3896,45 @@ async def search_resumes_intent_based(
                 'skills_match': False,
                 'company_match': False,
                 'experience_match': False,
-                'location_match': False
+                'location_match': False,
+                'email_match': False,
+                'phone_match': False,
+                'name_match': False
             }
+
+            # Identifier matching bonuses (email/phone/name)
+            email_req = qdrant_filters.get('email')
+            if email_req:
+                candidate_email = (payload.get('email') or '').strip().lower()
+                req_emails = email_req if isinstance(email_req, list) else [email_req]
+                req_emails_norm = [str(e).strip().lower() for e in req_emails if str(e).strip()]
+                if candidate_email and candidate_email in req_emails_norm:
+                    bonus_score += 1.2
+                    match_details['email_match'] = True
+
+            phone_req = qdrant_filters.get('phone')
+            if phone_req:
+                cand_digits = re.sub(r"\D", "", str(payload.get('phone') or ''))
+                req_phones = phone_req if isinstance(phone_req, list) else [phone_req]
+                req_digits_list = [re.sub(r"\D", "", str(p)) for p in req_phones]
+                for rd in req_digits_list:
+                    if cand_digits and rd and (cand_digits == rd or cand_digits.endswith(rd) or rd.endswith(cand_digits)):
+                        bonus_score += 1.2
+                        match_details['phone_match'] = True
+                        break
+
+            name_req = qdrant_filters.get('name')
+            if name_req:
+                cand_name = (payload.get('name') or '').strip().lower()
+                req_names = name_req if isinstance(name_req, list) else [name_req]
+                req_names_norm = [str(n).strip().lower() for n in req_names if str(n).strip()]
+                if cand_name and req_names_norm:
+                    if any(cand_name == rn for rn in req_names_norm):
+                        bonus_score += 1.0
+                        match_details['name_match'] = True
+                    elif any(rn in cand_name for rn in req_names_norm):
+                        bonus_score += 0.6
+                        match_details['name_match'] = True
 
             # Education matching bonus
             edu_reqs = intent_data.get("extracted_components", {}).get("education_requirements", {})
@@ -3900,23 +3969,56 @@ async def search_resumes_intent_based(
 
             # Role matching bonus
             role_reqs = intent_data.get("extracted_components", {}).get("role_requirements", {})
-            if role_reqs.get("has_requirement", False):
-                candidate_role = payload.get('current_role', '').lower()
-                candidate_seniority = payload.get('seniority', '').lower()
+            if role_reqs.get("has_requirement", False) or qdrant_filters.get('role_category') or qdrant_filters.get('job_title'):
+                # Prefer 'current_position' stored in payload; fallback to 'current_role'
+                candidate_role = (payload.get('current_position') or payload.get('current_role') or '').lower()
+                candidate_seniority = (payload.get('seniority') or '').lower()
 
-                # Job title match
-                if role_reqs.get("job_titles"):
-                    for title in role_reqs["job_titles"]:
-                        if title.lower() in candidate_role:
+                # Job title match (exact phrase or token overlap)
+                job_titles = role_reqs.get("job_titles") or qdrant_filters.get('job_title') or []
+                if job_titles:
+                    for title in job_titles:
+                        title_l = str(title).lower()
+                        if not title_l:
+                            continue
+                        if title_l in candidate_role:
                             bonus_score += 0.35
                             match_details['role_match'] = True
                             break
+                        # Token overlap heuristic
+                        title_tokens = [t for t in re.split(r"\W+", title_l) if len(t) > 1]
+                        role_tokens = [t for t in re.split(r"\W+", candidate_role) if len(t) > 1]
+                        if not role_tokens:
+                            continue
+                        overlap = set(title_tokens) & set(role_tokens)
+                        if 'full' in title_tokens and 'stack' in title_tokens and {'full', 'stack'} <= set(role_tokens):
+                            bonus_score += 0.25
+                            match_details['role_match'] = True
+                            break
+                        if len(overlap) >= 2:
+                            bonus_score += 0.2
+                            match_details['role_match'] = True
+                            break
+                        if len(overlap) >= 1 and any(tok in overlap for tok in ['developer', 'engineer', 'architect']):
+                            bonus_score += 0.1
+                            match_details['role_match'] = True
+                            # don't break; allow stronger matches to be found for higher bonus in other titles
 
                 # Seniority match
                 if role_reqs.get("role_levels"):
                     for level in role_reqs["role_levels"]:
-                        if level.lower() in candidate_seniority:
+                        if str(level).lower() in candidate_seniority:
                             bonus_score += 0.25
+                            match_details['role_match'] = True
+                            break
+
+                # Role category match (from final qdrant filters)
+                role_cat_reqs = qdrant_filters.get('role_category')
+                if role_cat_reqs:
+                    cand_role_cat = (payload.get('role_category') or '').lower()
+                    for rc in role_cat_reqs:
+                        if str(rc).lower() in cand_role_cat:
+                            bonus_score += 0.2
                             match_details['role_match'] = True
                             break
 
@@ -3979,7 +4081,6 @@ async def search_resumes_intent_based(
                 candidate_exp_str = payload.get('total_experience', '0')
 
                 # Extract years from candidate experience
-                import re
                 exp_match = re.search(r'(\d+)', candidate_exp_str)
                 if exp_match:
                     candidate_years = int(exp_match.group(1))
@@ -4107,6 +4208,7 @@ async def search_resumes_intent_based(
         return {
             "success": True,
             "query": query,
+            "requested_by": user_id,
             "total_results": len(formatted_results),
             "intent_analysis": {
                 "final_requirements": final_requirements,
@@ -4124,7 +4226,8 @@ async def search_resumes_intent_based(
                 "candidates_before_filtering": len(results) if 'results' in locals() else 0,
                 "candidates_after_filtering": len(formatted_results),
                 "filter_types_applied": list(qdrant_filters.keys()),
-                "search_approach": "hybrid" if has_post_retrieval_filters else "semantic_only"
+                "search_approach": "hybrid" if has_post_retrieval_filters else "semantic_only",
+                "margin": {"enabled": True, "ratio": margin_ratio, "top_semantic_score": top_semantic_score}
             }
         }
 
@@ -4196,7 +4299,8 @@ Return ONLY a JSON array of candidate indices (0-based) ranked by relevance, lim
         )
 
         # Parse LLM response
-        llm_response = response.choices[0].message.content.strip()
+        content = response.choices[0].message.content
+        llm_response = content.strip() if content else ""
 
         # Clean and parse JSON
         import re, json
@@ -4224,110 +4328,6 @@ Return ONLY a JSON array of candidate indices (0-based) ranked by relevance, lim
     except Exception as e:
         logger.error(f"LLM candidate matching failed: {e}")
         return candidates[:limit]
-
-
-@app.post("/search-resumes-smart")
-async def search_resumes_smart(
-    query: str = Form(...),
-    limit: int = Form(10)
-):
-    """
-    Smart LLM-based resume search using Azure OpenAI for intelligent matching.
-
-    Instead of strict filtering, this endpoint uses your Azure OpenAI deployment to:
-    - Understand semantic similarity between query and candidate data
-    - Match concepts (e.g., "AI/ML" matches "Machine Learning", "Deep Learning", etc.)
-    - Handle location variations (e.g., "Ahmedabad" matches "Ahmedabad, Gujarat")
-    - Provide intelligent ranking based on overall fit
-
-    Args:
-        query: Natural language query describing requirements
-        limit: Maximum number of results to return
-
-    Returns:
-        JSON response with intelligently matched candidates
-    """
-    try:
-        start_time = time.time()
-        logger.info(f"Smart search query: {query}")
-
-        # First, get all candidates from Qdrant using vector similarity
-        query_vector = await _generate_embedding(query)
-
-        if not query_vector:
-            return JSONResponse(
-                status_code=400,
-                content={"error": "Could not generate embedding for query"}
-            )
-
-        # Get more candidates for LLM to choose from
-        vector_candidates = await qdrant_client.search_similar(
-            query_vector=query_vector,
-            limit=min(50, limit * 5),  # Get 5x more candidates for LLM to filter
-            filter_conditions=None  # No strict filters, let LLM decide
-        )
-
-        if not vector_candidates:
-            return {
-                "success": True,
-                "query": query,
-                "total_results": 0,
-                "results": [],
-                "method": "smart_llm_search",
-                "processing_time": time.time() - start_time
-            }
-
-        # Use LLM to intelligently rank candidates
-        smart_results = await llm_candidate_matcher(query, vector_candidates, limit)
-
-        # Format results for response
-        formatted_results = []
-        for result in smart_results:
-            payload = result.get('payload', {})
-            formatted_result = {
-                "name": payload.get('name', 'Unknown'),
-                "email": payload.get('email', 'Unknown'),
-                "phone": payload.get('phone', 'Unknown'),
-                "current_position": payload.get('current_position', 'Unknown'),
-                "location": payload.get('location', 'Unknown'),
-                "total_experience": payload.get('total_experience', 'Unknown'),
-                "skills": payload.get('skills', [])[:15],  # Top 15 skills
-                "role_category": payload.get('role_category', 'Unknown'),
-                "summary": payload.get('summary', '')[:300] + '...' if payload.get('summary', '') else 'No summary available',
-                "semantic_score": result.get('score', 0.0),
-                "education": payload.get('education', []),
-                "recent_experience": [
-                    f"{job.get('title', 'Unknown')} at {job.get('company', 'Unknown')}"
-                    for job in payload.get('work_history', [])[:2]
-                ],
-                "key_projects": [
-                    f"{proj.get('name', 'Unknown')} ({', '.join(proj.get('technologies', [])[:3])})"
-                    for proj in payload.get('projects', [])[:3]
-                ],
-                "match_reason": "LLM-based intelligent matching"
-            }
-            formatted_results.append(formatted_result)
-
-        processing_time = time.time() - start_time
-        logger.info(f"Smart search completed: {len(formatted_results)} results in {processing_time:.2f}s")
-
-        return {
-            "success": True,
-            "query": query,
-            "total_results": len(formatted_results),
-            "results": formatted_results,
-            "method": "smart_llm_search",
-            "processing_time": processing_time,
-            "vector_candidates_analyzed": len(vector_candidates),
-            "llm_ranked_results": len(smart_results)
-        }
-
-    except Exception as e:
-        logger.error(f"Smart search error: {e}")
-        return JSONResponse(
-            status_code=500,
-            content={"error": f"Smart search failed: {str(e)}"}
-        )
 
 
 @app.get("/resume/{user_id}")
@@ -4360,12 +4360,316 @@ if __name__ == "__main__":
         reload=settings.app.debug,
         log_level=settings.app.log_level.lower()
     )
+@app.get("/resumes")
+async def get_all_resumes(
+    page: int = 1,
+    page_size: int = 20,
+    search: Optional[str] = None,
+    name: Optional[str] = None,
+    email: Optional[str] = None,
+    location: Optional[str] = None,
+    job_title: Optional[str] = None,
+    role_category: Optional[str] = None,
+    company: Optional[str] = None,
+    user_id: str = Query(..., description="Return resumes owned by this user_id only"),
+    order_by: str = "-created_at",
+):
+    """Return paginated list of resumes from PostgreSQL mirror (qdrant_resumes).
+
+    Query params:
+    - page (1-based), page_size (max 100)
+    - search (applies to name, current_position, summary, location, email)
+    - name, email, location, job_title, role_category (ILIKE filters)
+    - user_id: REQUIRED. Only resumes with owner_user_id == user_id are returned
+    - order_by: one of created_at|embedding_generated_at|upload_timestamp|name|current_position with optional '-' prefix for DESC
+    """
+    # Normalize pagination
+    page = max(1, int(page))
+    page_size = max(1, min(100, int(page_size)))
+    offset = (page - 1) * page_size
+
+    # Ensure DB connectivity
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="PostgreSQL not configured or unavailable")
+
+    total, items = await pg_client.list_resumes(
+        offset=offset,
+        limit=page_size,
+        search=search,
+        name=name,
+        email=email,
+        location=location,
+        job_title=job_title,
+        role_category=role_category,
+        company=company,
+        owner_user_id=user_id,
+        order_by=order_by,
+    )
+
+    return {
+        "success": True,
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+        "items": items,
+    }
 
 
+@app.get("/dashboard/metrics")
+async def dashboard_metrics(user_id: str = Query(..., description="Owner user_id to scope metrics")):
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="PostgreSQL not configured or unavailable")
+    data = await pg_client.get_dashboard_metrics(user_id)
+    return {"success": True, "user_id": user_id, "metrics": data}
+
+@app.get("/dashboard/recent-activity")
+async def dashboard_recent_activity(
+    user_id: str = Query(..., description="Owner user_id to scope activity"),
+    limit: int = Query(10, ge=1, le=50)
+):
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="PostgreSQL not configured or unavailable")
+    items = await pg_client.get_recent_activity(user_id, limit)
+    return {"success": True, "user_id": user_id, "items": items}
+
+@app.get("/dashboard/top-candidates")
+async def dashboard_top_candidates(
+    user_id: str = Query(..., description="Owner user_id to scope candidates"),
+    query: Optional[str] = Query(None, description="Optional query; falls back to recent prompt or top role"),
+    limit: int = Query(3, ge=1, le=10)
+):
+    """Compute top matching candidates for this user and query (this week preferred).
+    We reuse the intent analysis + vector search, restrict by owner_user_id, then post-filter to this week.
+    """
+    # Fallbacks if query not provided: recent prompt -> top role category -> generic
+    effective_query = (query or "").strip() if isinstance(query, str) else ""
+    if not effective_query:
+        try:
+            last_prompt = await pg_client.get_recent_prompt(user_id, days=30)
+            if last_prompt:
+                effective_query = last_prompt
+        except Exception:
+            pass
+    if not effective_query:
+        try:
+            top_role = await pg_client.get_top_role_category(user_id)
+            if top_role:
+                effective_query = top_role
+        except Exception:
+            pass
+    if not effective_query:
+        effective_query = "best candidates"
+
+    # Analyze intent
+    intent = await analyze_query_intent(effective_query, user_id)
+    if not intent.get("success"):
+        raise HTTPException(status_code=400, detail="Intent analysis failed")
+    final_requirements = intent.get("intent_analysis", {}).get("final_requirements", {}) or {}
+
+    # Embed query enriched with keywords
+    try:
+        from src.resume_parser.clients.azure_openai import azure_client
+        client = azure_client.get_sync_client()
+        kws = final_requirements.get("search_keywords", [])
+        emb_in = f"{effective_query}\n\nKeywords: {' '.join(kws[:20])}" if kws else effective_query
+        resp = client.embeddings.create(input=emb_in, model=azure_client.get_embedding_deployment())
+        vec = resp.data[0].embedding
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Embedding error: {e}")
+
+    # Qdrant search restricted to owner
+    filter_conditions = {"owner_user_id": user_id}
+    results = await qdrant_client.search_similar(query_vector=vec, limit=300, filter_conditions=filter_conditions)
+    if not results:
+        return {"success": True, "user_id": user_id, "items": []}
+
+    # Prefer candidates uploaded this week
+    from datetime import datetime, timedelta
+    week_ago = datetime.utcnow() - timedelta(days=7)
+
+    def within_week(payload: Dict[str, Any]) -> bool:
+        ts = payload.get('upload_timestamp')
+        if not ts:
+            return False
+        try:
+            dt = datetime.fromisoformat(ts)
+            return dt >= week_ago
+        except Exception:
+            return False
+
+    # Score normalization (relative to top)
+    top_score = max(r.get('score', 0.0) for r in results)
+    def pct(r):
+        s = r.get('score', 0.0)
+        return int(round(100 * (s / top_score), 0)) if top_score > 0 else 0
+
+    weekly = [r for r in results if within_week(r.get('payload', {}))]
+    pool = weekly if weekly else results
+    pool.sort(key=lambda r: r.get('score', 0.0), reverse=True)
+    items = []
+    for r in pool[:limit]:
+        p = r.get('payload', {})
+        skills = p.get('skills', []) or []
+        items.append({
+            "name": p.get('name', 'Unknown'),
+            "initials": ''.join([w[0].upper() for w in str(p.get('name','?')).split()[:2]]),
+            "match_percent": pct(r),
+            "current_role": p.get('current_position', 'Unknown'),
+            "location": p.get('location', 'Unknown'),
+            "skills": skills[:2],
+        })
+
+    return {"success": True, "user_id": user_id, "items": items}
+
+@app.get("/resumes/{resume_id}")
+async def get_resume_detail(resume_id: str, fallback_to_qdrant: bool = True):
+    """Get a single resume by id from the Postgres mirror; optionally fall back to Qdrant payload."""
+    ok = await pg_client.connect()
+    if ok:
+        row = await pg_client.get_resume(resume_id)
+        if row:
+            return {"success": True, "source": "postgres", "item": row}
+
+    if fallback_to_qdrant:
+        try:
+            payload = await qdrant_client.get_resume_by_id(resume_id)
+            if payload:
+                return {"success": True, "source": "qdrant", "item": payload}
+        except Exception:
+            pass
+
+    raise HTTPException(status_code=404, detail="Resume not found")
 
 
+@app.post("/user-search-prompts")
+async def create_user_search_prompt(
+    request: Request,
+    user_id: Optional[str] = Form(None),
+    prompt: Optional[str] = Form(None),
+    route: Optional[str] = Form(None),
+    liked: Optional[bool] = Form(None),
+    asked_at: Optional[str] = Form(None),
+    response_meta: Optional[str] = Form(None),
+    json_body: Optional[Dict[str, Any]] = Body(None),
+):
+    """
+    Store a user search prompt for analytics/feedback.
+
+    Accepts form or JSON. JSON example:
+    {"user_id":"u123","prompt":"senior backend","route":"search-resumes-intent-based","liked":true,"asked_at":"2025-09-25T10:01:47+00:00","response_meta":{"total_results":10}}
+    """
+    # Merge JSON body if provided (root-level) or nested json_body
+    payload: Optional[Dict[str, Any]] = None
+    try:
+        if request.headers.get("content-type", "").startswith("application/json"):
+            payload = await request.json()
+    except Exception:
+        payload = None
+    if payload and isinstance(payload, dict):
+        user_id = payload.get("user_id", user_id)
+        prompt = payload.get("prompt", prompt)
+        route = payload.get("route", route)
+        liked = payload.get("liked", liked)
+        asked_at = payload.get("asked_at", asked_at)
+        response_meta = payload.get("response_meta", response_meta)
+    elif json_body and isinstance(json_body, dict):
+        user_id = json_body.get("user_id", user_id)
+        prompt = json_body.get("prompt", prompt)
+        route = json_body.get("route", route)
+        liked = json_body.get("liked", liked)
+        asked_at = json_body.get("asked_at", asked_at)
+        response_meta = json_body.get("response_meta", response_meta)
+
+    if not prompt or not str(prompt).strip():
+        raise HTTPException(status_code=400, detail="prompt is required")
+
+    # Parse asked_at to datetime
+    from datetime import datetime
+    asked_dt = None
+    if asked_at:
+        try:
+            asked_dt = datetime.fromisoformat(str(asked_at))
+        except Exception:
+            asked_dt = None
+
+    # response_meta can be JSON string or dict
+    rm: Optional[Dict[str, Any]] = None
+    if isinstance(response_meta, str):
+        try:
+            import json as _json
+            rm = _json.loads(response_meta)
+        except Exception:
+            rm = None
+    elif isinstance(response_meta, dict):
+        rm = response_meta
+
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="PostgreSQL not configured or unavailable")
+
+    new_id = await pg_client.insert_user_search_prompt(
+        user_id=user_id or "anonymous",
+        prompt=str(prompt),
+        route=str((route or "search-resumes-intent-based")),
+        liked=liked if isinstance(liked, bool) else None,
+        asked_at=asked_dt,
+        response_meta=rm,
+    )
+
+    if not new_id:
+        raise HTTPException(status_code=500, detail="Failed to store prompt")
+
+    return {"success": True, "id": new_id}
 
 
+@app.patch("/user-search-prompts/{prompt_id}/feedback")
+async def update_user_search_prompt_feedback(
+    prompt_id: str,
+    request: Request,
+    liked: Optional[bool] = Form(None),
+    json_body: Optional[Dict[str, Any]] = Body(None),
+):
+    """Update user feedback (liked) for a stored prompt.
+    Accepts form or JSON body {"liked": true/false}.
+    """
+    # Normalize 'liked' from JSON when Content-Type is application/json
+    payload: Optional[Dict[str, Any]] = None
+    try:
+        if request.headers.get("content-type", "").startswith("application/json"):
+            payload = await request.json()
+    except Exception:
+        payload = None
 
+    if isinstance(payload, dict) and "liked" in payload:
+        liked = payload.get("liked")
+    elif isinstance(json_body, dict) and "liked" in json_body:
+        liked = json_body.get("liked")
 
+    # Coerce liked from common string forms
+    def _normalize_liked(val: Any) -> Optional[bool]:
+        if isinstance(val, bool):
+            return val
+        if isinstance(val, (int,)) and val in (0, 1):
+            return bool(val)
+        if isinstance(val, str):
+            v = val.strip().lower()
+            if v in ("true", "1", "yes", "y"): return True
+            if v in ("false", "0", "no", "n"): return False
+        return None
 
+    liked_norm = _normalize_liked(liked)
+    if liked_norm is None:
+        raise HTTPException(status_code=400, detail="liked is required")
+
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="PostgreSQL not configured or unavailable")
+
+    done = await pg_client.update_user_search_prompt_feedback(prompt_id, liked_norm)
+    if not done:
+        raise HTTPException(status_code=404, detail="Prompt not found or update failed")
+
+    return {"success": True, "id": prompt_id, "liked": liked_norm}

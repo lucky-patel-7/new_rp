@@ -48,7 +48,7 @@ class AzureOpenAIClient:
                 self._sync_client = AzureOpenAI(
                     api_key=settings.azure_openai.api_key,
                     api_version=settings.azure_openai.api_version,
-                    azure_endpoint=settings.azure_openai.endpoint
+                    azure_endpoint=settings.azure_openai.endpoint# type: ignore
                 )
                 logger.info("Synchronous Azure OpenAI client created successfully")
             except TypeError as e:
@@ -62,7 +62,7 @@ class AzureOpenAIClient:
                         self._sync_client = AzureOpenAI(
                             api_key=settings.azure_openai.api_key,
                             api_version=settings.azure_openai.api_version,
-                            azure_endpoint=settings.azure_openai.endpoint,
+                            azure_endpoint=settings.azure_openai.endpoint,# type: ignore
                             http_client=http_client
                         )
                         logger.info("Synchronous Azure OpenAI client created with custom http client")
@@ -76,7 +76,7 @@ class AzureOpenAIClient:
                 logger.error(f"Failed to create synchronous Azure OpenAI client: {e}")
                 self._sync_client = None
 
-        return self._sync_client
+        return self._sync_client# type: ignore
 
     def get_async_client(self) -> AsyncAzureOpenAI:
         """
@@ -94,7 +94,7 @@ class AzureOpenAIClient:
                 self._async_client = AsyncAzureOpenAI(
                     api_key=settings.azure_openai.api_key,
                     api_version=settings.azure_openai.api_version,
-                    azure_endpoint=settings.azure_openai.endpoint,
+                    azure_endpoint=settings.azure_openai.endpoint,# type: ignore
                     timeout=30.0
                 )
                 logger.info("Asynchronous Azure OpenAI client created successfully")
@@ -109,7 +109,7 @@ class AzureOpenAIClient:
                         self._async_client = AsyncAzureOpenAI(
                             api_key=settings.azure_openai.api_key,
                             api_version=settings.azure_openai.api_version,
-                            azure_endpoint=settings.azure_openai.endpoint,
+                            azure_endpoint=settings.azure_openai.endpoint,# type: ignore
                             http_client=http_client
                         )
                         logger.info("Asynchronous Azure OpenAI client created with custom http client")
@@ -123,15 +123,15 @@ class AzureOpenAIClient:
                 logger.error(f"Failed to create asynchronous Azure OpenAI client: {e}")
                 self._async_client = None
 
-        return self._async_client
+        return self._async_client# type: ignore
 
     def get_chat_deployment(self) -> str:
         """Get the chat deployment name."""
-        return settings.azure_openai.chat_deployment
+        return settings.azure_openai.chat_deployment# type: ignore
 
     def get_embedding_deployment(self) -> str:
         """Get the embedding deployment name."""
-        return settings.azure_openai.embedding_deployment
+        return settings.azure_openai.embedding_deployment# type: ignore
 
 
 # Global client instance

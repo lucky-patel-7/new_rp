@@ -77,7 +77,7 @@ class ResumeParser:
             # Validate file
             is_valid, error_msg = self.file_handler.validate_file(file_path, file_size)
             if not is_valid:
-                return ProcessingResult(
+                return ProcessingResult(# type: ignore
                     success=False,
                     error_message=error_msg,
                     processing_time=0.0
@@ -87,7 +87,7 @@ class ResumeParser:
             raw_text, file_type = self.file_handler.extract_text_from_file(file_path)
 
             if not raw_text or len(raw_text.strip()) < 50:
-                return ProcessingResult(
+                return ProcessingResult(# type: ignore
                     success=False,
                     error_message="Resume content is too short or empty",
                     processing_time=0.0
@@ -106,9 +106,9 @@ class ResumeParser:
 
             # Calculate processing time
             processing_time = (datetime.utcnow() - start_time).total_seconds()
-            resume_data.extraction_statistics.processing_time_seconds = processing_time
+            resume_data.extraction_statistics.processing_time_seconds = processing_time# type: ignore
 
-            return ProcessingResult(
+            return ProcessingResult(# type: ignore
                 success=True,
                 resume_data=resume_data,
                 processing_time=processing_time
@@ -117,7 +117,7 @@ class ResumeParser:
         except Exception as e:
             logger.error(f"Error processing resume file: {e}")
             processing_time = (datetime.utcnow() - start_time).total_seconds()
-            return ProcessingResult(
+            return ProcessingResult(# type: ignore
                 success=False,
                 error_message=str(e),
                 processing_time=processing_time
@@ -210,7 +210,7 @@ class ResumeParser:
             # Prepare prompt for comprehensive extraction
             prompt = self._create_extraction_prompt()
 
-            response = self.azure_client.chat.completions.create(
+            response = self.azure_client.chat.completions.create(# type: ignore
                 model=self.chat_deployment,
                 messages=[
                     {"role": "system", "content": prompt},
@@ -221,7 +221,7 @@ class ResumeParser:
             )
 
             response_text = response.choices[0].message.content
-            cleaned_response = clean_json_response(response_text)
+            cleaned_response = clean_json_response(response_text)# type: ignore
 
             # Parse JSON response
             structured_data = json.loads(cleaned_response)
@@ -230,7 +230,7 @@ class ResumeParser:
 
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse AI response as JSON: {e}")
-            logger.debug(f"Raw response: {response_text[:500]}...")
+            logger.debug(f"Raw response: {response_text[:500]}...")# type: ignore
             return self._fallback_parse(raw_text)
         except Exception as e:
             logger.error(f"Error in AI structuring: {e}")
@@ -417,7 +417,7 @@ Extract all available information. Use "Unknown" or empty arrays for missing dat
         if month_match:
             months = int(month_match.group(1))
 
-        return ExtractionStatistics(
+        return ExtractionStatistics(# type: ignore
             total_experience_years=years,
             total_experience_months=months,
             work_history_count=len(structured_data.get('work_history', [])),

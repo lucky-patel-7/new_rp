@@ -3,8 +3,14 @@ Configuration settings for the Resume Parser application.
 """
 
 from typing import Optional
+import os
 from pydantic_settings import BaseSettings
 from pydantic import Field
+try:
+    # pydantic v2
+    from pydantic import AliasChoices
+except Exception:
+    AliasChoices = None  # type: ignore
 from dotenv import load_dotenv
 
 
@@ -42,12 +48,33 @@ class PostgreSQLSettings(BaseSettings):
     host: str = Field(default="localhost")
     port: int = Field(default=5432)
     database: str = Field(default="resume_db")
-    username: Optional[str] = Field(default=None)
-    password: Optional[str] = Field(default=None)
+    # Accept multiple env var names for user/pass and DSN
+    if AliasChoices:  # pydantic v2
+        username: Optional[str] = Field(default=None, validation_alias=AliasChoices("USERNAME", "USER"))
+        password: Optional[str] = Field(default=None, validation_alias=AliasChoices("PASSWORD", "PASS"))
+        dsn: Optional[str] = Field(default=None, validation_alias=AliasChoices("DSN", "URL", "URI"))
+    else:  # fallback
+        username: Optional[str] = Field(default=None)
+        password: Optional[str] = Field(default=None)
+        dsn: Optional[str] = Field(default=None)
 
     @property
-    def connection_string(self) -> str:
-        return f"postgresql://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}"
+    def connection_string(self) -> Optional[str]:
+        # Prefer explicit DSN from env
+        if self.dsn and str(self.dsn).strip():
+            return self.dsn
+
+        # Common alternative envs without POSTGRES_ prefix
+        alt_dsn = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL")
+        if alt_dsn and alt_dsn.strip():
+            return alt_dsn
+
+        # Build from discrete parts if available
+        if self.username and self.password:
+            return f"postgresql://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}"
+
+        # Missing credentials
+        return None
 
     class Config:
         env_prefix = "POSTGRES_"

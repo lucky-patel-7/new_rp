@@ -13,6 +13,7 @@ help:
 	@echo "  clean      Clean up temporary files"
 	@echo "  run        Run the application"
 	@echo "  health     Check application health"
+	@echo "  intent-test Run 20+ prompts through /analyze-query-intent"
 
 # Install production dependencies
 install:
@@ -54,6 +55,11 @@ run:
 # Check application health
 health:
 	curl -s http://localhost:8001/health | python -m json.tool
+
+# Run intent analyzer test suite (set INTENT_BASE_URL if not 8000)
+intent-test:
+	INTENT_BASE_URL?=http://localhost:8000 \
+	python scripts/intent_test_runner.py
 
 # Setup development environment
 setup-dev: dev

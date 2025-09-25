@@ -48,3 +48,35 @@ CREATE TRIGGER trigger_update_embedding_status
     BEFORE UPDATE ON public.parsed_resumes
     FOR EACH ROW
     EXECUTE FUNCTION update_embedding_status();
+
+-- New table to mirror Qdrant payloads in PostgreSQL
+CREATE TABLE IF NOT EXISTS public.qdrant_resumes (
+    id uuid PRIMARY KEY,
+    vector_id varchar(255),
+    name text,
+    email text,
+    phone varchar(50),
+    location text,
+    linkedin_url text,
+    current_position text,
+    summary text,
+    total_experience text,
+    role_category text,
+    seniority text,
+    best_role text,
+    skills jsonb DEFAULT '[]'::jsonb,
+    work_history jsonb DEFAULT '[]'::jsonb,
+    projects jsonb DEFAULT '[]'::jsonb,
+    education jsonb DEFAULT '[]'::jsonb,
+    role_classification jsonb DEFAULT '{}'::jsonb,
+    recommended_roles jsonb DEFAULT '[]'::jsonb,
+    original_filename text,
+    upload_timestamp timestamptz,
+    embedding_model varchar(100) DEFAULT 'text-embedding-3-large',
+    embedding_generated_at timestamptz,
+    created_at timestamptz DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_qdrant_resumes_vector_id ON public.qdrant_resumes(vector_id);
+CREATE INDEX IF NOT EXISTS idx_qdrant_resumes_email ON public.qdrant_resumes(email);
+CREATE INDEX IF NOT EXISTS idx_qdrant_resumes_name_gin ON public.qdrant_resumes USING gin(to_tsvector('english', name));

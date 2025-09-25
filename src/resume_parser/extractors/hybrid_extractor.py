@@ -238,14 +238,14 @@ Respond ONLY in JSON format:
 }}
 """
 
-            response = self.client.chat.completions.create(
+            response = self.client.chat.completions.create(# type: ignore
                 model=self.chat_deployment,
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=200,
                 temperature=0.1
             )
 
-            llm_text = response.choices[0].message.content.strip()
+            llm_text = response.choices[0].message.content.strip()# type: ignore
 
             # Clean and parse JSON
             llm_text = re.sub(r"```json\s*([\s\S]*?)\s*```", r"\1", llm_text, flags=re.IGNORECASE)
@@ -368,14 +368,14 @@ Rules:
 Respond with ONLY the calculated experience (e.g., "3 years 6 months"):
 """
 
-            response = self.client.chat.completions.create(
+            response = self.client.chat.completions.create(# type: ignore
                 model=self.chat_deployment,
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=50,
                 temperature=0.1
             )
 
-            return response.choices[0].message.content.strip()
+            return response.choices[0].message.content.strip()# type: ignore
 
         except Exception as e:
             logger.warning(f"LLM experience calculation failed: {e}")
@@ -468,14 +468,14 @@ Return ONLY a clean, comma-separated list of skills (no categories, no descripti
 Example: Python, JavaScript, React, Docker, AWS, PostgreSQL
 """
 
-            response = self.client.chat.completions.create(
+            response = self.client.chat.completions.create(# type: ignore
                 model=self.chat_deployment,
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=150,
                 temperature=0.1
             )
 
-            skills_text = response.choices[0].message.content.strip()
+            skills_text = response.choices[0].message.content.strip()# type: ignore
             skills = [skill.strip() for skill in skills_text.split(',')]
             return [skill for skill in skills if len(skill) > 1]
 
@@ -608,14 +608,14 @@ Respond ONLY in JSON format as an array:
 ]
 """
 
-            response = self.client.chat.completions.create(
+            response = self.client.chat.completions.create(# type: ignore
                 model=self.chat_deployment,
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=800,
                 temperature=0.1
             )
 
-            llm_text = response.choices[0].message.content.strip()
+            llm_text = response.choices[0].message.content.strip()# type: ignore
 
             # Clean and parse JSON
             llm_text = re.sub(r"```json\s*([\s\S]*?)\s*```", r"\1", llm_text, flags=re.IGNORECASE)
@@ -704,14 +704,14 @@ Respond ONLY in JSON format as an array:
 Focus on real projects, not just technologies or job responsibilities.
 """
 
-            response = self.client.chat.completions.create(
+            response = self.client.chat.completions.create(# type: ignore
                 model=self.chat_deployment,
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=500,
                 temperature=0.1
             )
 
-            llm_text = response.choices[0].message.content.strip()
+            llm_text = response.choices[0].message.content.strip()# type: ignore
 
             # Clean and parse JSON
             llm_text = re.sub(r"```json\s*([\s\S]*?)\s*```", r"\1", llm_text, flags=re.IGNORECASE)
@@ -797,14 +797,14 @@ Respond ONLY in JSON format as an array:
 ]
 """
 
-            response = self.client.chat.completions.create(
+            response = self.client.chat.completions.create(# type: ignore
                 model=self.chat_deployment,
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=400,
                 temperature=0.1
             )
 
-            llm_text = response.choices[0].message.content.strip()
+            llm_text = response.choices[0].message.content.strip()# type: ignore
 
             # Clean and parse JSON
             llm_text = re.sub(r"```json\s*([\s\S]*?)\s*```", r"\1", llm_text, flags=re.IGNORECASE)
@@ -881,14 +881,14 @@ Respond ONLY in JSON format:
 If no current job is found, return empty strings.
 """
 
-            response = self.client.chat.completions.create(
+            response = self.client.chat.completions.create(# type: ignore
                 model=self.chat_deployment,
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=200,
                 temperature=0.1
             )
 
-            llm_text = response.choices[0].message.content.strip()
+            llm_text = response.choices[0].message.content.strip()# type: ignore
 
             # Clean and parse JSON
             llm_text = re.sub(r"```json\s*([\s\S]*?)\s*```", r"\1", llm_text, flags=re.IGNORECASE)

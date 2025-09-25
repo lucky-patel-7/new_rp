@@ -308,6 +308,23 @@ class IntelligentSearchProcessor:
 
         query_lower = query.lower()
 
+        # Special handling: Detect explicit name constraints like "named <name>" / "name is <name>"
+        try:
+            name_patterns = [
+                r"\b(?:candidate|person)?\s*(?:named|called)\s+([a-z][a-z.'\-]+(?:\s+[a-z][a-z.'\-]+){0,3})\b",
+                r"\bname\s*(?:is|=|:)\s*([a-z][a-z.'\-]+(?:\s+[a-z][a-z.'\-]+){0,3})\b",
+                r"\bnamed\s+([a-z][a-z.'\-]+(?:\s+[a-z][a-z.'\-]+){0,3})\b"
+            ]
+            for pat in name_patterns:
+                for m in re.finditer(pat, query_lower, re.IGNORECASE):
+                    name_phrase = m.group(1).strip()
+                    if name_phrase and len(name_phrase) >= 3:
+                        add_term(name_phrase)
+                        logger.info(f"🧑‍💼 Detected candidate name requirement: '{name_phrase}'")
+        except Exception:
+            # Non-fatal if regex fails
+            pass
+
         # Attribute pattern: "<attr> status <value>" or "<attr> status is <value>"
         status_pattern = re.compile(r'(\b[\w\s]{2,40}?)\s+status\s*(?:is|=|:)?\s*(\b[\w\s-]{2,40}\b)', re.IGNORECASE)
         for attr, value in status_pattern.findall(query_lower):
