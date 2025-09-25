@@ -32,6 +32,7 @@ from src.resume_parser.utils.logging import setup_logging, get_logger
 from src.resume_parser.utils.file_handler import FileHandler
 from src.resume_parser.clients.azure_openai import azure_client
 from config.settings import settings
+from src.api import admin_router, resumes_router, dashboard_router, prompts_router, limits_router, system_router, uploads_router, search_router
 
 # Setup logging
 setup_logging()
@@ -83,13 +84,15 @@ resume_parser = ResumeParser()
 upload_dir = Path(settings.app.upload_dir)
 upload_dir.mkdir(exist_ok=True)
 
-_ADMIN_API_KEY = os.getenv("AUTH_API_KEY") or os.getenv("ADMIN_API_KEY")
-
-async def require_admin(x_api_key: Optional[str] = Header(None, alias="X-API-Key")) -> None:
-    if _ADMIN_API_KEY:
-        if not x_api_key or x_api_key != _ADMIN_API_KEY:
-            raise HTTPException(status_code=401, detail="Invalid or missing admin API key")
-    return None
+# Mount routers
+app.include_router(system_router)
+app.include_router(resumes_router)
+app.include_router(admin_router)
+app.include_router(dashboard_router)
+app.include_router(prompts_router)
+app.include_router(limits_router)
+app.include_router(uploads_router)
+app.include_router(search_router)
 
 
 async def _generate_embedding(text: str) -> List[float]:
@@ -700,48 +703,7 @@ def _candidate_matches_education(
 
 
 
-@app.get("/")
-async def root():
-    """Root endpoint with API information."""
-    return {
-        "message": f"Welcome to {settings.app.app_name}",
-        "version": "1.0.0",
-        "status": "operational",
-        "endpoints": {
-            "upload": "/upload-resume",
-            "health": "/health",
-            "search": "/search-resumes"
-        }
-    }
-
-
-@app.get("/health")
-async def health_check():
-    """Health check endpoint."""
-    health_status = {
-        "status": "healthy",
-        "timestamp": str(asyncio.get_event_loop().time()),
-        "services": {}
-    }
-
-    # Check Azure OpenAI
-    try:
-        if resume_parser.azure_client:
-            health_status["services"]["azure_openai"] = "connected"
-        else:
-            health_status["services"]["azure_openai"] = "not_configured"
-    except Exception as e:
-        health_status["services"]["azure_openai"] = f"error: {str(e)}"
-
-    # Check Qdrant
-    try:
-        collection_info = qdrant_client.get_collection_info()
-        health_status["services"]["qdrant"] = "connected"
-        health_status["services"]["qdrant_info"] = collection_info
-    except Exception as e:
-        health_status["services"]["qdrant"] = f"error: {str(e)}"
-
-    return health_status
+# System routes moved to src/api/system.py
 
 
 @app.post("/upload-resume")
@@ -764,8 +726,9 @@ async def upload_resume(file: UploadFile = File(...), user_id: Optional[str] = F
             error_detail = f"Resume upload limit exceeded. You have uploaded {limit_info['current_resumes']}/{limit_info['resume_limit']} resumes. Available slots: {limit_info['available_slots']}"
             raise HTTPException(status_code=429, detail=error_detail)
 
-    # Generate unique resume ID (point id)
-    resume_id = str(uuid.uuid4())
+    # This endpoint moved to src/api/uploads.py. Keeping a thin shim for backward compatibility.
+    from fastapi import HTTPException as _HTTPException
+    raise _HTTPException(status_code=410, detail="/upload-resume moved. Use uploads router.")
 
     # Create temporary file
     temp_file = None
@@ -909,146 +872,7 @@ async def upload_resume(file: UploadFile = File(...), user_id: Optional[str] = F
         except Exception:
             pass
 
-@app.get("/user-limits/{user_id}")
-async def get_user_limits(user_id: str):
-    """
-    Get user's current resume upload limits and usage.
-
-    Args:
-        user_id: User identifier
-
-    Returns:
-        Dict containing current usage, limits, and available slots
-    """
-    try:
-        limits = await pg_client.get_user_resume_limits(user_id)
-
-        if not limits:
-            # Initialize limits for new user
-            await pg_client.init_user_resume_limits(user_id)
-            limits = await pg_client.get_user_resume_limits(user_id)
-
-        return {
-            "success": True,
-            "data": limits
-        }
-    except Exception as e:
-        logger.error(f"❌ Error fetching user limits for {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch user limits: {str(e)}")
-
-
-@app.post("/user-limits/{user_id}/decrement")
-async def decrement_user_resume_count(
-    user_id: str,
-    count: int = 1,
-    tokens_used: int = 0
-):
-    """
-    Decrease user's resume count (e.g., when resumes are deleted).
-
-    Args:
-        user_id: User identifier
-        count: Number of resumes to subtract (default: 1)
-        tokens_used: Tokens to subtract from usage (default: 0)
-
-    Returns:
-        Dict with success status and updated limits
-    """
-    try:
-        success = await pg_client.decrement_user_resume_count(user_id, count, tokens_used)
-
-        if not success:
-            raise HTTPException(status_code=400, detail="Failed to decrement resume count")
-
-        # Get updated limits
-        limits = await pg_client.get_user_resume_limits(user_id)
-
-        return {
-            "success": True,
-            "message": f"Decremented resume count by {count} and tokens by {tokens_used}",
-            "data": limits
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"❌ Error decrementing user resume count for {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to decrement resume count: {str(e)}")
-
-
-@app.post("/user-limits/{user_id}/reset")
-async def reset_user_resume_count(
-    user_id: str,
-    new_count: int = 0,
-    new_tokens: int = 0
-):
-    """
-    Reset user's resume count and token usage to specific values.
-
-    Args:
-        user_id: User identifier
-        new_count: New resume count (default: 0)
-        new_tokens: New token count (default: 0)
-
-    Returns:
-        Dict with success status and updated limits
-    """
-    try:
-        success = await pg_client.reset_user_resume_count(user_id, new_count, new_tokens)
-
-        if not success:
-            raise HTTPException(status_code=400, detail="Failed to reset resume count")
-
-        # Get updated limits
-        limits = await pg_client.get_user_resume_limits(user_id)
-
-        return {
-            "success": True,
-            "message": f"Reset resume count to {new_count} and tokens to {new_tokens}",
-            "data": limits
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"❌ Error resetting user resume count for {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to reset resume count: {str(e)}")
-
-
-@app.post("/user-limits/{user_id}/increment")
-async def manual_increment_user_resume_count(
-    user_id: str,
-    count: int = 1,
-    tokens_used: int = 0
-):
-    """
-    Manually increment user's resume count (for admin purposes).
-
-    Args:
-        user_id: User identifier
-        count: Number of resumes to add (default: 1)
-        tokens_used: Tokens to add to usage (default: 0)
-
-    Returns:
-        Dict with success status and updated limits
-    """
-    try:
-        success = await pg_client.increment_user_resume_count(user_id, count, tokens_used)
-
-        if not success:
-            raise HTTPException(status_code=400, detail="Failed to increment resume count")
-
-        # Get updated limits
-        limits = await pg_client.get_user_resume_limits(user_id)
-
-        return {
-            "success": True,
-            "message": f"Incremented resume count by {count} and tokens by {tokens_used}",
-            "data": limits
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"❌ Error incrementing user resume count for {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to increment resume count: {str(e)}")
+## User limits routes moved to src/api/limits.py
 
 
 # Add this route to your app.py
@@ -1348,7 +1172,7 @@ async def manual_increment_user_resume_count(
 #             "query": query
 #         }n
     
-@app.post("/analyze-query-intent")
+# analyze-query-intent route is now proxied via src/api/search.py
 async def analyze_query_intent(query: str = Form(...), user_id: Optional[str] = Form(None)):
     """
     Enhanced query intent analyzer capable of handling very complex multi-dimensional queries.
@@ -1869,7 +1693,8 @@ async def bulk_upload_resumes(files: List[UploadFile] = File(...), user_id: Opti
     Returns:
         Dict containing results for each file with success/failure status
     """
-    logger.info(f"📁 Processing bulk upload: {len(files)} files")
+    # This route moved to uploads router; keep a shim to avoid breaking clients.
+    raise HTTPException(status_code=410, detail="/bulk-upload-resumes moved. Use uploads router.")
 
     # Validate file count
     if len(files) > 5:
@@ -2276,208 +2101,7 @@ async def bulk_upload_folder(
     return results_summary
 
 
-@app.post("/admin/dump-qdrant-to-postgres")
-async def dump_qdrant_to_postgres(
-    limit: int = Form(0),
-    batch_size: int = Form(256),
-    dry_run: bool = Form(False),
-    json_body: Optional[Dict[str, Any]] = Body(None)
-):
-    """
-    Mirror all Qdrant points into PostgreSQL table qdrant_resumes.
-
-    Accepts form fields or JSON body with keys: limit, batch_size, dry_run.
-    - limit: 0 for all points, or a positive number to cap processing
-    - batch_size: Qdrant scroll batch size (default 256)
-    - dry_run: if true, do not write to Postgres; only count
-    """
-    # Allow JSON override
-    if json_body:
-        try:
-            limit = int(json_body.get("limit", limit))
-        except Exception:
-            pass
-        try:
-            batch_size = int(json_body.get("batch_size", batch_size))
-        except Exception:
-            pass
-        dry_run = bool(json_body.get("dry_run", dry_run))
-
-    # Validate Qdrant connection
-    try:
-        collection_info = qdrant_client.get_collection_info()
-        if collection_info.get("error"):
-            raise RuntimeError(collection_info.get("error"))
-    except Exception as e:
-        raise HTTPException(status_code=503, detail=f"Qdrant not available: {e}")
-
-    # Validate Postgres availability (best-effort; we still can dry-run)
-    if not dry_run:
-        ok = await pg_client.connect()
-        if not ok:
-            raise HTTPException(status_code=503, detail="PostgreSQL not configured or unavailable")
-
-    client = qdrant_client.client  # underlying qdrant_client.QdrantClient
-    collection = qdrant_client.collection_name
-
-    scanned = 0
-    mirrored = 0
-    failed = 0
-    offset = None
-
-    logger.info(f"[DUMP] Starting dump from Qdrant '{collection}' to Postgres (limit={limit}, batch={batch_size}, dry_run={dry_run})")
-
-    # Iterate via scroll
-    while True:
-        this_limit = batch_size
-        if limit and limit > 0:
-            remaining = limit - scanned
-            if remaining <= 0:
-                break
-            this_limit = min(this_limit, remaining)
-
-        points, offset = client.scroll(
-            collection_name=collection,
-            with_payload=True,
-            with_vectors=False,
-            limit=this_limit,
-            offset=offset,
-        )
-
-        if not points:
-            break
-
-        for p in points:
-            scanned += 1
-            payload = p.payload or {}
-            resume_id = str(p.id)
-
-            if dry_run:
-                mirrored += 1
-                continue
-
-            try:
-                await pg_client.upsert_parsed_resume(
-                    resume_id=resume_id,
-                    payload=payload,
-                    embedding_model=azure_client.get_embedding_deployment(),
-                    vector_id=resume_id,
-                )
-                mirrored += 1
-            except Exception as e:
-                failed += 1
-                logger.info(f"[DUMP] Failed to mirror {resume_id}: {e}")
-
-        if offset is None:
-            break
-
-    logger.info(f"[DUMP] Completed: scanned={scanned}, mirrored={mirrored}, failed={failed}")
-
-    return {
-        "success": True,
-        "collection": collection,
-        "limit": limit,
-        "batch_size": batch_size,
-        "dry_run": dry_run,
-        "scanned": scanned,
-        "mirrored": mirrored,
-        "failed": failed,
-    }
-
-
-@app.post("/admin/assign-owner-all")
-async def assign_owner_all(
-    request: Request,
-    owner_user_id: Optional[str] = Form(None),
-    batch_size: int = Form(512),
-    json_body: Optional[Dict[str, Any]] = Body(None)
-):
-    """
-    Assign the same owner_user_id to all resumes in both Postgres and Qdrant.
-
-    Body (form or JSON):
-    - owner_user_id (required)
-    - batch_size (optional, for Qdrant scrolling)
-    """
-    # Merge JSON if provided (root-level or nested json_body)
-    payload: Optional[Dict[str, Any]] = None
-    try:
-        if request.headers.get("content-type", "").startswith("application/json"):
-            payload = await request.json()
-    except Exception:
-        payload = None
-    if isinstance(payload, dict):
-        # Accept both owner_user_id and user_id (alias)
-        owner_user_id = payload.get("owner_user_id", payload.get("user_id", owner_user_id))
-        if "batch_size" in payload:
-            try:
-                batch_size = int(payload.get("batch_size", batch_size))
-            except Exception:
-                pass
-    elif json_body and isinstance(json_body, dict):
-        owner_user_id = json_body.get("owner_user_id", json_body.get("user_id", owner_user_id))
-        try:
-            batch_size = int(json_body.get("batch_size", batch_size))
-        except Exception:
-            pass
-
-    if not owner_user_id or not str(owner_user_id).strip():
-        raise HTTPException(status_code=400, detail="owner_user_id is required (or provide user_id)")
-
-    owner_user_id = str(owner_user_id).strip()
-
-    # Update Postgres
-    pg_updated = 0
-    if await pg_client.connect():
-        assert pg_client._pool is not None  # type: ignore[attr-defined]
-        sql = f"UPDATE {pg_client._table} SET owner_user_id = $1 WHERE owner_user_id IS DISTINCT FROM $1"  # type: ignore[attr-defined]
-        try:
-            async with pg_client._pool.acquire() as conn:  # type: ignore[attr-defined]
-                status = await conn.execute(sql, owner_user_id)
-                # status like 'UPDATE 42'
-                try:
-                    pg_updated = int(status.split()[-1])
-                except Exception:
-                    pg_updated = 0
-        except Exception as e:
-            logger.error(f"[ADMIN] Failed to update Postgres owner_user_id: {e}")
-
-    # Update Qdrant payloads
-    q_updated = 0
-    try:
-        client = qdrant_client.client
-        collection = qdrant_client.collection_name
-        offset = None
-        while True:
-            points, offset = client.scroll(
-                collection_name=collection,
-                with_payload=False,
-                with_vectors=False,
-                limit=batch_size,
-                offset=offset,
-            )
-            if not points:
-                break
-            ids = [p.id for p in points]
-            if ids:
-                client.set_payload(
-                    collection_name=collection,
-                    payload={"owner_user_id": owner_user_id},
-                    points=ids,
-                )
-                q_updated += len(ids)
-            if offset is None:
-                break
-    except Exception as e:
-        logger.error(f"[ADMIN] Failed to update Qdrant owner_user_id: {e}")
-
-    return {
-        "success": True,
-        "owner_user_id": owner_user_id,
-        "postgres_updated_rows": pg_updated,
-        "qdrant_updated_points": q_updated,
-        "batch_size": batch_size,
-    }
+## Admin dump and owner assignment routes moved to src/api/admin.py
 
 
 
@@ -3040,7 +2664,7 @@ def _format_search_results(results: List[Dict], parsed_query) -> List[Dict]:
 
 
 
-@app.post("/search-resumes-intent-based")
+# search-resumes-intent-based route is now proxied via src/api/search.py
 async def search_resumes_intent_based(
     query: str = Form(...),
     limit: int = Form(10),
@@ -4338,24 +3962,7 @@ Return ONLY a JSON array of candidate indices (0-based) ranked by relevance, lim
         return candidates[:limit]
 
 
-@app.get("/resume/{user_id}")
-async def get_resume(user_id: str):
-    """Get resume data by user ID."""
-    try:
-        resume_data = await qdrant_client.get_resume_by_id(user_id)
-        if not resume_data:
-            raise HTTPException(status_code=404, detail="Resume not found")
-
-        return {
-            "user_id": user_id,
-            "resume_data": resume_data
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error retrieving resume {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+# Resumes routes moved to src/api/resumes.py
 
 
 if __name__ == "__main__":
@@ -4368,419 +3975,12 @@ if __name__ == "__main__":
         reload=settings.app.debug,
         log_level=settings.app.log_level.lower()
     )
-@app.get("/resumes")
-async def get_all_resumes(
-    page: int = 1,
-    page_size: int = 20,
-    limit: Optional[int] = Query(None, description="Alias for page_size for compatibility"),
-    search: Optional[str] = None,
-    name: Optional[str] = None,
-    email: Optional[str] = None,
-    location: Optional[str] = None,
-    job_title: Optional[str] = None,
-    role_category: Optional[str] = None,
-    company: Optional[str] = None,
-    user_id: Optional[str] = Query(None, description="Return resumes owned by this user_id only"),
-    admin_view: bool = Query(False, description="If true, ignore user_id and return all resumes"),
-    order_by: str = "-created_at",
-):
-    """Return paginated list of resumes from PostgreSQL mirror (qdrant_resumes).
-
-    Query params:
-    - page (1-based), page_size (max 100)
-    - search (applies to name, current_position, summary, location, email)
-    - name, email, location, job_title, role_category (ILIKE filters)
-    - user_id: REQUIRED. Only resumes with owner_user_id == user_id are returned
-    - order_by: one of created_at|embedding_generated_at|upload_timestamp|name|current_position with optional '-' prefix for DESC
-    """
-    # Normalize pagination
-    page = max(1, int(page))
-    if isinstance(limit, int) and limit > 0:
-        page_size = limit
-    page_size = max(1, min(100, int(page_size)))
-    offset = (page - 1) * page_size
-
-    # Ensure DB connectivity
-    ok = await pg_client.connect()
-    if not ok:
-        raise HTTPException(status_code=503, detail="PostgreSQL not configured or unavailable")
-
-    # Scope resumes: admin lists all, otherwise require user_id
-    owner_user_id: Optional[str]
-    if admin_view:
-        owner_user_id = None
-    else:
-        if not user_id:
-            raise HTTPException(status_code=400, detail="user_id is required unless admin_view=true")
-        owner_user_id = user_id
-
-    total, items = await pg_client.list_resumes(
-        offset=offset,
-        limit=page_size,
-        search=search,
-        name=name,
-        email=email,
-        location=location,
-        job_title=job_title,
-        role_category=role_category,
-        company=company,
-        owner_user_id=owner_user_id,
-        order_by=order_by,
-    )
-
-    return {
-        "success": True,
-        "page": page,
-        "page_size": page_size,
-        "total": total,
-        "items": items,
-        "resumes": items,
-    }
 
 
-@app.get("/admin/users")
-async def admin_list_users(
-    page: int = Query(1, ge=1),
-    limit: int = Query(50, ge=1, le=200),
-    _auth: None = Depends(require_admin),
-):
-    ok = await pg_client.connect()
-    if not ok:
-        raise HTTPException(status_code=503, detail="PostgreSQL not configured or unavailable")
 
-    assert pg_client._pool is not None  # type: ignore[attr-defined]
-    offset = (page - 1) * limit
-    total = 0
-    items: List[Dict[str, Any]] = []
-    try:
-        async with pg_client._pool.acquire() as conn:  # type: ignore[attr-defined]
-            total = await conn.fetchval("SELECT COUNT(*) FROM public.users")
-            rows = await conn.fetch(
-                """
-                SELECT u.id, u.email, u.name, u.image, u.created_at, u.updated_at,
-                       COALESCE(l.total_resumes_uploaded, 0) AS total_resumes_uploaded,
-                       COALESCE(l.resume_limit, 10) AS resume_limit,
-                       COALESCE(l.tokens_used, 0) AS tokens_used,
-                       COALESCE(l.token_limit, 1000000) AS token_limit,
-                       l.last_resume_uploaded_at
-                FROM public.users u
-                LEFT JOIN public.user_resume_limits l ON l.user_id = u.id
-                ORDER BY u.created_at DESC
-                LIMIT $1 OFFSET $2
-                """,
-                limit, offset,
-            )
-            for r in rows:
-                items.append({
-                    "id": r["id"],
-                    "email": r["email"],
-                    "name": r["name"],
-                    "image": r["image"],
-                    "created_at": (r["created_at"].isoformat() if r["created_at"] else None),
-                    "updated_at": (r["updated_at"].isoformat() if r["updated_at"] else None),
-                    "total_resumes_uploaded": int(r["total_resumes_uploaded"] or 0),
-                    "resume_limit": int(r["resume_limit"] or 0),
-                    "tokens_used": int(r["tokens_used"] or 0),
-                    "token_limit": int(r["token_limit"] or 0),
-                    "last_resume_uploaded_at": (r["last_resume_uploaded_at"].isoformat() if r["last_resume_uploaded_at"] else None),
-                })
-    except Exception as e:
-        logger.error(f"[ADMIN] Failed to list users: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch users")
+# Dashboard metrics and recent-activity moved to src/api/dashboard.py
 
-    return {"success": True, "page": page, "limit": limit, "total": total, "items": items, "users": items}
-
-
-@app.get("/admin/stats/resumes")
-async def admin_stats_resumes(_auth: None = Depends(require_admin)):
-    ok = await pg_client.connect()
-    if not ok:
-        raise HTTPException(status_code=503, detail="PostgreSQL not configured or unavailable")
-
-    assert pg_client._pool is not None  # type: ignore[attr-defined]
-    try:
-        async with pg_client._pool.acquire() as conn:  # type: ignore[attr-defined]
-            total = await conn.fetchval(f"SELECT COUNT(*) FROM {pg_client._table}")  # type: ignore[attr-defined]
-            week = await conn.fetchval(
-                f"SELECT COUNT(*) FROM {pg_client._table} WHERE created_at >= date_trunc('week', now())"  # type: ignore[attr-defined]
-            )
-            month = await conn.fetchval(
-                f"SELECT COUNT(*) FROM {pg_client._table} WHERE created_at >= date_trunc('month', now())"  # type: ignore[attr-defined]
-            )
-    except Exception as e:
-        logger.error(f"[ADMIN] Failed to compute resume stats: {e}")
-        raise HTTPException(status_code=500, detail="Failed to compute resume stats")
-
-    return {"success": True, "total": int(total or 0), "this_week": int(week or 0), "this_month": int(month or 0)}
-
-
-@app.get("/admin/stats/users")
-async def admin_stats_users(_auth: None = Depends(require_admin)):
-    ok = await pg_client.connect()
-    if not ok:
-        raise HTTPException(status_code=503, detail="PostgreSQL not configured or unavailable")
-
-    assert pg_client._pool is not None  # type: ignore[attr-defined]
-    try:
-        async with pg_client._pool.acquire() as conn:  # type: ignore[attr-defined]
-            total = await conn.fetchval("SELECT COUNT(*) FROM public.users")
-            new_30d = await conn.fetchval(
-                "SELECT COUNT(*) FROM public.users WHERE created_at >= now() - interval '30 days'"
-            )
-            active_30d = await conn.fetchval(
-                """
-                SELECT COUNT(DISTINCT u.id) FROM public.users u
-                LEFT JOIN public.user_resume_limits l ON l.user_id = u.id
-                LEFT JOIN public.user_search_prompts p ON p.user_id = u.id
-                WHERE (l.last_resume_uploaded_at >= now() - interval '30 days')
-                   OR (p.asked_at >= now() - interval '30 days')
-                """
-            )
-    except Exception as e:
-        logger.error(f"[ADMIN] Failed to compute user stats: {e}")
-        raise HTTPException(status_code=500, detail="Failed to compute user stats")
-
-    return {
-        "success": True,
-        "total": int(total or 0),
-        "active_30d": int(active_30d or 0),
-        "new_30d": int(new_30d or 0),
-    }
-
-
-@app.get("/admin/search-logs")
-async def admin_search_logs(
-    page: int = Query(1, ge=1),
-    limit: int = Query(20, ge=1, le=200),
-    _auth: None = Depends(require_admin),
-):
-    ok = await pg_client.connect()
-    if not ok:
-        raise HTTPException(status_code=503, detail="PostgreSQL not configured or unavailable")
-
-    assert pg_client._pool is not None  # type: ignore[attr-defined]
-    offset = (page - 1) * limit
-    total = 0
-    items: List[Dict[str, Any]] = []
-    try:
-        async with pg_client._pool.acquire() as conn:  # type: ignore[attr-defined]
-            try:
-                total = await conn.fetchval("SELECT COUNT(*) FROM public.user_search_prompts")
-            except Exception:
-                total = 0
-                return {"success": True, "page": page, "limit": limit, "total": total, "items": items, "logs": items}
-
-            rows = await conn.fetch(
-                """
-                SELECT id, user_id, prompt, route, liked, asked_at, response_meta
-                FROM public.user_search_prompts
-                ORDER BY asked_at DESC
-                LIMIT $1 OFFSET $2
-                """,
-                limit, offset,
-            )
-            for r in rows:
-                items.append({
-                    "id": str(r["id"]),
-                    "user_id": r["user_id"],
-                    "prompt": r["prompt"],
-                    "route": r["route"],
-                    "liked": r["liked"],
-                    "asked_at": (r["asked_at"].isoformat() if r["asked_at"] else None),
-                    "response_meta": r["response_meta"],
-                })
-    except Exception as e:
-        logger.error(f"[ADMIN] Failed to fetch search logs: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch search logs")
-
-    return {"success": True, "page": page, "limit": limit, "total": total, "items": items, "logs": items}
-
-
-@app.delete("/admin/resumes/{resume_id}")
-async def admin_delete_resume(resume_id: str, _auth: None = Depends(require_admin)):
-    ok = await pg_client.connect()
-    if not ok:
-        raise HTTPException(status_code=503, detail="PostgreSQL not configured or unavailable")
-
-    assert pg_client._pool is not None  # type: ignore[attr-defined]
-    owner_user_id: Optional[str] = None
-    deleted_pg = False
-    deleted_q = False
-    decremented = False
-    try:
-        async with pg_client._pool.acquire() as conn:  # type: ignore[attr-defined]
-            try:
-                row = await conn.fetchrow(f"SELECT owner_user_id FROM {pg_client._table} WHERE id = $1", resume_id)  # type: ignore[attr-defined]
-                if row and row.get("owner_user_id"):
-                    owner_user_id = str(row["owner_user_id"]) if row["owner_user_id"] else None
-            except Exception:
-                owner_user_id = None
-            try:
-                res = await conn.execute(f"DELETE FROM {pg_client._table} WHERE id = $1", resume_id)  # type: ignore[attr-defined]
-                deleted_pg = res.upper().startswith("DELETE")
-            except Exception as e:
-                logger.error(f"[ADMIN] Failed to delete resume {resume_id} from Postgres: {e}")
-                deleted_pg = False
-    except Exception as e:
-        logger.error(f"[ADMIN] Postgres operation error deleting resume {resume_id}: {e}")
-
-    try:
-        deleted_q = await qdrant_client.delete_resume(resume_id)
-    except Exception as e:
-        logger.error(f"[ADMIN] Failed to delete resume {resume_id} from Qdrant: {e}")
-
-    if owner_user_id:
-        try:
-            decremented = await pg_client.decrement_user_resume_count(owner_user_id, 1, 0)
-        except Exception:
-            decremented = False
-
-    return {
-        "success": True,
-        "resume_id": resume_id,
-        "deleted_postgres": deleted_pg,
-        "deleted_qdrant": deleted_q,
-        "owner_user_id": owner_user_id,
-        "decremented_user_count": decremented,
-    }
-
-
-@app.delete("/admin/users/{user_id}")
-async def admin_delete_user(user_id: str, _auth: None = Depends(require_admin)):
-    ok = await pg_client.connect()
-    if not ok:
-        raise HTTPException(status_code=503, detail="PostgreSQL not configured or unavailable")
-
-    assert pg_client._pool is not None  # type: ignore[attr-defined]
-    deleted_counts: Dict[str, int] = {
-        "postgres_resumes": 0,
-        "qdrant_points": 0,
-        "prompts": 0,
-        "limits_row": 0,
-        "user_row": 0,
-    }
-
-    try:
-        async with pg_client._pool.acquire() as conn:  # type: ignore[attr-defined]
-            res = await conn.execute(f"DELETE FROM {pg_client._table} WHERE owner_user_id = $1", user_id)  # type: ignore[attr-defined]
-            try:
-                deleted_counts["postgres_resumes"] = int(res.split()[-1]) if res.upper().startswith("DELETE") else 0
-            except Exception:
-                deleted_counts["postgres_resumes"] = 0
-            try:
-                r = await conn.execute("DELETE FROM public.user_search_prompts WHERE user_id = $1", user_id)
-                deleted_counts["prompts"] = int(r.split()[-1]) if r.upper().startswith("DELETE") else 0
-            except Exception:
-                pass
-            try:
-                r = await conn.execute("DELETE FROM public.user_resume_limits WHERE user_id = $1", user_id)
-                deleted_counts["limits_row"] = int(r.split()[-1]) if r.upper().startswith("DELETE") else 0
-            except Exception:
-                pass
-            try:
-                r = await conn.execute("DELETE FROM public.users WHERE id = $1", user_id)
-                deleted_counts["user_row"] = int(r.split()[-1]) if r.upper().startswith("DELETE") else 0
-            except Exception:
-                pass
-    except Exception as e:
-        logger.error(f"[ADMIN] Failed Postgres deletes for user {user_id}: {e}")
-
-    try:
-        client = qdrant_client.client
-        collection = qdrant_client.collection_name
-        if client is not None:
-            from qdrant_client.models import Filter, FieldCondition, MatchValue
-            f = Filter(must=[FieldCondition(key='owner_user_id', match=MatchValue(value=user_id))])
-            client.delete(collection_name=collection, filter=f)
-            deleted_counts["qdrant_points"] = 0
-    except Exception as e:
-        logger.error(f"[ADMIN] Failed Qdrant deletes for user {user_id}: {e}")
-
-    return {"success": True, "user_id": user_id, "deleted": deleted_counts}
-
-
-@app.get("/admin/users/{user_id}/limits")
-async def admin_get_user_limits(user_id: str, _auth: None = Depends(require_admin)):
-    ok = await pg_client.connect()
-    if not ok:
-        raise HTTPException(status_code=503, detail="PostgreSQL not configured or unavailable")
-    data = await pg_client.get_user_resume_limits(user_id)
-    if not data:
-        await pg_client.init_user_resume_limits(user_id)
-        data = await pg_client.get_user_resume_limits(user_id)
-    return {"success": True, "user_id": user_id, "limits": data}
-
-
-@app.patch("/admin/users/{user_id}/limits")
-async def admin_update_user_limits(
-    user_id: str,
-    resume_limit: Optional[int] = Body(None),
-    token_limit: Optional[int] = Body(None),
-    reset_counts: bool = Body(False),
-    new_count: Optional[int] = Body(None),
-    new_tokens: Optional[int] = Body(None),
-    _auth: None = Depends(require_admin),
-):
-    ok = await pg_client.connect()
-    if not ok:
-        raise HTTPException(status_code=503, detail="PostgreSQL not configured or unavailable")
-
-    assert pg_client._pool is not None  # type: ignore[attr-defined]
-    await pg_client.init_user_resume_limits(user_id)
-
-    updated = False
-    try:
-        async with pg_client._pool.acquire() as conn:  # type: ignore[attr-defined]
-            if resume_limit is not None or token_limit is not None:
-                sets = []
-                args: List[Any] = []
-                if resume_limit is not None:
-                    sets.append(f"resume_limit = ${len(args)+1}")
-                    args.append(int(resume_limit))
-                if token_limit is not None:
-                    sets.append(f"token_limit = ${len(args)+1}")
-                    args.append(int(token_limit))
-                args.append(user_id)
-                sql = f"UPDATE public.user_resume_limits SET {', '.join(sets)}, updated_at = NOW() WHERE user_id = ${len(args)}"
-                r = await conn.execute(sql, *args)
-                updated = r.upper().startswith("UPDATE")
-    except Exception as e:
-        logger.error(f"[ADMIN] Failed updating limits for {user_id}: {e}")
-
-    counts_changed = False
-    if reset_counts:
-        counts_changed = await pg_client.reset_user_resume_count(user_id, new_count or 0, new_tokens or 0)
-    elif new_count is not None or new_tokens is not None:
-        cur = await pg_client.get_user_resume_limits(user_id)
-        if cur:
-            nc = int(new_count if new_count is not None else cur.get("total_resumes_uploaded", 0))
-            nt = int(new_tokens if new_tokens is not None else cur.get("tokens_used", 0))
-            counts_changed = await pg_client.reset_user_resume_count(user_id, nc, nt)
-
-    data = await pg_client.get_user_resume_limits(user_id)
-    return {"success": True, "user_id": user_id, "updated_limits": updated, "counts_changed": bool(counts_changed), "limits": data}
-
-
-@app.get("/dashboard/metrics")
-async def dashboard_metrics(user_id: str = Query(..., description="Owner user_id to scope metrics")):
-    ok = await pg_client.connect()
-    if not ok:
-        raise HTTPException(status_code=503, detail="PostgreSQL not configured or unavailable")
-    data = await pg_client.get_dashboard_metrics(user_id)
-    return {"success": True, "user_id": user_id, "metrics": data}
-
-@app.get("/dashboard/recent-activity")
-async def dashboard_recent_activity(
-    user_id: str = Query(..., description="Owner user_id to scope activity"),
-    limit: int = Query(10, ge=1, le=50)
-):
-    ok = await pg_client.connect()
-    if not ok:
-        raise HTTPException(status_code=503, detail="PostgreSQL not configured or unavailable")
-    items = await pg_client.get_recent_activity(user_id, limit)
-    return {"success": True, "user_id": user_id, "items": items}
-
-@app.get("/dashboard/top-candidates")
+## Dashboard top-candidates moved to router; keep implementation here
 async def dashboard_top_candidates(
     user_id: str = Query(..., description="Owner user_id to scope candidates"),
     query: Optional[str] = Query(None, description="Optional query; falls back to recent prompt or top role"),
@@ -4869,152 +4069,7 @@ async def dashboard_top_candidates(
 
     return {"success": True, "user_id": user_id, "items": items}
 
-@app.get("/resumes/{resume_id}")
-async def get_resume_detail(resume_id: str, fallback_to_qdrant: bool = True):
-    """Get a single resume by id from the Postgres mirror; optionally fall back to Qdrant payload."""
-    ok = await pg_client.connect()
-    if ok:
-        row = await pg_client.get_resume(resume_id)
-        if row:
-            return {"success": True, "source": "postgres", "item": row}
-
-    if fallback_to_qdrant:
-        try:
-            payload = await qdrant_client.get_resume_by_id(resume_id)
-            if payload:
-                return {"success": True, "source": "qdrant", "item": payload}
-        except Exception:
-            pass
-
-    raise HTTPException(status_code=404, detail="Resume not found")
+# Resume detail moved to src/api/resumes.py
 
 
-@app.post("/user-search-prompts")
-async def create_user_search_prompt(
-    request: Request,
-    user_id: Optional[str] = Form(None),
-    prompt: Optional[str] = Form(None),
-    route: Optional[str] = Form(None),
-    liked: Optional[bool] = Form(None),
-    asked_at: Optional[str] = Form(None),
-    response_meta: Optional[str] = Form(None),
-    json_body: Optional[Dict[str, Any]] = Body(None),
-):
-    """
-    Store a user search prompt for analytics/feedback.
-
-    Accepts form or JSON. JSON example:
-    {"user_id":"u123","prompt":"senior backend","route":"search-resumes-intent-based","liked":true,"asked_at":"2025-09-25T10:01:47+00:00","response_meta":{"total_results":10}}
-    """
-    # Merge JSON body if provided (root-level) or nested json_body
-    payload: Optional[Dict[str, Any]] = None
-    try:
-        if request.headers.get("content-type", "").startswith("application/json"):
-            payload = await request.json()
-    except Exception:
-        payload = None
-    if payload and isinstance(payload, dict):
-        user_id = payload.get("user_id", user_id)
-        prompt = payload.get("prompt", prompt)
-        route = payload.get("route", route)
-        liked = payload.get("liked", liked)
-        asked_at = payload.get("asked_at", asked_at)
-        response_meta = payload.get("response_meta", response_meta)
-    elif json_body and isinstance(json_body, dict):
-        user_id = json_body.get("user_id", user_id)
-        prompt = json_body.get("prompt", prompt)
-        route = json_body.get("route", route)
-        liked = json_body.get("liked", liked)
-        asked_at = json_body.get("asked_at", asked_at)
-        response_meta = json_body.get("response_meta", response_meta)
-
-    if not prompt or not str(prompt).strip():
-        raise HTTPException(status_code=400, detail="prompt is required")
-
-    # Parse asked_at to datetime
-    from datetime import datetime
-    asked_dt = None
-    if asked_at:
-        try:
-            asked_dt = datetime.fromisoformat(str(asked_at))
-        except Exception:
-            asked_dt = None
-
-    # response_meta can be JSON string or dict
-    rm: Optional[Dict[str, Any]] = None
-    if isinstance(response_meta, str):
-        try:
-            import json as _json
-            rm = _json.loads(response_meta)
-        except Exception:
-            rm = None
-    elif isinstance(response_meta, dict):
-        rm = response_meta
-
-    ok = await pg_client.connect()
-    if not ok:
-        raise HTTPException(status_code=503, detail="PostgreSQL not configured or unavailable")
-
-    new_id = await pg_client.insert_user_search_prompt(
-        user_id=user_id or "anonymous",
-        prompt=str(prompt),
-        route=str((route or "search-resumes-intent-based")),
-        liked=liked if isinstance(liked, bool) else None,
-        asked_at=asked_dt,
-        response_meta=rm,
-    )
-
-    if not new_id:
-        raise HTTPException(status_code=500, detail="Failed to store prompt")
-
-    return {"success": True, "id": new_id}
-
-
-@app.patch("/user-search-prompts/{prompt_id}/feedback")
-async def update_user_search_prompt_feedback(
-    prompt_id: str,
-    request: Request,
-    liked: Optional[bool] = Form(None),
-    json_body: Optional[Dict[str, Any]] = Body(None),
-):
-    """Update user feedback (liked) for a stored prompt.
-    Accepts form or JSON body {"liked": true/false}.
-    """
-    # Normalize 'liked' from JSON when Content-Type is application/json
-    payload: Optional[Dict[str, Any]] = None
-    try:
-        if request.headers.get("content-type", "").startswith("application/json"):
-            payload = await request.json()
-    except Exception:
-        payload = None
-
-    if isinstance(payload, dict) and "liked" in payload:
-        liked = payload.get("liked")
-    elif isinstance(json_body, dict) and "liked" in json_body:
-        liked = json_body.get("liked")
-
-    # Coerce liked from common string forms
-    def _normalize_liked(val: Any) -> Optional[bool]:
-        if isinstance(val, bool):
-            return val
-        if isinstance(val, (int,)) and val in (0, 1):
-            return bool(val)
-        if isinstance(val, str):
-            v = val.strip().lower()
-            if v in ("true", "1", "yes", "y"): return True
-            if v in ("false", "0", "no", "n"): return False
-        return None
-
-    liked_norm = _normalize_liked(liked)
-    if liked_norm is None:
-        raise HTTPException(status_code=400, detail="liked is required")
-
-    ok = await pg_client.connect()
-    if not ok:
-        raise HTTPException(status_code=503, detail="PostgreSQL not configured or unavailable")
-
-    done = await pg_client.update_user_search_prompt_feedback(prompt_id, liked_norm)
-    if not done:
-        raise HTTPException(status_code=404, detail="Prompt not found or update failed")
-
-    return {"success": True, "id": prompt_id, "liked": liked_norm}
+# User search prompts moved to src/api/prompts.py
