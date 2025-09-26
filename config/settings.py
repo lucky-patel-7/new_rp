@@ -50,9 +50,9 @@ class PostgreSQLSettings(BaseSettings):
     database: str = Field(default="resume_db")
     # Accept multiple env var names for user/pass and DSN
     if AliasChoices:  # pydantic v2
-        username: Optional[str] = Field(default=None, validation_alias=AliasChoices("USERNAME", "USER"))
-        password: Optional[str] = Field(default=None, validation_alias=AliasChoices("PASSWORD", "PASS"))
-        dsn: Optional[str] = Field(default=None, validation_alias=AliasChoices("DSN", "URL", "URI"))
+        username: Optional[str] = Field(default=None, validation_alias=AliasChoices("POSTGRES_USERNAME", "POSTGRES_USER"))
+        password: Optional[str] = Field(default=None, validation_alias=AliasChoices("POSTGRES_PASSWORD", "POSTGRES_PASS"))
+        dsn: Optional[str] = Field(default=None, validation_alias=AliasChoices("POSTGRES_DSN", "POSTGRES_URL", "POSTGRES_URI"))
     else:  # fallback
         username: Optional[str] = Field(default=None)
         password: Optional[str] = Field(default=None)

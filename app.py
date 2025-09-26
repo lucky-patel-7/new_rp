@@ -752,7 +752,7 @@ async def upload_resume(file: UploadFile = File(...), user_id: Optional[str] = F
     Supports PDF, DOC, DOCX, and TXT files.
     Returns structured resume data and stores embeddings in Qdrant.
     """
-    logger.info(f"📄 Processing resume upload: {file.filename}")
+    logger.info(f"Processing resume upload: {file.filename}")
 
     if not file.filename:
         raise HTTPException(status_code=400, detail="No file provided")
@@ -1910,7 +1910,7 @@ async def bulk_upload_resumes(files: List[UploadFile] = File(...), user_id: Opti
         }
 
         try:
-            logger.info(f"📄 Processing file {i+1}/{len(files)}: {file.filename}")
+            logger.info(f"Processing file {i+1}/{len(files)}: {file.filename}")
 
             if not file.filename:
                 raise ValueError("No filename provided")
@@ -3086,6 +3086,43 @@ async def search_resumes_intent_based(
             )
 
         logger.info(f"📋 Final requirements extracted: {final_requirements}")
+
+        search_strategy = final_requirements.get("search_strategy", {})
+        if (
+            not final_requirements.get("qdrant_filters")
+            and not final_requirements.get("search_keywords")
+            and final_requirements.get("filter_count", 0) == 0
+            and search_strategy.get("primary_intent") == "unknown"
+        ):
+            logger.info(
+                "Intent analysis returned unknown intent with no actionable filters; skipping semantic search."
+            )
+            return {
+                "success": True,
+                "query": query,
+                "requested_by": user_id,
+                "total_results": 0,
+                "intent_analysis": {
+                    "final_requirements": final_requirements,
+                    "filters_applied": {},
+                    "search_strategy": search_strategy,
+                },
+                "results": [],
+                "processing_summary": {
+                    "query_analyzed": True,
+                    "filters_used": False,
+                    "post_retrieval_filtering_applied": False,
+                    "semantic_fallback": True,
+                    "strict_matching_enabled": strict_matching,
+                    "matching_mode": "strict" if strict_matching else "partial",
+                    "candidates_before_filtering": 0,
+                    "candidates_after_filtering": 0,
+                    "filter_types_applied": [],
+                    "search_approach": "semantic_only",
+                    "margin": {"enabled": False, "ratio": None, "top_semantic_score": 0.0},
+                    "notes": "No actionable criteria were extracted from the query; nothing to search.",
+                },
+            }
 
         # Step 2: Generate embedding for the query
         try:

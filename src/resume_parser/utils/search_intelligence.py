@@ -687,24 +687,24 @@ class IntelligentSearchProcessor:
                 if skill_lower in candidate_skills:
                     exact_skill_matches += 1
                     matched_skills.append(f"EXACT:{skill}")
-                    logger.info(f"🔧 ✅ EXACT match: '{skill}' found in candidate's skills")
+                    logger.info(f"EXACT match: '{skill}' found in candidate's skills")
                 # Partial match in skills array (e.g., "python" matches "Python 3.9")
                 elif any(skill_lower in candidate_skill for candidate_skill in candidate_skills):
                     skill_matches += 0.8  # Increased from 0.7 for better partial matching
                     matched_skills.append(f"PARTIAL:{skill}")
                     matching_skill = next(cs for cs in candidate_skills if skill_lower in cs)
-                    logger.info(f"🔧 ✅ PARTIAL match: '{skill}' found in '{matching_skill}'")
+                    logger.info(f"PARTIAL match: '{skill}' found in '{matching_skill}'")
                 # Reverse partial match (e.g., "machine learning" partially matches "ml")
                 elif any(candidate_skill in skill_lower for candidate_skill in candidate_skills if len(candidate_skill) > 2):
                     skill_matches += 0.6
                     matched_skills.append(f"REVERSE:{skill}")
                     matching_skill = next(cs for cs in candidate_skills if cs in skill_lower)
-                    logger.info(f"🔧 ✅ REVERSE match: '{matching_skill}' matches part of '{skill}'")
+                    logger.info(f"REVERSE match: '{matching_skill}' matches part of '{skill}'")
                 # Check if skill appears in comprehensive text
                 elif skill_lower in comprehensive_text:
                     skill_matches += 0.4  # Reduced weight for text-only matches
                     matched_skills.append(f"TEXT:{skill}")
-                    logger.info(f"🔧 ✅ TEXT match: '{skill}' found in resume content")
+                    logger.info(f"TEXT match: '{skill}' found in resume content")
                 else:
                     logger.info(f"🔧 ❌ NO match: '{skill}' not found")
 
@@ -1141,7 +1141,7 @@ Natural Language Examples:
             if text_ai_mentions >= 1:
                 substantial_ai_projects = True
                 ai_project_details.append(f"Text content - {text_ai_mentions} AI indicators found")
-                logger.info(f"🤖 DEBUG: ✅ Found AI indicators in comprehensive text: {text_ai_mentions}")
+                logger.info(f"DEBUG: Found AI indicators in comprehensive text: {text_ai_mentions}")
 
         logger.info(f"🤖 Substantial AI work experience: {substantial_ai_experience} - {ai_work_details}")
         logger.info(f"🤖 Substantial AI projects: {substantial_ai_projects} - {ai_project_details}")

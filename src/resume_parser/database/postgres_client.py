@@ -32,6 +32,7 @@ class PostgresClient:
             if self._pool:
                 return True
             conn_str = settings.postgres.connection_string
+            print(f"Postgres connection string: {conn_str}")
             if not conn_str:
                 logger.info("PostgreSQL not configured (no credentials); DB layer disabled")
                 return False

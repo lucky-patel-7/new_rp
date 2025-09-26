@@ -48,7 +48,7 @@ class ResumeParser:
             self.azure_client = azure_client.get_sync_client()
             self.chat_deployment = azure_client.get_chat_deployment()
             self.embedding_deployment = azure_client.get_embedding_deployment()
-            logger.info("✅ Azure OpenAI client initialized successfully")
+            logger.info("Azure OpenAI client initialized successfully")
         except Exception as e:
             logger.warning(f"[WARNING] Failed to initialize Azure OpenAI: {e}")
             logger.info("[INFO] Will use fallback parsing only")
@@ -197,7 +197,7 @@ class ResumeParser:
                 logger.debug(f"Projects data: {structured_data.get('projects', [])}")
                 raise
 
-            logger.info(f"✅ Resume parsing completed for user: {user_id}")
+            logger.info(f"Resume parsing completed for user: {user_id}")
             return resume_data
 
         except Exception as e:
@@ -225,7 +225,7 @@ class ResumeParser:
 
             # Parse JSON response
             structured_data = json.loads(cleaned_response)
-            logger.debug("✅ AI structuring completed successfully")
+            logger.debug("AI structuring completed successfully")
             return structured_data
 
         except json.JSONDecodeError as e:
@@ -444,7 +444,7 @@ Extract all available information. Use "Unknown" or empty arrays for missing dat
             )
 
             embedding_vector = response.data[0].embedding
-            logger.debug(f"✅ Created embedding vector of size {len(embedding_vector)}")
+            logger.debug(f"Created embedding vector of size {len(embedding_vector)}")
             return embedding_vector
 
         except Exception as e:
