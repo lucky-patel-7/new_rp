@@ -2,7 +2,7 @@
 File handling utilities for resume processing.
 """
 
-import magic
+import mimetypes
 import fitz  # PyMuPDF
 import sys
 from pathlib import Path
@@ -36,10 +36,25 @@ class FileHandler:
         if file_size > settings.max_file_size_bytes:
             return False, f"File size exceeds {settings.app.max_file_size_mb}MB limit"
 
-        # Check file type
+        # Check file type using mimetypes and file extension
         try:
-            file_type = magic.from_file(str(file_path), mime=True)
-            logger.debug(f"Detected file type: {file_type}")
+            # Get MIME type from file extension
+            mime_type, _ = mimetypes.guess_type(str(file_path))
+            if not mime_type:
+                # Fallback: check file extension directly
+                file_extension = file_path.suffix.lower().lstrip('.')
+                extension_to_mime = {
+                    'pdf': 'application/pdf',
+                    'doc': 'application/msword',
+                    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    'txt': 'text/plain'
+                }
+                mime_type = extension_to_mime.get(file_extension)
+
+            if not mime_type:
+                return False, "Could not determine file type"
+
+            logger.debug(f"Detected file type: {mime_type}")
 
             # Map MIME types to extensions
             allowed_types = {
@@ -49,10 +64,10 @@ class FileHandler:
                 'text/plain': 'txt'
             }
 
-            if file_type not in allowed_types:
-                return False, f"File type {file_type} not supported"
+            if mime_type not in allowed_types:
+                return False, f"File type {mime_type} not supported"
 
-            detected_extension = allowed_types[file_type]
+            detected_extension = allowed_types[mime_type]
             if detected_extension not in settings.app.allowed_file_types:
                 return False, f"File type {detected_extension} not allowed"
 
@@ -74,19 +89,35 @@ class FileHandler:
             Tuple of (extracted_text, file_type)
         """
         try:
-            file_type = magic.from_file(str(file_path), mime=True)
-            logger.info(f"Extracting text from {file_type} file: {file_path.name}")
+            # Determine file type from extension
+            file_extension = file_path.suffix.lower().lstrip('.')
+            mime_type, _ = mimetypes.guess_type(str(file_path))
 
-            if file_type == 'application/pdf':
+            # Map extension to MIME type if mimetypes fails
+            if not mime_type:
+                extension_to_mime = {
+                    'pdf': 'application/pdf',
+                    'doc': 'application/msword',
+                    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    'txt': 'text/plain'
+                }
+                mime_type = extension_to_mime.get(file_extension)
+
+            if not mime_type:
+                raise ValueError(f"Could not determine file type for extension: {file_extension}")
+
+            logger.info(f"Extracting text from {mime_type} file: {file_path.name}")
+
+            if mime_type == 'application/pdf':
                 return FileHandler._extract_from_pdf(file_path), 'pdf'
-            elif file_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+            elif mime_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
                 return FileHandler._extract_from_docx(file_path), 'docx'
-            elif file_type == 'application/msword':
+            elif mime_type == 'application/msword':
                 return FileHandler._extract_from_doc(file_path), 'doc'
-            elif file_type == 'text/plain':
+            elif mime_type == 'text/plain':
                 return FileHandler._extract_from_txt(file_path), 'txt'
             else:
-                raise ValueError(f"Unsupported file type: {file_type}")
+                raise ValueError(f"Unsupported file type: {mime_type}")
 
         except Exception as e:
             logger.error(f"Error extracting text from file: {e}")

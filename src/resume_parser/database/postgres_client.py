@@ -8,6 +8,7 @@ import logging
 from typing import Any, Dict, Optional, List, Tuple
 import uuid
 
+
 import asyncpg
 from datetime import datetime, date
 
@@ -24,6 +25,9 @@ class PostgresClient:
         self._schema_ensured = False
         self._prompts_table = "public.user_search_prompts"
         self._prompts_schema_ensured = False
+        self._interview_schema_ensured = False
+
+    
 
     async def connect(self) -> bool:
         if self._pool:
@@ -46,6 +50,8 @@ class PostgresClient:
                         self._schema_ensured = True
                         await self._ensure_prompts_schema(conn)
                         self._prompts_schema_ensured = True
+                        await self._ensure_interview_schema(conn) # Ensure new tables
+                        self._interview_schema_ensured = True
                 except Exception as ee:
                     logger.info(f"[PG] Schema ensure skipped: {ee}")
                 return True
@@ -121,7 +127,7 @@ class PostgresClient:
             skills, work_history, projects, education,
             role_classification, recommended_roles,
             original_filename, upload_timestamp,
-            embedding_model, embedding_generated_at, created_at
+            embedding_model, embedding_generated_at, created_at, is_shortlisted
         ) VALUES (
             $1, $2, $3,
             $4, $5, $6, $7, $8,
@@ -130,7 +136,7 @@ class PostgresClient:
             $15::jsonb, $16::jsonb, $17::jsonb, $18::jsonb,
             $19::jsonb, $20::jsonb,
             $21, $22,
-            $23, NOW(), NOW()
+            $23, NOW(), NOW(), FALSE
         )
         ON CONFLICT (id) DO UPDATE SET
             vector_id = EXCLUDED.vector_id,
@@ -229,7 +235,8 @@ class PostgresClient:
             upload_timestamp timestamptz,
             embedding_model varchar(100) DEFAULT 'text-embedding-3-large',
             embedding_generated_at timestamptz,
-            created_at timestamptz DEFAULT now()
+            created_at timestamptz DEFAULT now(),
+            is_shortlisted BOOLEAN NOT NULL DEFAULT FALSE
         );
         """
         await conn.execute(create_sql)
@@ -261,6 +268,7 @@ class PostgresClient:
             f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS embedding_model varchar(100) DEFAULT 'text-embedding-3-large'",
             f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS embedding_generated_at timestamptz",
             f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now()",
+            f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS is_shortlisted BOOLEAN NOT NULL DEFAULT FALSE",
         ]
         for stmt in alter_statements:
             try:
@@ -286,6 +294,10 @@ class PostgresClient:
             await conn.execute(f"CREATE INDEX IF NOT EXISTS idx_qdrant_resumes_owner ON {table}(owner_user_id)")
         except Exception:
             pass
+        try:
+            await conn.execute(f"CREATE INDEX IF NOT EXISTS idx_qdrant_resumes_is_shortlisted ON {table}(is_shortlisted)")
+        except Exception:
+            pass
         # Full-text index on common text fields (best-effort)
         try:
             await conn.execute(
@@ -306,6 +318,57 @@ class PostgresClient:
         except Exception:
             # constraint may already exist or users table not present; ignore
             pass
+
+    async def _ensure_interview_schema(self, conn: asyncpg.Connection) -> None:
+        """Ensure the interview_questions, call_records, and interview_sessions tables exist."""
+        # Create interview_questions table
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS public.interview_questions (
+                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                user_id VARCHAR(255) NOT NULL,
+                question_text TEXT NOT NULL,
+                category VARCHAR(100),
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE
+            );
+        """)
+        await conn.execute("CREATE INDEX IF NOT EXISTS idx_interview_questions_user_id ON public.interview_questions(user_id);")
+
+        # Create call_records table
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS public.call_records (
+                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                resume_id UUID NOT NULL,
+                user_id VARCHAR(255) NOT NULL,
+                call_status VARCHAR(50) NOT NULL,
+                initiated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                notes TEXT,
+                CONSTRAINT fk_resume FOREIGN KEY (resume_id) REFERENCES public.parsed_resumes(id) ON DELETE CASCADE,
+                CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE
+            );
+        """)
+        await conn.execute("CREATE INDEX IF NOT EXISTS idx_call_records_resume_id ON public.call_records(resume_id);")
+        await conn.execute("CREATE INDEX IF NOT EXISTS idx_call_records_user_id ON public.call_records(user_id);")
+
+        # Create interview_sessions table
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS public.interview_sessions (
+                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                user_id VARCHAR(255) NOT NULL,
+                session_type VARCHAR(50) NOT NULL,
+                question_ids JSONB NOT NULL,
+                candidate_ids JSONB,
+                current_question_index INTEGER DEFAULT 0,
+                status VARCHAR(50) DEFAULT 'active',
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                CONSTRAINT fk_user_session FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE
+            );
+        """)
+        await conn.execute("CREATE INDEX IF NOT EXISTS idx_interview_sessions_user_id ON public.interview_sessions(user_id);")
+
+        logger.info("[PG] Ensured interview schema (questions, calls, sessions).")
 
     async def list_resumes(
         self,
@@ -401,7 +464,7 @@ class PostgresClient:
                    current_position, summary, total_experience, role_category, seniority,
                    best_role, skills, work_history, projects, education,
                    role_classification, recommended_roles, original_filename,
-                   upload_timestamp, embedding_model, embedding_generated_at, created_at
+                   upload_timestamp, embedding_model, embedding_generated_at, created_at, is_shortlisted
             FROM {self._table}
             {where_sql}
             {order_sql}
@@ -416,6 +479,202 @@ class PostgresClient:
         items: List[Dict[str, Any]] = [dict(r) for r in rows]
         return int(total or 0), items
 
+    # --- Shortlisting Functions ---
+
+    async def get_shortlisted_resumes(self, user_id: str) -> List[Dict[str, Any]]:
+        """Retrieve all shortlisted resumes for a given user."""
+        if not await self.connect():
+            return []
+        assert self._pool is not None
+        sql = f"SELECT * FROM {self._table} WHERE owner_user_id = $1 AND is_shortlisted = TRUE ORDER BY upload_timestamp DESC"
+        async with self._pool.acquire() as conn:
+            rows = await conn.fetch(sql, user_id)
+        
+        # Convert UUID objects to strings for JSON serialization
+        result = []
+        for row in rows:
+            row_dict = dict(row)
+            for key, value in row_dict.items():
+                if isinstance(value, uuid.UUID):
+                    row_dict[key] = str(value)
+                elif isinstance(value, datetime):
+                    row_dict[key] = value.isoformat()
+            result.append(row_dict)
+        return result
+
+    async def update_shortlist_status(self, resume_id: uuid.UUID, is_shortlisted: bool) -> bool:
+        """Update the shortlist status for a specific resume."""
+        if not await self.connect():
+            return False
+        assert self._pool is not None
+        
+        # Update PostgreSQL
+        sql = f"UPDATE {self._table} SET is_shortlisted = $2 WHERE id = $1"
+        async with self._pool.acquire() as conn:
+            result = await conn.execute(sql, resume_id, is_shortlisted)
+            success = result == "UPDATE 1"
+            
+            if success:
+                # Also update Qdrant payload to keep it in sync
+                try:
+                    from .qdrant_client import qdrant_client
+                    if qdrant_client._connected:
+                        # Get current payload from Qdrant
+                        current_payload = await qdrant_client.get_resume_by_id(str(resume_id))
+                        if current_payload:
+                            # Update the shortlist status
+                            current_payload['is_shortlisted'] = is_shortlisted
+                            # Upsert back to Qdrant (this will update the payload)
+                            # Note: We need the vector, but since we're only updating payload, 
+                            # we can use a dummy vector or get the existing one
+                            # For now, we'll skip Qdrant update as it requires the vector
+                            # The shortlist status will be merged from PostgreSQL in search results
+                            pass
+                except Exception as e:
+                    logger.warning(f"Could not update Qdrant payload for shortlist status: {e}")
+            
+            return success
+
+    async def get_shortlist_status(self, resume_id: uuid.UUID) -> bool:
+        """Check if a specific resume is shortlisted."""
+        if not await self.connect():
+            return False
+        assert self._pool is not None
+        sql = f"SELECT is_shortlisted FROM {self._table} WHERE id = $1"
+        async with self._pool.acquire() as conn:
+            status = await conn.fetchval(sql, resume_id)
+        return status is True
+
+    # --- Interview Question CRUD Functions ---
+
+    async def create_interview_question(self, question_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Create a new interview question."""
+        if not await self.connect():
+            return None
+        assert self._pool is not None
+        sql = """
+            INSERT INTO public.interview_questions (user_id, question_text, category)
+            VALUES ($1, $2, $3)
+            RETURNING *;
+        """
+        async with self._pool.acquire() as conn:
+            row = await conn.fetchrow(
+                sql,
+                question_data['user_id'],
+                question_data['question_text'],
+                question_data.get('category')
+            )
+        if row:
+            row_dict = dict(row)
+            for key, value in row_dict.items():
+                if isinstance(value, uuid.UUID):
+                    row_dict[key] = str(value)
+                elif isinstance(value, datetime):
+                    row_dict[key] = value.isoformat()
+            return row_dict
+        return None
+
+    async def get_interview_questions(self, user_id: str) -> List[Dict[str, Any]]:
+        """Retrieve all interview questions for a user."""
+        if not await self.connect():
+            return []
+        assert self._pool is not None
+        sql = "SELECT * FROM public.interview_questions WHERE user_id = $1 ORDER BY created_at DESC"
+        async with self._pool.acquire() as conn:
+            rows = await conn.fetch(sql, user_id)
+        
+        # Convert UUID objects to strings for JSON serialization
+        result = []
+        for row in rows:
+            row_dict = dict(row)
+            for key, value in row_dict.items():
+                if isinstance(value, uuid.UUID):
+                    row_dict[key] = str(value)
+                elif isinstance(value, datetime):
+                    row_dict[key] = value.isoformat()
+            result.append(row_dict)
+        return result
+
+    async def update_interview_question(self, question_id: uuid.UUID, question_update: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Update an existing interview question."""
+        if not await self.connect() or not question_update:
+            return None
+        assert self._pool is not None
+        
+        # Dynamically build the SET clause
+        set_parts = []
+        args = []
+        for i, (key, value) in enumerate(question_update.items()):
+            if key in ('question_text', 'category'): # Whitelist of updatable columns
+                set_parts.append(f"{key} = ${i + 1}")
+                args.append(value)
+        
+        if not set_parts:
+            return None # Nothing to update
+
+        set_clause = ", ".join(set_parts)
+        args.append(question_id)
+        
+        sql = f"""
+            UPDATE public.interview_questions
+            SET {set_clause}, updated_at = NOW()
+            WHERE id = ${len(args)}
+            RETURNING *;
+        """
+        async with self._pool.acquire() as conn:
+            row = await conn.fetchrow(sql, *args)
+        if row:
+            row_dict = dict(row)
+            for key, value in row_dict.items():
+                if isinstance(value, uuid.UUID):
+                    row_dict[key] = str(value)
+                elif isinstance(value, datetime):
+                    row_dict[key] = value.isoformat()
+            return row_dict
+        return None
+
+    async def get_interview_question(self, question_id: uuid.UUID) -> Optional[Dict[str, Any]]:
+        """Get a single interview question by ID."""
+        if not await self.connect():
+            return None
+        assert self._pool is not None
+        sql = "SELECT * FROM public.interview_questions WHERE id = $1"
+        async with self._pool.acquire() as conn:
+            row = await conn.fetchrow(sql, question_id)
+        if row:
+            row_dict = dict(row)
+            for key, value in row_dict.items():
+                if isinstance(value, uuid.UUID):
+                    row_dict[key] = str(value)
+                elif isinstance(value, datetime):
+                    row_dict[key] = value.isoformat()
+            return row_dict
+        return None
+
+    # --- Call Logging Functions ---
+
+    async def log_interview_call(self, resume_id: uuid.UUID, user_id: str, status: str, notes: Optional[str]) -> Optional[Dict[str, Any]]:
+        """Log an initiated interview call to the database."""
+        if not await self.connect():
+            return None
+        assert self._pool is not None
+        sql = """
+            INSERT INTO public.call_records (resume_id, user_id, call_status, notes)
+            VALUES ($1, $2, $3, $4)
+            RETURNING *;
+        """
+        async with self._pool.acquire() as conn:
+            row = await conn.fetchrow(sql, resume_id, user_id, status, notes)
+        if row:
+            row_dict = dict(row)
+            for key, value in row_dict.items():
+                if isinstance(value, uuid.UUID):
+                    row_dict[key] = str(value)
+                elif isinstance(value, datetime):
+                    row_dict[key] = value.isoformat()
+            return row_dict
+        return None
+
     async def get_resume(self, resume_id: str) -> Optional[Dict[str, Any]]:
         """Get a single resume by id from qdrant_resumes."""
         if not await self.connect():
@@ -426,13 +685,21 @@ class PostgresClient:
                    current_position, summary, total_experience, role_category, seniority,
                    best_role, skills, work_history, projects, education,
                    role_classification, recommended_roles, original_filename,
-                   upload_timestamp, embedding_model, embedding_generated_at, created_at
+                   upload_timestamp, embedding_model, embedding_generated_at, created_at, is_shortlisted
             FROM {self._table}
             WHERE id = $1
         """
         async with self._pool.acquire() as conn:
             row = await conn.fetchrow(sql, resume_id)
-        return dict(row) if row else None
+        if row:
+            row_dict = dict(row)
+            for key, value in row_dict.items():
+                if isinstance(value, uuid.UUID):
+                    row_dict[key] = str(value)
+                elif isinstance(value, datetime):
+                    row_dict[key] = value.isoformat()
+            return row_dict
+        return None
 
     async def _ensure_prompts_schema(self, conn: asyncpg.Connection) -> None:
         """Ensure the user_search_prompts table and indexes exist."""
@@ -1087,16 +1354,85 @@ class PostgresClient:
             "available_token_slots": max(0, row['token_limit'] - row['tokens_used'])
         }
 
+    async def create_interview_session(self, user_id: str, session_type: str, question_ids: List[uuid.UUID], candidate_ids: Optional[List[uuid.UUID]] = None) -> Optional[Dict[str, Any]]:
+        """Create a new interview session."""
+        ok = await self.connect()
+        if not ok:
+            return None
+        assert self._pool is not None
+        async with self._pool.acquire() as conn:
+            row = await conn.fetchrow(
+                """
+                INSERT INTO public.interview_sessions (user_id, session_type, question_ids, candidate_ids)
+                VALUES ($1, $2, $3, $4)
+                RETURNING id, user_id, session_type, question_ids, candidate_ids, current_question_index, status, created_at, updated_at
+                """,
+                user_id, session_type, question_ids, candidate_ids
+            )
+            if row:
+                return dict(row)
+        return None
 
-# Global client instance
+    async def get_interview_session(self, session_id: str) -> Optional[Dict[str, Any]]:
+        ok = await self.connect()
+        if not ok:
+            return None
+        assert self._pool is not None
+        async with self._pool.acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT * FROM public.interview_sessions WHERE id = $1",
+                session_id
+            )
+            return dict(row) if row else None
+
+    async def save_interview_response(
+        self,
+        user_id: str,
+        question_id: uuid.UUID,
+        answer_text: Optional[str] = None,
+        audio_file_path: Optional[str] = None,
+        audio_duration: Optional[float] = None,
+        response_time_seconds: Optional[float] = None
+    ) -> Optional[str]:
+        """Save an interview response (text and/or audio)."""
+        if not await self.connect():
+            return None
+        assert self._pool is not None
+        
+        sql = """
+            INSERT INTO public.interview_responses (
+                user_id, question_id, answer_text, audio_file_path, 
+                audio_duration, response_time_seconds
+            )
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING id
+        """
+        
+        async with self._pool.acquire() as conn:
+            try:
+                response_id = await conn.fetchval(
+                    sql,
+                    user_id,
+                    question_id,
+                    answer_text,
+                    audio_file_path,
+                    audio_duration,
+                    response_time_seconds
+                )
+                return str(response_id) if response_id else None
+            except Exception as e:
+                logger.error(f"[PG] Failed to save interview response: {e}")
+                return None
+
+
 pg_client = PostgresClient()
 
 
-    
-    
-    
 
 
-    
-    
-    
+
+
+
+
+
+

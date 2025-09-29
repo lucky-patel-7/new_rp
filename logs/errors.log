@@ -274,3 +274,275 @@ seniority
 DETAIL:  Key (user_id)=(114071897474722740000) is not present in table "users".
 2025-09-25 22:16:33 - src.resume_parser.database.postgres_client - ERROR - [PG] Failed to upsert qdrant_resumes 325714ef-44a4-42e2-a4ab-65ceb65ecf4f: insert or update on table "qdrant_resumes" violates foreign key constraint "qdrant_resumes_owner_user_id_fkey"
 DETAIL:  Key (owner_user_id)=(114071897474722740000) is not present in table "users".
+2025-09-26 13:46:16 - asyncio - ERROR - Task exception was never retrieved
+future: <Task finished name='Task-12' coro=<AsyncClient.aclose() done, defined at C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\httpx\_client.py:1978> exception=AttributeError("'AsyncHttpxClientWrapper' object has no attribute '_state'")>
+Traceback (most recent call last):
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\httpx\_client.py", line 1982, in aclose
+    if self._state != ClientState.CLOSED:
+       ^^^^^^^^^^^
+AttributeError: 'AsyncHttpxClientWrapper' object has no attribute '_state'
+2025-09-26 18:12:53 - app - ERROR - Failed to get shortlisted resumes for user 106333593103872410028: Object of type UUID is not JSON serializable
+Traceback (most recent call last):
+  File "C:\Users\25080402\Desktop\new_rp\app.py", line 4477, in get_shortlisted_resumes
+    return JSONResponse(content={"shortlisted_candidates": shortlisted}, status_code=200)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\starlette\responses.py", line 182, in __init__
+    super().__init__(content, status_code, headers, media_type, background)
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\starlette\responses.py", line 45, in __init__
+    self.body = self.render(content)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\starlette\responses.py", line 185, in render
+    return json.dumps(
+           ^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\encoder.py", line 258, in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type UUID is not JSON serializable
+2025-09-26 18:12:56 - app - ERROR - Failed to get shortlisted resumes for user 106333593103872410028: Object of type UUID is not JSON serializable
+Traceback (most recent call last):
+  File "C:\Users\25080402\Desktop\new_rp\app.py", line 4477, in get_shortlisted_resumes
+    return JSONResponse(content={"shortlisted_candidates": shortlisted}, status_code=200)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\starlette\responses.py", line 182, in __init__
+    super().__init__(content, status_code, headers, media_type, background)
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\starlette\responses.py", line 45, in __init__
+    self.body = self.render(content)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\starlette\responses.py", line 185, in render
+    return json.dumps(
+           ^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\encoder.py", line 258, in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type UUID is not JSON serializable
+2025-09-26 18:19:22 - app - ERROR - Failed to get shortlisted resumes for user 106333593103872410028: Object of type datetime is not JSON serializable
+Traceback (most recent call last):
+  File "C:\Users\25080402\Desktop\new_rp\app.py", line 4477, in get_shortlisted_resumes
+    return JSONResponse(content={"shortlisted_candidates": shortlisted}, status_code=200)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\starlette\responses.py", line 182, in __init__
+    super().__init__(content, status_code, headers, media_type, background)
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\starlette\responses.py", line 45, in __init__
+    self.body = self.render(content)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\starlette\responses.py", line 185, in render
+    return json.dumps(
+           ^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\encoder.py", line 258, in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type datetime is not JSON serializable
+2025-09-26 18:19:41 - app - ERROR - Failed to get shortlisted resumes for user 106333593103872410028: Object of type datetime is not JSON serializable
+Traceback (most recent call last):
+  File "C:\Users\25080402\Desktop\new_rp\app.py", line 4477, in get_shortlisted_resumes
+    return JSONResponse(content={"shortlisted_candidates": shortlisted}, status_code=200)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\starlette\responses.py", line 182, in __init__
+    super().__init__(content, status_code, headers, media_type, background)
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\starlette\responses.py", line 45, in __init__
+    self.body = self.render(content)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\starlette\responses.py", line 185, in render
+    return json.dumps(
+           ^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\encoder.py", line 258, in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type datetime is not JSON serializable
+2025-09-26 18:19:43 - app - ERROR - Failed to get shortlisted resumes for user 106333593103872410028: Object of type datetime is not JSON serializable
+Traceback (most recent call last):
+  File "C:\Users\25080402\Desktop\new_rp\app.py", line 4477, in get_shortlisted_resumes
+    return JSONResponse(content={"shortlisted_candidates": shortlisted}, status_code=200)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\starlette\responses.py", line 182, in __init__
+    super().__init__(content, status_code, headers, media_type, background)
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\starlette\responses.py", line 45, in __init__
+    self.body = self.render(content)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\starlette\responses.py", line 185, in render
+    return json.dumps(
+           ^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\encoder.py", line 258, in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type datetime is not JSON serializable
+2025-09-26 18:34:45 - app - ERROR - Failed to get shortlisted resumes for user 106333593103872410028: Object of type datetime is not JSON serializable
+Traceback (most recent call last):
+  File "C:\Users\25080402\Desktop\new_rp\app.py", line 4477, in get_shortlisted_resumes
+    return JSONResponse(content={"shortlisted_candidates": shortlisted}, status_code=200)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\starlette\responses.py", line 182, in __init__
+    super().__init__(content, status_code, headers, media_type, background)
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\starlette\responses.py", line 45, in __init__
+    self.body = self.render(content)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\starlette\responses.py", line 185, in render
+    return json.dumps(
+           ^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\encoder.py", line 258, in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type datetime is not JSON serializable
+2025-09-26 18:35:38 - app - ERROR - Failed to get shortlisted resumes for user 106333593103872410028: Object of type datetime is not JSON serializable
+Traceback (most recent call last):
+  File "C:\Users\25080402\Desktop\new_rp\app.py", line 4477, in get_shortlisted_resumes
+    return JSONResponse(content={"shortlisted_candidates": shortlisted}, status_code=200)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\starlette\responses.py", line 182, in __init__
+    super().__init__(content, status_code, headers, media_type, background)
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\starlette\responses.py", line 45, in __init__
+    self.body = self.render(content)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\starlette\responses.py", line 185, in render
+    return json.dumps(
+           ^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\encoder.py", line 258, in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type datetime is not JSON serializable
+2025-09-26 18:39:10 - app - ERROR - Failed to get shortlisted resumes for user 106333593103872410028: Object of type datetime is not JSON serializable
+Traceback (most recent call last):
+  File "C:\Users\25080402\Desktop\new_rp\app.py", line 4477, in get_shortlisted_resumes
+    return JSONResponse(content={"shortlisted_candidates": shortlisted}, status_code=200)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\starlette\responses.py", line 182, in __init__
+    super().__init__(content, status_code, headers, media_type, background)
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\starlette\responses.py", line 45, in __init__
+    self.body = self.render(content)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\starlette\responses.py", line 185, in render
+    return json.dumps(
+           ^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\encoder.py", line 258, in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\AppData\Local\Programs\Python\Python311\Lib\json\encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type datetime is not JSON serializable
+2025-09-26 18:43:01 - app - ERROR - Error initiating call for resume 1eb3c52f-0e6d-47f5-a5b2-f91bedde1ca6: insert or update on table "call_records" violates foreign key constraint "fk_resume"
+DETAIL:  Key (resume_id)=(1eb3c52f-0e6d-47f5-a5b2-f91bedde1ca6) is not present in table "parsed_resumes".
+Traceback (most recent call last):
+  File "C:\Users\25080402\Desktop\new_rp\app.py", line 4587, in initiate_interview_call
+    call_record = await pg_client.log_interview_call(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\Desktop\new_rp\src\resume_parser\database\postgres_client.py", line 641, in log_interview_call
+    row = await conn.fetchrow(sql, resume_id, user_id, status, notes)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\asyncpg\connection.py", line 748, in fetchrow
+    data = await self._execute(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\asyncpg\connection.py", line 1864, in _execute
+    result, _ = await self.__execute(
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\asyncpg\connection.py", line 1961, in __execute
+    result, stmt = await self._do_execute(
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\asyncpg\connection.py", line 2024, in _do_execute
+    result = await executor(stmt, None)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "asyncpg\\protocol\\protocol.pyx", line 206, in bind_execute
+asyncpg.exceptions.ForeignKeyViolationError: insert or update on table "call_records" violates foreign key constraint "fk_resume"
+DETAIL:  Key (resume_id)=(1eb3c52f-0e6d-47f5-a5b2-f91bedde1ca6) is not present in table "parsed_resumes".
+2025-09-26 18:43:18 - app - ERROR - Failed to create interview question for user 106333593103872410028: 'InterviewQuestionCreate' object is not subscriptable
+Traceback (most recent call last):
+  File "C:\Users\25080402\Desktop\new_rp\app.py", line 4511, in create_interview_question
+    new_question = await pg_client.create_interview_question(question)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\Desktop\new_rp\src\resume_parser\database\postgres_client.py", line 545, in create_interview_question
+    question_data['user_id'],
+    ~~~~~~~~~~~~~^^^^^^^^^^^
+TypeError: 'InterviewQuestionCreate' object is not subscriptable
+2025-09-26 18:47:31 - app - ERROR - Error initiating call for resume abfdfc18-42ea-4989-a59f-1b16de885756: insert or update on table "call_records" violates foreign key constraint "fk_resume"
+DETAIL:  Key (resume_id)=(abfdfc18-42ea-4989-a59f-1b16de885756) is not present in table "parsed_resumes".
+Traceback (most recent call last):
+  File "C:\Users\25080402\Desktop\new_rp\app.py", line 4591, in initiate_interview_call
+    call_record = await pg_client.log_interview_call(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\Desktop\new_rp\src\resume_parser\database\postgres_client.py", line 641, in log_interview_call
+    row = await conn.fetchrow(sql, resume_id, user_id, status, notes)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\asyncpg\connection.py", line 748, in fetchrow
+    data = await self._execute(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\asyncpg\connection.py", line 1864, in _execute
+    result, _ = await self.__execute(
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\asyncpg\connection.py", line 1961, in __execute
+    result, stmt = await self._do_execute(
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\asyncpg\connection.py", line 2024, in _do_execute
+    result = await executor(stmt, None)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "asyncpg\\protocol\\protocol.pyx", line 206, in bind_execute
+asyncpg.exceptions.ForeignKeyViolationError: insert or update on table "call_records" violates foreign key constraint "fk_resume"
+DETAIL:  Key (resume_id)=(abfdfc18-42ea-4989-a59f-1b16de885756) is not present in table "parsed_resumes".
+2025-09-26 18:55:59 - asyncio - ERROR - Task exception was never retrieved
+future: <Task finished name='Task-115' coro=<AsyncClient.aclose() done, defined at C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\httpx\_client.py:1978> exception=AttributeError("'AsyncHttpxClientWrapper' object has no attribute '_state'")>
+Traceback (most recent call last):
+  File "C:\Users\25080402\Desktop\new_rp\venvrp\Lib\site-packages\httpx\_client.py", line 1982, in aclose
+    if self._state != ClientState.CLOSED:
+       ^^^^^^^^^^^
+AttributeError: 'AsyncHttpxClientWrapper' object has no attribute '_state'
+2025-09-26 19:36:53 - app - ERROR - Error in intent-based resume search: name 'analyze_query_intent' is not defined

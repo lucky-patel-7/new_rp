@@ -13,6 +13,7 @@ import time
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Set, Tuple
 from difflib import SequenceMatcher
+from datetime import datetime
 
 # Add the project root to the Python path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -22,6 +23,7 @@ from fastapi import FastAPI, File, UploadFile, HTTPException, Depends, Form, Bod
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import asyncio
+from pydantic import BaseModel, Field
 
 # Import organized modules
 from src.resume_parser.core.parser import ResumeParser
@@ -36,6 +38,81 @@ from config.settings import settings
 # Setup logging
 setup_logging()
 logger = get_logger(__name__)
+
+# --- Pydantic Models for New Features ---
+
+class ShortlistUpdate(BaseModel):
+    is_shortlisted: bool
+
+class InterviewQuestionBase(BaseModel):
+    user_id: str = Field(..., description="The ID of the user creating the question.")
+    question_text: str = Field(..., max_length=1000, description="The text of the interview question.")
+    category: Optional[str] = Field(None, max_length=100, description="A category for the question (e.g., 'Technical', 'Behavioral').")
+
+class InterviewQuestionCreate(InterviewQuestionBase):
+    pass
+
+class InterviewQuestionUpdate(BaseModel):
+    question_text: Optional[str] = Field(None, max_length=1000, description="The updated text of the interview question.")
+    category: Optional[str] = Field(None, max_length=100, description="The updated category for the question.")
+
+class InterviewQuestionInDB(InterviewQuestionBase):
+    id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class CallInitiationRequest(BaseModel):
+    resume_id: uuid.UUID = Field(..., description="The ID of the resume/candidate to call.")
+    user_id: str = Field(..., description="The ID of the user initiating the call.")
+    notes: Optional[str] = Field(None, description="Optional notes for the call.")
+
+class CallRecord(BaseModel):
+    id: uuid.UUID
+    resume_id: uuid.UUID
+    user_id: str
+    call_status: str
+    initiated_at: datetime
+    notes: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+# --- New Interview Session Models ---
+
+class InterviewSessionCreate(BaseModel):
+    user_id: str = Field(..., description="The ID of the user creating the interview session.")
+    session_type: str = Field(..., description="Type of session: 'test' or 'live'")
+    question_ids: List[uuid.UUID] = Field(..., description="List of question IDs to include in the interview.")
+    candidate_ids: Optional[List[uuid.UUID]] = Field(None, description="List of candidate IDs (for live interviews).")
+
+class InterviewSessionInDB(BaseModel):
+    id: uuid.UUID
+    user_id: str
+    session_type: str
+    question_ids: List[uuid.UUID]
+    candidate_ids: Optional[List[uuid.UUID]]
+    current_question_index: int
+    status: str  # 'active', 'completed', 'paused'
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class InterviewResponse(BaseModel):
+    question_id: uuid.UUID
+    answer_text: str
+    audio_duration: Optional[float] = None
+    response_time_seconds: Optional[float] = None
+
+class InterviewSetupResponse(BaseModel):
+    available_questions: List[InterviewQuestionInDB]
+    available_candidates: List[Dict[str, Any]]
+    can_create_session: bool
+    
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -849,7 +926,8 @@ async def upload_resume(file: UploadFile = File(...), user_id: Optional[str] = F
             "original_filename": file.filename,
             "extraction_statistics": safe_extraction_statistics,
             "upload_timestamp": upload_timestamp,
-            "owner_user_id": user_id
+            "owner_user_id": user_id,
+            "is_shortlisted": False  # Initialize as not shortlisted
         }
 
         # Create embedding and store in Qdrant
@@ -1317,9 +1395,219 @@ async def manual_increment_user_resume_count(
 #                 "suggested_result_limit": 50 if complexity_score > 70 else 100
 #             }
 
+#             # ============= NEW ADDITION: FINAL REQUIREMENTS FOR QDRANT SEARCH =============
+#             # Extract key-value pairs for direct Qdrant filtering
+#             components = intent_data.get("extracted_components", {})
+            
+#             # Initialize Qdrant-ready filters
+#             qdrant_filters = {}
+#             search_keywords = []
+            
+#             identifier_filters = _extract_identifier_filters_from_query(query)
+#             for field, values in identifier_filters.items():
+#                 if not values:
+#                     continue
+#                 existing = qdrant_filters.get(field)
+#                 combined_values: List[str] = []
+
+#                 if isinstance(existing, list):
+#                     combined_values.extend([str(v).strip() for v in existing if str(v).strip()])
+#                 elif existing is not None:
+#                     existing_str = str(existing).strip()
+#                     if existing_str:
+#                         combined_values.append(existing_str)
+
+#                 for value in values:
+#                     value_str = str(value).strip()
+#                     if value_str and value_str not in combined_values:
+#                         combined_values.append(value_str)
+
+#                 if combined_values:
+#                     qdrant_filters[field] = combined_values
+#                     search_keywords.extend(combined_values)
+
+#             # Education filters
+#             if components.get("education_requirements", {}).get("has_requirement", False):
+#                 edu_req = components["education_requirements"]
+                
+#                 if edu_req.get("degree_levels"):
+#                     qdrant_filters["degree_level"] = edu_req["degree_levels"]
+                
+#                 if edu_req.get("fields_of_study"):
+#                     qdrant_filters["field_of_study"] = edu_req["fields_of_study"]
+                
+#                 if edu_req.get("institutions"):
+#                     qdrant_filters["institution"] = edu_req["institutions"]
+                
+#                 # Add to search keywords
+#                 search_keywords.extend(edu_req.get("degree_levels", []))
+#                 search_keywords.extend(edu_req.get("fields_of_study", []))
+#                 search_keywords.extend(edu_req.get("institutions", []))
+            
+#             # Role/Job filters
+#             if components.get("role_requirements", {}).get("has_requirement", False):
+#                 role_req = components["role_requirements"]
+                
+#                 if role_req.get("job_titles"):
+#                     qdrant_filters["job_title"] = role_req["job_titles"]
+                
+#                 if role_req.get("role_levels"):
+#                     qdrant_filters["seniority_level"] = role_req["role_levels"]
+                
+#                 if role_req.get("role_categories"):
+#                     qdrant_filters["role_category"] = role_req["role_categories"]
+                
+#                 # Add to search keywords
+#                 search_keywords.extend(role_req.get("job_titles", []))
+#                 search_keywords.extend(role_req.get("role_levels", []))
+            
+#             # Skills filters
+#             if components.get("skill_requirements", {}).get("has_requirement", False):
+#                 skill_req = components["skill_requirements"]
+                
+#                 all_skills = []
+#                 all_skills.extend(skill_req.get("technical_skills", []))
+#                 all_skills.extend(skill_req.get("frameworks", []))
+#                 all_skills.extend(skill_req.get("technologies", []))
+                
+#                 if all_skills:
+#                     qdrant_filters["skills"] = all_skills
+                
+#                 if skill_req.get("skill_categories"):
+#                     qdrant_filters["skill_category"] = skill_req["skill_categories"]
+                
+#                 # Add to search keywords
+#                 search_keywords.extend(all_skills)
+            
+#             # Company filters
+#             if components.get("company_requirements", {}).get("has_requirement", False):
+#                 comp_req = components["company_requirements"]
+                
+#                 all_companies = []
+#                 all_companies.extend(comp_req.get("specific_companies", []))
+                
+#                 if all_companies:
+#                     qdrant_filters["company"] = all_companies
+                
+#                 if comp_req.get("company_groups"):
+#                     qdrant_filters["company_type"] = comp_req["company_groups"]
+                
+#                 if comp_req.get("industry_sectors"):
+#                     qdrant_filters["industry"] = comp_req["industry_sectors"]
+                
+#                 # Add to search keywords
+#                 search_keywords.extend(all_companies)
+#                 search_keywords.extend(comp_req.get("company_groups", []))
+            
+#             # Experience filters
+#             if components.get("experience_requirements", {}).get("has_requirement", False):
+#                 exp_req = components["experience_requirements"]
+                
+#                 if exp_req.get("min_years") is not None:
+#                     qdrant_filters["min_experience"] = exp_req["min_years"]
+                
+#                 if exp_req.get("max_years") is not None:
+#                     qdrant_filters["max_experience"] = exp_req["max_years"]
+                
+#                 if exp_req.get("seniority_levels"):
+#                     # If not already set from role requirements
+#                     if "seniority_level" not in qdrant_filters:
+#                         qdrant_filters["seniority_level"] = exp_req["seniority_levels"]
+            
+#             # Location filters
+#             if components.get("location_requirements", {}).get("has_requirement", False):
+#                 loc_req = components["location_requirements"]
+                
+#                 all_locations = []
+#                 all_locations.extend(loc_req.get("current_locations", []))
+#                 all_locations.extend(loc_req.get("preferred_locations", []))
+
+#                 # Remove duplicates while preserving order
+#                 unique_locations = list(dict.fromkeys(all_locations))
+
+#                 if unique_locations:
+#                     qdrant_filters["location"] = unique_locations
+                
+#                 if loc_req.get("geographic_regions"):
+#                     qdrant_filters["region"] = loc_req["geographic_regions"]
+                
+#                 # Add to search keywords
+#                 search_keywords.extend(all_locations)
+            
+#             # Additional criteria filters
+#             if components.get("additional_criteria"):
+#                 add_criteria = components["additional_criteria"]
+                
+#                 if add_criteria.get("certifications"):
+#                     qdrant_filters["certifications"] = add_criteria["certifications"]
+#                     search_keywords.extend(add_criteria["certifications"])
+                
+#                 if add_criteria.get("languages"):
+#                     qdrant_filters["languages"] = add_criteria["languages"]
+                
+#                 if add_criteria.get("work_authorization"):
+#                     qdrant_filters["work_authorization"] = add_criteria["work_authorization"]
+                
+#                 if add_criteria.get("work_preferences"):
+#                     qdrant_filters["work_preference"] = add_criteria["work_preferences"]
+            
+#             # Clean up search keywords
+#             clean_keywords = list(set([
+#                 kw.strip().lower() for kw in search_keywords 
+#                 if kw and kw.strip() and len(kw.strip()) > 1
+#             ]))
+            
+#             # Determine primary intent override based on identifiers
+#             override_primary_intent = None
+#             if qdrant_filters.get('email') or qdrant_filters.get('phone'):
+#                 override_primary_intent = 'contact_information'
+#             elif qdrant_filters.get('name'):
+#                 override_primary_intent = 'person_name'
+
+#             # Create final requirements structure
+#             final_requirements = {
+#                 "qdrant_filters": qdrant_filters,
+#                 "search_keywords": clean_keywords,
+#                 "filter_count": len(qdrant_filters),
+#                 "has_strict_requirements": len(qdrant_filters) > 0,
+#                 "search_strategy": {
+#                     "primary_intent": override_primary_intent or intent_data.get("query_metadata", {}).get("primary_intent", "hybrid"),
+#                     "recommended_approach": intent_data.get("search_strategy", {}).get("recommended_approach", "semantic_search"),
+#                     "complexity": intent_data.get("search_strategy", {}).get("search_complexity", "single_pass")
+#                 }
+#             }
+
+#             # LLM refinement pass for better filters/keywords
+#             try:
+#                 refined = _llm_refine_final_requirements(query, final_requirements)
+#             except Exception as _e:
+#                 refined = None
+#                 logger.info(f"[INTENT_LLM] Skipping refinement: {_e}")
+
+#             if refined:
+#                 # Merge refined back (prefer refined values)
+#                 fr_qf = refined.get('qdrant_filters') or {}
+#                 fr_kw = refined.get('search_keywords') or []
+#                 fr_pi = refined.get('primary_intent')
+
+#                 if isinstance(fr_qf, dict):
+#                     final_requirements['qdrant_filters'] = fr_qf
+#                     final_requirements['filter_count'] = len(fr_qf)
+#                 if isinstance(fr_kw, list):
+#                     final_requirements['search_keywords'] = fr_kw
+#                 if fr_pi:
+#                     final_requirements['search_strategy']['primary_intent'] = fr_pi
+
+#                 logger.info(f"[INTENT_LLM] Refined final requirements: {final_requirements}")
+
+#             # Add final requirements to the response
+#             intent_data["final_requirements"] = final_requirements
+#             # ============= END OF NEW ADDITION =============
+
 #             return {
 #                 "success": True,
 #                 "query": query,
+#                 "user_id": user_id,
 #                 "intent_analysis": intent_data,
 #                 "processing_time": "enhanced_analysis_complete"
 #             }
@@ -1328,16 +1616,17 @@ async def manual_increment_user_resume_count(
 #             return {
 #                 "success": False,
 #                 "error": "No response from AI service",
-#                 "query": query
+#                 "query": query,
+#                 "user_id": user_id
 #             }
             
-#     except json.JSONDecodeError as e:
+#     except json.JSONDecodeError as e: # type: ignore
 #         logger.error(f"JSON parsing error in query intent analysis: {e}")
 #         return {
 #             "success": False,
 #             "error": f"Failed to parse AI response: {str(e)}",
 #             "query": query,
-#             "raw_response": ai_response if 'ai_response' in locals() else None
+#             "raw_response": ai_response if 'ai_response' in locals() else None # type: ignore
 #         }
         
 #     except Exception as e:
@@ -1345,515 +1634,9 @@ async def manual_increment_user_resume_count(
 #         return {
 #             "success": False,
 #             "error": f"Intent analysis failed: {str(e)}",
-#             "query": query
-#         }n
-    
-@app.post("/analyze-query-intent")
-async def analyze_query_intent(query: str = Form(...), user_id: Optional[str] = Form(None)):
-    """
-    Enhanced query intent analyzer capable of handling very complex multi-dimensional queries.
-    
-    Handles complex queries like:
-    "I'm looking for Principal Software Architects with PhD in Computer Science from top universities 
-    (Stanford, MIT, Carnegie Mellon), 10+ years experience, who have worked at FAANG companies 
-    (Facebook, Apple, Amazon, Netflix, Google), know distributed systems, Kubernetes, Java, Go, 
-    currently in Silicon Valley or willing to relocate to San Francisco"
-    """
-    
-    try:
-        from src.resume_parser.clients.azure_openai import azure_client
-        import json
-        import re
-        
-        client = azure_client.get_sync_client()
-        chat_deployment = azure_client.get_chat_deployment()
-        
-        # Enhanced prompt with better complex query handling
-        enhanced_intent_prompt = f"""
-You are an advanced query intent analyzer for a resume search system. Analyze this job search query and extract ALL components with high precision. Return ONLY a JSON object.
-
-Query: "{query}"
-
-Extract and classify ALL components from this query. Be thorough and precise:
-
-{{
-    "query_metadata": {{
-        "complexity_level": "simple|moderate|complex|very_complex",
-        "query_type": "single_criteria|multi_criteria|comprehensive",
-        "primary_intent": "education|role|skills|company|location|experience|hybrid",
-        "secondary_intents": ["education", "role", "skills", "company", "location"],
-        "confidence_score": 0.95,
-        "intent_explanation": "Detailed explanation of the query structure and why this classification was chosen"
-    }},
-    
-    "extracted_components": {{
-        "education_requirements": {{
-            "has_requirement": true/false,
-            "degree_levels": ["PhD", "Master's", "Bachelor's", "Associate"],
-            "specific_degrees": ["PhD in Computer Science", "Master of Science", etc],
-            "fields_of_study": ["Computer Science", "Engineering", "Data Science", etc],
-            "institutions": ["Stanford University", "MIT", "Carnegie Mellon University", etc],
-            "institution_tiers": ["top_tier", "ivy_league", "technical_schools"],
-            "education_keywords": ["from top universities", "prestigious", etc]
-        }},
-        
-        "role_requirements": {{
-            "has_requirement": true/false,
-            "job_titles": ["Principal Software Architect", "Senior Engineer", etc],
-            "role_levels": ["Principal", "Senior", "Lead", "Staff", "Director"],
-            "role_categories": ["Engineering", "Management", "Technical", etc],
-            "role_keywords": ["architect", "lead", "principal", etc]
-        }},
-        
-        "skill_requirements": {{
-            "has_requirement": true/false,
-            "technical_skills": ["distributed systems", "Kubernetes", "Java", "Go", "Python"],
-            "frameworks": ["React", "Angular", "Spring", etc],
-            "technologies": ["AWS", "Docker", "Microservices", etc],
-            "domains": ["machine learning", "data science", "cybersecurity", etc],
-            "skill_categories": ["programming", "architecture", "devops", "cloud"],
-            "proficiency_indicators": ["expert", "advanced", "proficient"]
-        }},
-        
-        "company_requirements": {{
-            "has_requirement": true/false,
-            "specific_companies": ["Google", "Facebook", "Apple", "Amazon", "Netflix"],
-            "company_groups": ["FAANG", "Big Tech", "Fortune 500"],
-            "company_types": ["startup", "enterprise", "public", "private"],
-            "company_sizes": ["large", "medium", "small"],
-            "industry_sectors": ["technology", "finance", "healthcare", etc]
-        }},
-        
-        "experience_requirements": {{
-            "has_requirement": true/false,
-            "min_years": 10,
-            "max_years": null,
-            "specific_experience": ["10+ years", "5-8 years", etc],
-            "experience_types": ["industry", "relevant", "total"],
-            "seniority_levels": ["junior", "mid", "senior", "principal", "staff"]
-        }},
-        
-        "location_requirements": {{
-            "has_requirement": true/false,
-            "current_locations": ["Silicon Valley", "San Francisco", "New York"],
-            "preferred_locations": ["San Francisco", "Bay Area"],
-            "relocation_indicators": ["willing to relocate", "open to relocation"],
-            "location_flexibility": "strict|flexible|remote_ok",
-            "geographic_regions": ["West Coast", "East Coast", "US", "Global"]
-        }},
-        
-        "additional_criteria": {{
-            "certifications": ["AWS Certified", "PMP", etc],
-            "languages": ["English", "Spanish", etc],
-            "work_authorization": ["US Citizen", "H1B", etc],
-            "availability": ["immediate", "2 weeks notice", etc],
-            "salary_expectations": "competitive|market_rate|specific_range",
-            "work_preferences": ["remote", "hybrid", "on-site"]
-        }}
-    }},
-    
-    "search_strategy": {{
-        "recommended_approach": "education_first|role_first|skills_first|company_first|semantic_hybrid|multi_stage_filtering",
-        "filtering_priority": ["education", "role", "experience", "skills", "company", "location"],
-        "search_complexity": "single_pass|multi_pass|cascading_filters|ml_ranking",
-        "expected_result_size": "very_small|small|medium|large",
-        "fallback_strategies": ["relax_education", "expand_companies", "broader_location"]
-    }},
-    
-    "query_understanding": {{
-        "key_constraints": ["PhD required", "FAANG experience", "10+ years", "specific skills"],
-        "optional_preferences": ["Silicon Valley", "relocation flexibility"],
-        "deal_breakers": ["education_level", "experience_minimum"],
-        "negotiable_items": ["specific_location", "company_size"],
-        "query_ambiguities": ["definition of top universities", "distributed systems scope"]
-    }}
-}}
-
-IMPORTANT EXTRACTION RULES:
-1. For EDUCATION: Extract exact degree requirements, specific institutions mentioned, and education-related keywords
-2. For COMPANIES: Identify specific companies, company groups (like FAANG), and company characteristics
-3. For SKILLS: Separate technical skills, frameworks, domains, and proficiency levels
-4. For EXPERIENCE: Extract numeric requirements, seniority indicators, and experience types
-5. For LOCATION: Distinguish between current location, preferred location, and relocation willingness
-6. For COMPLEXITY: Classify based on number of criteria and specificity of requirements
-
-EXAMPLES OF COMPLEX QUERIES:
-
-"Senior Data Scientist with PhD in Statistics from Ivy League, 8+ years at tech companies, expert in PyTorch, TensorFlow, MLOps, currently in NYC or SF"
-→ complexity_level: "very_complex", primary_intent: "hybrid", multiple strict requirements
-
-"Full-stack developer, React + Node.js, startup experience, remote OK"
-→ complexity_level: "moderate", primary_intent: "skills", some flexibility
-
-"Looking for ML engineers from Google, Facebook, or similar, with computer vision expertise"
-→ complexity_level: "complex", primary_intent: "company", specific domain skills
-
-Return only the JSON object, no additional text or explanations.
-"""
-
-        # Make the API call
-        response = client.chat.completions.create(
-            model=chat_deployment,
-            messages=[
-                {
-                    "role": "system", 
-                    "content": "You are an advanced query intent analyzer that returns comprehensive JSON analysis of job search queries. Focus on extracting ALL components with high precision."
-                },
-                {"role": "user", "content": enhanced_intent_prompt}
-            ],
-            max_tokens=1500,  # Increased for complex responses
-            temperature=0.05   # Lower temperature for more consistent extraction
-        )
-
-        ai_response = response.choices[0].message.content
-        
-        if ai_response:
-            ai_response = ai_response.strip()
-
-            # Clean up markdown formatting
-            if ai_response.startswith("```json"):
-                ai_response = ai_response[7:]
-            elif ai_response.startswith("```"):
-                ai_response = ai_response[3:]
-            if ai_response.endswith("```"):
-                ai_response = ai_response[:-3]
-
-            ai_response = ai_response.strip()
-
-            # Parse the enhanced JSON response
-            intent_data = json.loads(ai_response)
-            
-            # Add comprehensive query analysis with regex patterns
-            query_lower = query.lower()
-            query_words = query_lower.split()
-            
-            # Enhanced pattern matching for complex queries
-            patterns = {
-                "degree_patterns": [
-                    r'\b(phd|ph\.d\.?|doctorate|doctoral)\b',
-                    r'\b(master[\'s]*|ms|m\.s\.?|mba|m\.b\.a\.?)\b',
-                    r'\b(bachelor[\'s]*|bs|b\.s\.?|ba|b\.a\.?)\b'
-                ],
-                "university_patterns": [
-                    r'\b(stanford|mit|harvard|berkeley|caltech|carnegie mellon|princeton|yale)\b',
-                    r'\b(top universities|prestigious|ivy league|tier[- ]1)\b'
-                ],
-                "company_patterns": [
-                    r'\b(google|facebook|apple|amazon|netflix|microsoft|meta)\b',
-                    r'\b(faang|big tech|fortune 500)\b'
-                ],
-                "experience_patterns": [
-                    r'\b(\d+)\+?\s*years?\b',
-                    r'\b(senior|principal|staff|lead|director|vp|c-level)\b'
-                ],
-                "location_patterns": [
-                    r'\b(silicon valley|san francisco|nyc|new york|seattle|austin)\b',
-                    r'\b(relocate|relocation|willing to move|open to)\b'
-                ],
-                "skill_patterns": [
-                    r'\b(python|java|javascript|go|rust|c\+\+)\b',
-                    r'\b(kubernetes|docker|aws|azure|gcp)\b',
-                    r'\b(machine learning|ai|distributed systems|microservices)\b'
-                ]
-            }
-            
-            # Count pattern matches for complexity assessment
-            pattern_matches = {}
-            total_matches = 0
-            
-            for category, pattern_list in patterns.items():
-                matches = 0
-                for pattern in pattern_list:
-                    matches += len(re.findall(pattern, query_lower))
-                pattern_matches[category] = matches
-                total_matches += matches
-            
-            # Enhanced query analysis
-            intent_data["advanced_analysis"] = {
-                "query_statistics": {
-                    "query_length": len(query),
-                    "word_count": len(query_words),
-                    "sentence_count": len([s for s in query.split('.') if s.strip()]),
-                    "comma_separated_criteria": len([c for c in query.split(',') if c.strip()]),
-                    "parenthetical_info": len(re.findall(r'\([^)]+\)', query))
-                },
-                "pattern_analysis": pattern_matches,
-                "complexity_indicators": {
-                    "multiple_criteria": total_matches >= 3,
-                    "specific_institutions": pattern_matches.get("university_patterns", 0) > 0,
-                    "company_requirements": pattern_matches.get("company_patterns", 0) > 0,
-                    "technical_depth": pattern_matches.get("skill_patterns", 0) >= 2,
-                    "experience_specific": pattern_matches.get("experience_patterns", 0) > 0,
-                    "location_constraints": pattern_matches.get("location_patterns", 0) > 0
-                },
-                "query_structure": {
-                    "has_conjunctions": any(word in query_lower for word in ['and', 'with', 'who', 'that']),
-                    "has_qualifiers": any(word in query_lower for word in ['prefer', 'ideal', 'bonus', 'nice to have']),
-                    "has_requirements": any(word in query_lower for word in ['must', 'required', 'need', 'should']),
-                    "has_alternatives": any(word in query_lower for word in ['or', 'alternatively', 'either'])
-                },
-                "semantic_signals": {
-                    "urgency_indicators": any(word in query_lower for word in ['asap', 'urgent', 'immediately', 'quickly']),
-                    "flexibility_indicators": any(word in query_lower for word in ['flexible', 'open to', 'willing to', 'consider']),
-                    "exclusivity_indicators": any(word in query_lower for word in ['only', 'exclusively', 'specifically', 'strictly'])
-                }
-            }
-            
-            # Determine overall complexity score
-            complexity_score = min(100, (total_matches * 15) + (len(query_words) * 2))
-            intent_data["advanced_analysis"]["overall_complexity_score"] = complexity_score
-            
-            # Add processing recommendations
-            intent_data["processing_recommendations"] = {
-                "use_multi_stage_filtering": complexity_score > 60,
-                "require_fuzzy_matching": pattern_matches.get("skill_patterns", 0) > 3,
-                "prioritize_exact_matches": intent_data["advanced_analysis"]["semantic_signals"]["exclusivity_indicators"],
-                "enable_fallback_search": True,
-                "suggested_result_limit": 50 if complexity_score > 70 else 100
-            }
-
-            # ============= NEW ADDITION: FINAL REQUIREMENTS FOR QDRANT SEARCH =============
-            # Extract key-value pairs for direct Qdrant filtering
-            components = intent_data.get("extracted_components", {})
-            
-            # Initialize Qdrant-ready filters
-            qdrant_filters = {}
-            search_keywords = []
-            
-            identifier_filters = _extract_identifier_filters_from_query(query)
-            for field, values in identifier_filters.items():
-                if not values:
-                    continue
-                existing = qdrant_filters.get(field)
-                combined_values: List[str] = []
-
-                if isinstance(existing, list):
-                    combined_values.extend([str(v).strip() for v in existing if str(v).strip()])
-                elif existing is not None:
-                    existing_str = str(existing).strip()
-                    if existing_str:
-                        combined_values.append(existing_str)
-
-                for value in values:
-                    value_str = str(value).strip()
-                    if value_str and value_str not in combined_values:
-                        combined_values.append(value_str)
-
-                if combined_values:
-                    qdrant_filters[field] = combined_values
-                    search_keywords.extend(combined_values)
-
-            # Education filters
-            if components.get("education_requirements", {}).get("has_requirement", False):
-                edu_req = components["education_requirements"]
-                
-                if edu_req.get("degree_levels"):
-                    qdrant_filters["degree_level"] = edu_req["degree_levels"]
-                
-                if edu_req.get("fields_of_study"):
-                    qdrant_filters["field_of_study"] = edu_req["fields_of_study"]
-                
-                if edu_req.get("institutions"):
-                    qdrant_filters["institution"] = edu_req["institutions"]
-                
-                # Add to search keywords
-                search_keywords.extend(edu_req.get("degree_levels", []))
-                search_keywords.extend(edu_req.get("fields_of_study", []))
-                search_keywords.extend(edu_req.get("institutions", []))
-            
-            # Role/Job filters
-            if components.get("role_requirements", {}).get("has_requirement", False):
-                role_req = components["role_requirements"]
-                
-                if role_req.get("job_titles"):
-                    qdrant_filters["job_title"] = role_req["job_titles"]
-                
-                if role_req.get("role_levels"):
-                    qdrant_filters["seniority_level"] = role_req["role_levels"]
-                
-                if role_req.get("role_categories"):
-                    qdrant_filters["role_category"] = role_req["role_categories"]
-                
-                # Add to search keywords
-                search_keywords.extend(role_req.get("job_titles", []))
-                search_keywords.extend(role_req.get("role_levels", []))
-            
-            # Skills filters
-            if components.get("skill_requirements", {}).get("has_requirement", False):
-                skill_req = components["skill_requirements"]
-                
-                all_skills = []
-                all_skills.extend(skill_req.get("technical_skills", []))
-                all_skills.extend(skill_req.get("frameworks", []))
-                all_skills.extend(skill_req.get("technologies", []))
-                
-                if all_skills:
-                    qdrant_filters["skills"] = all_skills
-                
-                if skill_req.get("skill_categories"):
-                    qdrant_filters["skill_category"] = skill_req["skill_categories"]
-                
-                # Add to search keywords
-                search_keywords.extend(all_skills)
-            
-            # Company filters
-            if components.get("company_requirements", {}).get("has_requirement", False):
-                comp_req = components["company_requirements"]
-                
-                all_companies = []
-                all_companies.extend(comp_req.get("specific_companies", []))
-                
-                if all_companies:
-                    qdrant_filters["company"] = all_companies
-                
-                if comp_req.get("company_groups"):
-                    qdrant_filters["company_type"] = comp_req["company_groups"]
-                
-                if comp_req.get("industry_sectors"):
-                    qdrant_filters["industry"] = comp_req["industry_sectors"]
-                
-                # Add to search keywords
-                search_keywords.extend(all_companies)
-                search_keywords.extend(comp_req.get("company_groups", []))
-            
-            # Experience filters
-            if components.get("experience_requirements", {}).get("has_requirement", False):
-                exp_req = components["experience_requirements"]
-                
-                if exp_req.get("min_years") is not None:
-                    qdrant_filters["min_experience"] = exp_req["min_years"]
-                
-                if exp_req.get("max_years") is not None:
-                    qdrant_filters["max_experience"] = exp_req["max_years"]
-                
-                if exp_req.get("seniority_levels"):
-                    # If not already set from role requirements
-                    if "seniority_level" not in qdrant_filters:
-                        qdrant_filters["seniority_level"] = exp_req["seniority_levels"]
-            
-            # Location filters
-            if components.get("location_requirements", {}).get("has_requirement", False):
-                loc_req = components["location_requirements"]
-                
-                all_locations = []
-                all_locations.extend(loc_req.get("current_locations", []))
-                all_locations.extend(loc_req.get("preferred_locations", []))
-
-                # Remove duplicates while preserving order
-                unique_locations = list(dict.fromkeys(all_locations))
-
-                if unique_locations:
-                    qdrant_filters["location"] = unique_locations
-                
-                if loc_req.get("geographic_regions"):
-                    qdrant_filters["region"] = loc_req["geographic_regions"]
-                
-                # Add to search keywords
-                search_keywords.extend(all_locations)
-            
-            # Additional criteria filters
-            if components.get("additional_criteria"):
-                add_criteria = components["additional_criteria"]
-                
-                if add_criteria.get("certifications"):
-                    qdrant_filters["certifications"] = add_criteria["certifications"]
-                    search_keywords.extend(add_criteria["certifications"])
-                
-                if add_criteria.get("languages"):
-                    qdrant_filters["languages"] = add_criteria["languages"]
-                
-                if add_criteria.get("work_authorization"):
-                    qdrant_filters["work_authorization"] = add_criteria["work_authorization"]
-                
-                if add_criteria.get("work_preferences"):
-                    qdrant_filters["work_preference"] = add_criteria["work_preferences"]
-            
-            # Clean up search keywords
-            clean_keywords = list(set([
-                kw.strip().lower() for kw in search_keywords 
-                if kw and kw.strip() and len(kw.strip()) > 1
-            ]))
-            
-            # Determine primary intent override based on identifiers
-            override_primary_intent = None
-            if qdrant_filters.get('email') or qdrant_filters.get('phone'):
-                override_primary_intent = 'contact_information'
-            elif qdrant_filters.get('name'):
-                override_primary_intent = 'person_name'
-
-            # Create final requirements structure
-            final_requirements = {
-                "qdrant_filters": qdrant_filters,
-                "search_keywords": clean_keywords,
-                "filter_count": len(qdrant_filters),
-                "has_strict_requirements": len(qdrant_filters) > 0,
-                "search_strategy": {
-                    "primary_intent": override_primary_intent or intent_data.get("query_metadata", {}).get("primary_intent", "hybrid"),
-                    "recommended_approach": intent_data.get("search_strategy", {}).get("recommended_approach", "semantic_search"),
-                    "complexity": intent_data.get("search_strategy", {}).get("search_complexity", "single_pass")
-                }
-            }
-
-            # LLM refinement pass for better filters/keywords
-            try:
-                refined = _llm_refine_final_requirements(query, final_requirements)
-            except Exception as _e:
-                refined = None
-                logger.info(f"[INTENT_LLM] Skipping refinement: {_e}")
-
-            if refined:
-                # Merge refined back (prefer refined values)
-                fr_qf = refined.get('qdrant_filters') or {}
-                fr_kw = refined.get('search_keywords') or []
-                fr_pi = refined.get('primary_intent')
-
-                if isinstance(fr_qf, dict):
-                    final_requirements['qdrant_filters'] = fr_qf
-                    final_requirements['filter_count'] = len(fr_qf)
-                if isinstance(fr_kw, list):
-                    final_requirements['search_keywords'] = fr_kw
-                if fr_pi:
-                    final_requirements['search_strategy']['primary_intent'] = fr_pi
-
-                logger.info(f"[INTENT_LLM] Refined final requirements: {final_requirements}")
-
-            # Add final requirements to the response
-            intent_data["final_requirements"] = final_requirements
-            # ============= END OF NEW ADDITION =============
-
-            return {
-                "success": True,
-                "query": query,
-                "user_id": user_id,
-                "intent_analysis": intent_data,
-                "processing_time": "enhanced_analysis_complete"
-            }
-        
-        else:
-            return {
-                "success": False,
-                "error": "No response from AI service",
-                "query": query,
-                "user_id": user_id
-            }
-            
-    except json.JSONDecodeError as e: # type: ignore
-        logger.error(f"JSON parsing error in query intent analysis: {e}")
-        return {
-            "success": False,
-            "error": f"Failed to parse AI response: {str(e)}",
-            "query": query,
-            "raw_response": ai_response if 'ai_response' in locals() else None # type: ignore
-        }
-        
-    except Exception as e:
-        logger.error(f"Error in enhanced query intent analysis: {e}")
-        return {
-            "success": False,
-            "error": f"Intent analysis failed: {str(e)}",
-            "query": query,
-            "user_id": user_id
-        }
+#             "query": query,
+#             "user_id": user_id
+#         }
 
 @app.post("/bulk-upload-resumes")
 async def bulk_upload_resumes(files: List[UploadFile] = File(...), user_id: Optional[str] = Form(None)):
@@ -1987,7 +1770,7 @@ async def bulk_upload_resumes(files: List[UploadFile] = File(...), user_id: Opti
                     "role_category": getattr(resume_data.role_classification, 'primary_category', None) if getattr(resume_data, 'role_classification', None) else None,
                     "seniority": getattr(resume_data.role_classification, 'seniority', None) if getattr(resume_data, 'role_classification', None) else None,
                     "best_role": getattr(resume_data, 'best_role', None),
-                    "summary": getattr(resume_data, 'summary', None),
+                    "summary": getattr(resume_data, 'summary', ''),
                     "recommended_roles": getattr(resume_data, 'recommended_roles', []),
                     "work_history": safe_work_history,
                     "current_employment": safe_current_employment,
@@ -1997,7 +1780,8 @@ async def bulk_upload_resumes(files: List[UploadFile] = File(...), user_id: Opti
                     "original_filename": file.filename,
                     "extraction_statistics": safe_extraction_statistics,
                     "upload_timestamp": upload_timestamp,
-                    "owner_user_id": user_id
+                    "owner_user_id": user_id,
+                    "is_shortlisted": False  # Initialize as not shortlisted
                 }
 
                 # Create embedding and store in Qdrant (same as single upload)
@@ -2023,7 +1807,7 @@ async def bulk_upload_resumes(files: List[UploadFile] = File(...), user_id: Opti
                         except Exception as e:
                             logger.info(f"[PG] Skipped mirroring to Postgres (bulk): {e}")
                     except Exception as e:
-                        logger.error(f"❌ Failed to store resume {i+1} in Qdrant: {e}")
+                        logger.error(f"❌ Failed to store in Qdrant: {e}")
                         # Continue without failing the request
 
                 # Success - prepare simplified response data
@@ -2199,13 +1983,10 @@ async def bulk_upload_folder(
             payload = {
                 "user_id": getattr(resume_data, 'user_id', None),
                 "name": getattr(resume_data, 'name', None),
-                "name_lc": (getattr(resume_data, 'name', '') or '').strip().lower(),
                 "email": getattr(resume_data, 'email', None),
-                "email_lc": (getattr(resume_data, 'email', '') or '').strip().lower(),
-                "phone": getattr(resume_data, 'phone', ''),
-                "phone_digits": re.sub(r"\D", "", str(getattr(resume_data, 'phone', ''))) if getattr(resume_data, 'phone', None) else "",
+                "phone": getattr(resume_data, 'phone', None),
                 "location": getattr(resume_data, 'location', None),
-                "linkedin_url": getattr(resume_data, 'linkedin_url', ''),
+                "linkedin_url": getattr(resume_data, 'linkedin_url', None),
                 "current_position": getattr(resume_data, 'current_position', None),
                 "skills": getattr(resume_data, 'skills', []),
                 "total_experience": getattr(resume_data, 'total_experience', None),
@@ -2222,7 +2003,8 @@ async def bulk_upload_folder(
                 "original_filename": path.name,
                 "extraction_statistics": safe_extraction_statistics,
                 "upload_timestamp": upload_timestamp,
-                "owner_user_id": user_id
+                "owner_user_id": user_id,
+                "is_shortlisted": False  # Initialize as not shortlisted
             }
 
             # Create embedding and store in Qdrant
@@ -2481,7 +2263,6 @@ async def assign_owner_all(
 
 
 
-
 def _rerank_with_role_matching(results: List[Dict], parsed_query, search_processor, has_location_filter: bool = False) -> List[Dict]:
     """Re-rank semantic search results based on role relevance and comprehensive scoring."""
     if not results:
@@ -2735,10 +2516,11 @@ def _format_search_results(results: List[Dict], parsed_query) -> List[Dict]:
 
         # Location match reason
         if parsed_query.location:
-            candidate_location = payload.get('location', '').lower()
-            query_location = parsed_query.location.lower()
-            if query_location in candidate_location or candidate_location in query_location:
-                detailed_explanations.append(f"📍 Location match: Candidate is in {payload.get('location', 'Unknown')}, matches query requirement for {parsed_query.location}")
+            candidate_location = payload.get('location', '')
+            query_location = parsed_query.location
+            if candidate_location and query_location:
+                if candidate_location in query_location or query_location in candidate_location:
+                    reasons.append(f"Location: {candidate_location} matches {query_location}")
 
         # Company match reason - PRIORITY
         if parsed_query.companies:
@@ -2775,7 +2557,7 @@ def _format_search_results(results: List[Dict], parsed_query) -> List[Dict]:
                 role_phrase = f" as {current_title}" if current_title else ""
                 detailed_explanations.insert(
                     0,
-                    f"🏢 Company Match: Experience{role_phrase} at {matched_company} aligns with your request for {matched_query_company}"
+                    f"Company Match: Experience{role_phrase} at {matched_company} aligns with your request for {matched_query_company}"
                 )
 
         # Detailed role matching explanation
@@ -2791,15 +2573,15 @@ def _format_search_results(results: List[Dict], parsed_query) -> List[Dict]:
 
             # Detailed role matching logic
             if role_sector and role_sector.lower() in role_category.lower():
-                role_explanations.append(f"🎯 Perfect sector match: Query '{detected_role}' belongs to '{role_sector}' sector, candidate's role category is '{role_category}'")
+                role_explanations.append(f"Perfect sector match: Query '{detected_role}' belongs to '{role_sector}' sector, candidate's role category is '{role_category}'")
             elif detected_role.lower() in current_position.lower():
-                role_explanations.append(f"🎯 Direct position match: Query role '{detected_role}' found in candidate's current position '{current_position}'")
+                role_explanations.append(f"Direct position match: Query role '{detected_role}' found in candidate's current position '{current_position}'")
             elif any(variation.lower() in current_position.lower() for variation in role_variations if variation):
                 matching_variation = next(var for var in role_variations if var and var.lower() in current_position.lower())
-                role_explanations.append(f"🎯 Role variation match: '{matching_variation}' (variation of {detected_role}) found in position '{current_position}'")
+                role_explanations.append(f"Role variation match: '{matching_variation}' (variation of {detected_role}) found in position '{current_position}'")
             elif role_category and role_category != 'Unknown':
                 # Semantic/related role match
-                role_explanations.append(f"🔄 Related field match: Query '{detected_role}' is similar to candidate's '{role_category}' category")
+                role_explanations.append(f"Related field match: Query '{detected_role}' is similar to candidate's '{role_category}' category")
 
         # Check work history for detailed experience matching
         work_history = payload.get('work_history', [])
@@ -2817,12 +2599,12 @@ def _format_search_results(results: List[Dict], parsed_query) -> List[Dict]:
 
                     # Check for direct role match in job title
                     if detected_role.lower() in job_title:
-                        experience_explanations.append(f"💼 Direct role experience: Previous role '{job.get('title', '')}' at {company} directly matches query '{detected_role}'")
+                        experience_explanations.append(f"Direct role experience: Previous role '{job.get('title', '')}' at {company} directly matches query '{detected_role}'")
                         break
                     # Check for role variations in job title
                     elif any(var.lower() in job_title for var in role_variations if var and len(var) > 3):
                         matching_var = next(var for var in role_variations if var and len(var) > 3 and var.lower() in job_title)
-                        experience_explanations.append(f"💼 Related role experience: Previous role '{job.get('title', '')}' at {company} contains '{matching_var}', related to query '{detected_role}'")
+                        experience_explanations.append(f"Related role experience: Previous role '{job.get('title', '')}' at {company} contains '{matching_var}', related to query '{detected_role}'")
                         break
 
         # Combine role explanations
@@ -2878,13 +2660,13 @@ def _format_search_results(results: List[Dict], parsed_query) -> List[Dict]:
 
             # Create detailed skill explanations
             if direct_skill_matches:
-                skill_explanations.append(f"🔧 Direct skills match: {', '.join(direct_skill_matches)} listed in candidate's skills")
+                skill_explanations.append(f"Direct skills match: {', '.join(direct_skill_matches)} listed in candidate's skills")
 
             if work_skill_matches:
-                skill_explanations.append(f"💻 Work experience skills: {work_skill_matches[0]}")  # Show top work skill match
+                skill_explanations.append(f"Work experience skills: {work_skill_matches[0]}")  # Show top work skill match
 
             if project_skill_matches:
-                skill_explanations.append(f"🚀 Project skills: {project_skill_matches[0]}")  # Show top project skill match
+                skill_explanations.append(f"Project skills: {project_skill_matches[0]}")  # Show top project skill match
 
             if skill_explanations:
                 detailed_explanations.extend(skill_explanations[:2])  # Show top 2 skill explanations
@@ -3438,8 +3220,7 @@ async def search_resumes_intent_based(
                                 break
                     else:
                         req_location = str(location_requirements).lower()
-                        if req_location in candidate_location or candidate_location in req_location:
-                            location_match = True
+                        location_match = req_location in candidate_location or candidate_location in req_location
 
                     criteria_matches.append(("location", location_match, True))
 
@@ -3470,6 +3251,284 @@ async def search_resumes_intent_based(
                 # Name filtering (exact or substring match)
                 name_requirements = qdrant_filters.get('name')
                 if name_requirements:
+                    candidate_name = str(payload.get('name', '')).lower().strip()
+                    name_match = False
+
+                    for req_name in _normalize_filter_values(name_requirements):
+                        if req_name and req_name in candidate_name:
+                            name_match = True
+                            break
+
+                    criteria_matches.append(("name", name_match, True))
+
+                    if not name_match:
+                        logger.info(f"dYs_ Name mismatch for {payload.get('name', 'Unknown')} - does not contain required name '{name_requirements}'")
+
+                # Email filtering (exact match)
+                email_requirements = qdrant_filters.get('email')
+                if email_requirements:
+                    candidate_email = str(payload.get('email', '')).lower().strip()
+                    email_match = False
+
+                    for req_email in _normalize_filter_values(email_requirements):
+                        if req_email and req_email == candidate_email:
+                            email_match = True
+                            break
+
+                    criteria_matches.append(("email", email_match, True))
+
+                    if not email_match:
+                        logger.info(f"dYs_ Email mismatch for {payload.get('name', 'Unknown')} - email '{candidate_email}' doesn't match '{email_requirements}'")
+
+                # Phone filtering (elastic digits-only match)
+                phone_requirements = qdrant_filters.get('phone')
+                if phone_requirements:
+                    candidate_phone = str(payload.get('phone', '')).strip()
+                    candidate_phone_digits = _digits_only(candidate_phone)
+                    phone_match = False
+
+                    for req_phone in _normalize_filter_values(phone_requirements):
+                        req_digits = _digits_only(req_phone)
+                        if _phone_digits_match(candidate_phone_digits, req_digits):
+                            phone_match = True
+                            break
+
+                    criteria_matches.append(("phone", phone_match, True))
+
+                    if not phone_match:
+                        logger.info(f"dYs_ Phone mismatch for {payload.get('name', 'Unknown')} - phone '{candidate_phone}' doesn't match '{phone_requirements}'")
+
+                # Role category filtering (flexible matching with LLM semantic similarity)
+                role_category_requirements = qdrant_filters.get('role_category')
+                if role_category_requirements:
+                    candidate_role_category = payload.get('role_category', '').lower()
+                    category_match = False
+
+                    if isinstance(role_category_requirements, list):
+                        for req_category in role_category_requirements:
+                            # First try exact matching
+                            if req_category.lower() in candidate_role_category or candidate_role_category in req_category.lower():
+                                category_match = True
+                                break
+                            # Then try LLM semantic matching for better accuracy
+                            try:
+                                if await _llm_semantic_similarity(req_category, candidate_role_category):
+                                    category_match = True
+                                    break
+                            except:
+                                # Fallback to basic matching if LLM fails
+                                pass
+                    else:
+                        req_category = str(role_category_requirements).lower()
+                        # First try exact matching
+                        if req_category in candidate_role_category or candidate_role_category in req_category:
+                            category_match = True
+                        # Then try LLM semantic matching
+                        else:
+                            try:
+                                if await _llm_semantic_similarity(req_category, candidate_role_category):
+                                    category_match = True
+                            except:
+                                # Fallback if LLM fails
+                                pass
+
+                    criteria_matches.append(("role_category", category_match, True))
+
+                    if not category_match:
+                        logger.info(f"🚫 Role category mismatch for {payload.get('name', 'Unknown')} - '{candidate_role_category}' doesn't match '{role_category_requirements}'")
+
+                # Skills filtering (flexible matching)
+                skills_requirements = qdrant_filters.get('skills')
+                if skills_requirements:
+                    candidate_skills = [s.lower() for s in payload.get('skills', [])]
+
+                    if isinstance(skills_requirements, list):
+                        required_skills = [skill.lower() for skill in skills_requirements]
+                        matched_skills = []
+
+                        # Check each required skill
+                        for req_skill in required_skills:
+                            skill_found = any(req_skill in cand_skill for cand_skill in candidate_skills)
+                            matched_skills.append(skill_found)
+
+                        # For skills, we track individual skill matches
+                        for i, req_skill in enumerate(required_skills):
+                            criteria_matches.append((f"skill_{req_skill}", matched_skills[i], True))
+
+                        # Overall skills match logic
+                        total_matched = sum(matched_skills)
+                        skills_match = total_matched == len(required_skills)  # Default: ALL skills required
+
+                        if not skills_match:
+                            missing_skills = [req_skill for i, req_skill in enumerate(required_skills) if not matched_skills[i]]
+                            logger.info(f"🚫 Skills mismatch for {payload.get('name', 'Unknown')} - missing: {', '.join(missing_skills)}")
+
+                    else:
+                        req_skill = str(skills_requirements).lower()
+                        skills_match = any(req_skill in cand_skill for cand_skill in candidate_skills)
+                        criteria_matches.append((f"skill_{req_skill}", skills_match, True))
+
+                        if not skills_match:
+                            logger.info(f"🚫 Skills mismatch for {payload.get('name', 'Unknown')} - missing: {req_skill}")
+
+                # Company filtering (flexible matching)
+                company_requirements = qdrant_filters.get('company')
+                if company_requirements:
+                    candidate_companies = [c.lower() for c in _extract_candidate_companies(payload)]
+                    company_match = False
+
+                    if isinstance(company_requirements, list):
+                        for req_company in company_requirements:
+                            if any(req_company.lower() in cand_company or cand_company in req_company.lower()
+                                  for cand_company in candidate_companies):
+                                company_match = True
+                                break
+                    else:
+                        req_company = str(company_requirements).lower()
+                        company_match = any(req_company in cand_company or cand_company in req_company
+                                          for cand_company in candidate_companies)
+
+                    criteria_matches.append(("company", company_match, True))
+
+                    if not company_match:
+                        logger.info(f"🚫 Company mismatch for {payload.get('name', 'Unknown')} - companies: {candidate_companies}, required: {company_requirements}")
+
+                # Education filtering (flexible matching)
+                education_requirements = qdrant_filters.get('education_level') or qdrant_filters.get('field_of_study') or qdrant_filters.get('institution')
+                if education_requirements:
+                    education_info = _extract_education_info(payload)
+                    education_match = False
+
+                    # Check education level
+                    education_level_req = qdrant_filters.get('education_level')
+                    if education_level_req:
+                        candidate_edu_level = education_info['education_level'].lower()
+                        if isinstance(education_level_req, list):
+                            education_match = any(req.lower() in candidate_edu_level for req in education_level_req)
+                        else:
+                            education_match = str(education_level_req).lower() in candidate_edu_level
+
+                    # Check field of study
+                    field_of_study_req = qdrant_filters.get('field_of_study')
+                    if field_of_study_req and not education_match:
+                        candidate_field = education_info['education_field'].lower()
+                        if isinstance(field_of_study_req, list):
+                            education_match = any(req.lower() in candidate_field for req in field_of_study_req)
+                        else:
+                            education_match = str(field_of_study_req).lower() in candidate_field
+
+                    # Check institution
+                    institution_req = qdrant_filters.get('institution')
+                    if institution_req and not education_match:
+                        candidate_institution = education_info['university'].lower()
+                        if isinstance(institution_req, list):
+                            education_match = any(req.lower() in candidate_institution for req in institution_req)
+                        else:
+                            education_match = str(institution_req).lower() in candidate_institution
+
+                    criteria_matches.append(("education", education_match, True))
+
+                    if not education_match:
+                        logger.info(f"🚫 Education mismatch for {payload.get('name', 'Unknown')} - education: {education_info}, required: {education_requirements}")
+
+                # Final decision: Apply strict vs non-strict matching logic
+                should_exclude = should_exclude_candidate(criteria_matches, strict_matching, result.get('score', 0.0))
+
+                if not should_exclude:
+                    filtered_results.append(result)
+                else:
+                    # Log exclusion reason
+                    failed_criteria = [match[0] for match in criteria_matches if not match[1]]
+                    matching_mode = "strict" if strict_matching else "non-strict"
+                    logger.info(f"🚫 Excluding {payload.get('name', 'Unknown')} ({matching_mode} mode) - failed criteria: {', '.join(failed_criteria)}")
+
+            logger.info(f"🎯 Post-retrieval filtering: {len(results)} → {len(filtered_results)} candidates")
+            results = filtered_results
+
+        # Helper function to generate selection reasons
+        async def generate_selection_reason(payload: Dict[str, Any], match_details: Dict[str, bool], qdrant_filters: Dict[str, Any], search_keywords: List[str]) -> str:
+            """Generate a detailed explanation of why this candidate was selected."""
+            candidate_name = payload.get('name', 'Unknown')
+            candidate_role = payload.get('current_position', 'Unknown')
+            candidate_location = payload.get('location', 'Unknown')
+
+            logger.info(f"[REASON_DEBUG] =========================")
+            logger.info(f"[REASON_DEBUG] Generating selection reason for: {candidate_name}")
+            logger.info(f"[REASON_DEBUG] Candidate role: {candidate_role}")
+            logger.info(f"[REASON_DEBUG] Candidate location: {candidate_location}")
+            logger.info(f"[REASON_DEBUG] Search keywords provided: {search_keywords}")
+            logger.info(f"[REASON_DEBUG] Qdrant filters applied: {list(qdrant_filters.keys()) if qdrant_filters else 'None'}")
+            logger.info(f"[REASON_DEBUG] Match details flags: {match_details}")
+            logger.info(f"[REASON_DEBUG] =========================")
+
+            # Validate inputs
+            if not search_keywords:
+                logger.warning(f"[REASON_DEBUG] WARNING: No search keywords provided for reason generation!")
+            if not qdrant_filters:
+                logger.warning(f"[REASON_DEBUG] WARNING: No qdrant filters provided for reason generation!")
+            if not any(match_details.values()):
+                logger.warning(f"[REASON_DEBUG] WARNING: No match details flags are True - this may indicate semantic-only matching!")
+
+            reasons = []
+
+            # Identifier matches first for clarity
+            email_req = qdrant_filters.get('email')
+            if email_req and match_details.get('email_match'):
+                candidate_email = payload.get('email', 'Unknown')
+                if candidate_email:
+                    reasons.append(f"📧 Exact email match: {candidate_email}")
+
+            phone_req = qdrant_filters.get('phone')
+            if phone_req and match_details.get('phone_match'):
+                candidate_phone = payload.get('phone', 'Unknown')
+                if candidate_phone:
+                    reasons.append(f"📞 Exact phone match: {candidate_phone}")
+
+            name_req = qdrant_filters.get('name')
+            if name_req and match_details.get('name_match'):
+                candidate_full_name = payload.get('name', 'Unknown')
+                req_name_display = name_req[0] if isinstance(name_req, list) and name_req else str(name_req)
+                reasons.append(f"🧑 Name match: '{candidate_full_name}' matches requested '{req_name_display}'")
+
+            # Location match
+            if match_details.get('location_match'):
+                candidate_location = payload.get('location', 'Unknown')
+                req_locations = qdrant_filters.get('location', [])
+                if isinstance(req_locations, list):
+                    location_text = ', '.join(req_locations)
+                else:
+                    location_text = str(req_locations)
+                reasons.append(f"🗺️ Location match: Located in '{candidate_location}' (matches requirement: {location_text})")
+
+            # Experience match
+            if match_details.get('experience_match'):
+                candidate_exp = payload.get('total_experience', 'Unknown')
+                min_exp = qdrant_filters.get('min_experience')
+                max_exp = qdrant_filters.get('max_experience')
+                if min_exp is not None:
+                    reasons.append(f"📅 Experience match: {candidate_exp} experience (meets minimum {min_exp} years requirement)")
+                elif max_exp is not None:
+                    reasons.append(f"📅 Experience match: {candidate_exp} experience (within maximum {max_exp} years limit)")
+
+            # Role/Position match
+            if match_details.get('role_match'):
+                candidate_role = payload.get('current_position', 'Unknown')
+                job_titles = qdrant_filters.get('job_title', [])
+                role_categories = qdrant_filters.get('role_category', [])
+                if job_titles:
+                    job_title_text = ', '.join(job_titles) if isinstance(job_titles, list) else str(job_titles)
+                    reasons.append(f"💼 Role match: Current position '{candidate_role}' aligns with requirement: {job_title_text}")
+                if role_categories:
+                    category_text = ', '.join(role_categories) if isinstance(role_categories, list) else str(role_categories)
+                    role_category = payload.get('role_category', 'Unknown')
+                    reasons.append(f"🎯 Category match: Role category '{role_category}' matches: {category_text}")
+
+            # Skills match
+            if match_details.get('skills_match'):
+                candidate_skills = payload.get('skills', [])
+                required_skills = qdrant_filters.get('skills', [])
+                if isinstance(required_skills, list):
+                    matched_skills = []
                     candidate_name = str(payload.get('name', '')).lower().strip()
                     name_match = False
 
@@ -4206,22 +4265,41 @@ async def search_resumes_intent_based(
         search_keywords = final_requirements.get("search_keywords", [])
         logger.info(f"[REASON_DEBUG] Extracted search keywords for reason generation: {search_keywords}")
 
+        # Get shortlist status for all results
+        resume_ids = [str(result.get('id')) for result in results]
+        shortlist_status_map = {}
+        if resume_ids:
+            try:
+                # Query shortlist status for all resume IDs
+                placeholders = ', '.join(f'${i+1}' for i in range(len(resume_ids)))
+                sql = f"SELECT id, is_shortlisted FROM public.qdrant_resumes WHERE id IN ({placeholders})"
+                async with pg_client._pool.acquire() as conn:
+                    rows = await conn.fetch(sql, *resume_ids)
+                    shortlist_status_map = {str(row['id']): row['is_shortlisted'] for row in rows}
+            except Exception as e:
+                logger.warning(f"Could not fetch shortlist status: {e}")
+
         formatted_results = []
         for result in results:
             payload = result.get('payload', {})
             education_info = _extract_education_info(payload)
             match_details = result.get('match_details', {})
 
+            # Get shortlist status
+            resume_id = str(result.get('id'))
+            is_shortlisted = shortlist_status_map.get(resume_id, False)
+
             # Generate selection reason
             logger.info(f"[REASON_DEBUG] About to generate selection reason for candidate {result.get('id')} (Score: {result.get('score', 0):.3f})")
             logger.info(f"[REASON_DEBUG] Passing parameters - Keywords: {len(search_keywords)} items, Filters: {len(qdrant_filters)} types, Match flags: {sum(match_details.values())}/{len(match_details)} true")
 
-            selection_reason = generate_selection_reason(payload, match_details, qdrant_filters, search_keywords)
+            selection_reason = await generate_selection_reason(payload, match_details, qdrant_filters, search_keywords)
 
             formatted_result = {
                 'id': result.get('id'),
                 'score': result.get('score', 0),
                 'intent_score': result.get('intent_score', 0),
+                'is_shortlisted': is_shortlisted,
                 'candidate': {
                     'name': payload.get('name', 'N/A'),
                     'email': payload.get('email', 'N/A'),
@@ -4395,6 +4473,207 @@ async def get_resume(user_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# --- Shortlisting Endpoints ---
+
+@app.get("/resumes/shortlisted", summary="Get Shortlisted Candidates", tags=["Shortlist"])
+async def get_shortlisted_resumes(user_id: str):
+    """Retrieve all shortlisted resumes for a specific user."""
+    if not user_id:
+        raise HTTPException(status_code=400, detail="user_id is required.")
+    
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="Database connection failed.")
+    
+    try:
+        shortlisted = await pg_client.get_shortlisted_resumes(user_id)
+        return JSONResponse(content={"shortlisted_candidates": shortlisted}, status_code=200)
+    except Exception as e:
+        logger.error(f"Failed to get shortlisted resumes for user {user_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Could not retrieve shortlisted candidates.")
+
+@app.patch("/resumes/{resume_id}/shortlist", summary="Update Shortlist Status", tags=["Shortlist"])
+async def update_shortlist_status(resume_id: uuid.UUID, payload: ShortlistUpdate):
+    """Update the shortlist status of a single resume."""
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="Database connection failed.")
+    
+    try:
+        success = await pg_client.update_shortlist_status(resume_id, payload.is_shortlisted)
+        if not success:
+            raise HTTPException(status_code=404, detail="Resume not found.")
+        return JSONResponse(content={"message": "Shortlist status updated successfully.", "is_shortlisted": payload.is_shortlisted}, status_code=200)
+    except Exception as e:
+        logger.error(f"Failed to update shortlist status for resume {resume_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Could not update shortlist status.")
+
+# --- Interview Question CRUD Endpoints ---
+
+@app.post("/users/{user_id}/questions", response_model=InterviewQuestionInDB, status_code=201, summary="Create Interview Question", tags=["Interviews"])
+async def create_interview_question(user_id: str, question: InterviewQuestionCreate):
+    """Create a new custom interview question for a user."""
+    if user_id != question.user_id:
+        raise HTTPException(status_code=403, detail="User ID mismatch.")
+    
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="Database connection failed.")
+    
+    try:
+        # Convert Pydantic model to dictionary
+        question_data = question.model_dump()
+        new_question = await pg_client.create_interview_question(question_data)
+        if not new_question:
+            raise HTTPException(status_code=500, detail="Failed to create question.")
+        return new_question
+    except Exception as e:
+        logger.error(f"Failed to create interview question for user {user_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Could not create interview question.")
+
+@app.get("/users/{user_id}/questions", response_model=List[InterviewQuestionInDB], summary="Get All Interview Questions", tags=["Interviews"])
+async def get_interview_questions(user_id: str):
+    """Retrieve all custom interview questions for a user."""
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="Database connection failed.")
+    
+    try:
+        questions = await pg_client.get_interview_questions(user_id)
+        return questions
+    except Exception as e:
+        logger.error(f"Failed to get interview questions for user {user_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Could not retrieve interview questions.")
+
+@app.put("/questions/{question_id}", response_model=InterviewQuestionInDB, summary="Update Interview Question", tags=["Interviews"])
+async def update_interview_question(question_id: uuid.UUID, question_update: InterviewQuestionUpdate):
+    """Update an existing interview question."""
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="Database connection failed.")
+
+    try:
+        # Convert Pydantic model to dictionary
+        update_data = question_update.model_dump(exclude_unset=True)
+        updated_question = await pg_client.update_interview_question(question_id, update_data)
+        if not updated_question:
+            raise HTTPException(status_code=404, detail="Question not found.")
+        return updated_question
+    except Exception as e:
+        logger.error(f"Failed to update interview question {question_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Could not update interview question.")
+
+@app.delete("/questions/{question_id}", status_code=204, summary="Delete Interview Question", tags=["Interviews"])
+async def delete_interview_question(question_id: uuid.UUID):
+    """Delete an interview question."""
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="Database connection failed.")
+
+    try:
+        success = await pg_client.delete_interview_question(question_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Question not found.")
+        return None  # No content response
+    except Exception as e:
+        logger.error(f"Failed to delete interview question {question_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Could not delete interview question.")
+
+# --- Interview Response Endpoints ---
+
+@app.post("/users/{user_id}/interview-responses", response_model=dict, status_code=201, summary="Save Interview Response", tags=["Interviews"])
+async def save_interview_response(
+    user_id: str,
+    question_id: str = Form(...),
+    answer_text: Optional[str] = Form(None),
+    audio_file: Optional[UploadFile] = File(None),
+    audio_duration: Optional[float] = Form(None),
+    response_time_seconds: Optional[float] = Form(None)
+):
+    """Save an interview response (text and/or audio)."""
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="Database connection failed.")
+
+    try:
+        # Validate question exists and belongs to user
+        question_uuid = uuid.UUID(question_id)
+        question = await pg_client.get_interview_question(question_uuid)
+        if not question or question['user_id'] != user_id:
+            raise HTTPException(status_code=404, detail="Question not found or access denied.")
+
+        audio_file_path = None
+        if audio_file:
+            # Save audio file
+            audio_dir = Path(settings.app.upload_dir) / "interview_audio"
+            audio_dir.mkdir(exist_ok=True)
+            
+            file_extension = Path(audio_file.filename).suffix.lower() if audio_file.filename else ".wav"
+            audio_filename = f"{user_id}_{question_id}_{uuid.uuid4()}{file_extension}"
+            audio_file_path = audio_dir / audio_filename
+            
+            with open(audio_file_path, "wb") as f:
+                content = await audio_file.read()
+                f.write(content)
+
+        # Save response to database
+        response_id = await pg_client.save_interview_response(
+            user_id=user_id,
+            question_id=question_uuid,
+            answer_text=answer_text,
+            audio_file_path=str(audio_file_path) if audio_file_path else None,
+            audio_duration=audio_duration,
+            response_time_seconds=response_time_seconds
+        )
+
+        return {
+            "success": True,
+            "response_id": response_id,
+            "message": "Interview response saved successfully"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to save interview response for user {user_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Could not save interview response.")
+
+# --- Call Initiation Endpoint ---
+
+@app.post("/interviews/call", response_model=CallRecord, status_code=201, summary="Initiate an Interview Call", tags=["Interviews"])
+async def initiate_interview_call(call_request: CallInitiationRequest):
+    """
+    Initiates an interview call for a shortlisted candidate.
+    This is a placeholder and will log the call attempt.
+    """
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="Database connection failed.")
+
+    # Check if the candidate is shortlisted before allowing a call
+    is_shortlisted = await pg_client.get_shortlist_status(call_request.resume_id)
+    if not is_shortlisted:
+        raise HTTPException(status_code=403, detail="Cannot initiate a call for a candidate who is not shortlisted.")
+
+    logger.info(f"Initiating call for resume_id: {call_request.resume_id} by user_id: {call_request.user_id}")
+    
+    # In a real-world scenario, you would integrate with a service like Twilio here.
+    # For now, we will just log the call to our database.
+    try:
+        call_record = await pg_client.log_interview_call(
+            resume_id=call_request.resume_id,
+            user_id=call_request.user_id,
+            status="initiated",
+            notes=call_request.notes
+        )
+        if not call_record:
+            raise HTTPException(status_code=500, detail="Failed to log the call initiation.")
+        
+        return call_record
+    except Exception as e:
+        logger.error(f"Error initiating call for resume {call_request.resume_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Could not initiate the call.")
+
 if __name__ == "__main__":
     import uvicorn
 
@@ -4418,7 +4697,7 @@ async def get_all_resumes(
     role_category: Optional[str] = None,
     company: Optional[str] = None,
     user_id: Optional[str] = Query(None, description="Return resumes owned by this user_id only"),
-    admin_view: bool = Query(False, description="If true, ignore user_id and return all resumes"),
+    admin_view: bool = Query(True, description="If true, ignore user_id and return all resumes"),  # Changed default to True for development
     order_by: str = "-created_at",
 ):
     """Return paginated list of resumes from PostgreSQL mirror (qdrant_resumes).
@@ -4427,7 +4706,8 @@ async def get_all_resumes(
     - page (1-based), page_size (max 100)
     - search (applies to name, current_position, summary, location, email)
     - name, email, location, job_title, role_category (ILIKE filters)
-    - user_id: REQUIRED. Only resumes with owner_user_id == user_id are returned
+    - user_id: Optional. Only resumes with owner_user_id == user_id are returned if provided
+    - admin_view: Defaults to true for development - returns all resumes if true, filters by user_id if false
     - order_by: one of created_at|embedding_generated_at|upload_timestamp|name|current_position with optional '-' prefix for DESC
     """
     # Normalize pagination
@@ -4448,7 +4728,7 @@ async def get_all_resumes(
         owner_user_id = None
     else:
         if not user_id:
-            raise HTTPException(status_code=400, detail="user_id is required unless admin_view=true")
+            raise HTTPException(status_code=400, detail="user_id is required when admin_view=false")
         owner_user_id = user_id
 
     total, items = await pg_client.list_resumes(

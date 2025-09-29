@@ -12,7 +12,7 @@ qdrant-client==1.15.1          # Qdrant vector database
 # Resume Parsing
 PyMuPDF==1.23.8               # PDF parsing (fitz)
 python-docx==0.8.11           # DOC/DOCX parsing
-python-magic==0.4.27          # File type detection
+# python-magic removed - using mimetypes from stdlib for Windows compatibility
 
 # AI & Embeddings (Azure OpenAI)
 openai==1.51.2                # OpenAI API for embeddings and parsing

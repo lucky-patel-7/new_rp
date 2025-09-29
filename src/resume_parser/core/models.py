@@ -5,6 +5,7 @@ Core data models for the resume parser.
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timezone
 from pydantic import BaseModel, Field
+import uuid
 
 
 class WorkExperience(BaseModel):
@@ -133,3 +134,59 @@ class ProcessingResult(BaseModel):
     error_message: Optional[str] = Field(None, description="Error message if failed")
     processing_time: Optional[float] = Field(None, description="Processing time in seconds")
     embedding_id: Optional[str] = Field(None, description="Qdrant vector ID")
+
+
+
+# --- Models for New Features ---
+
+class ShortlistUpdate(BaseModel):
+    """Model for updating the shortlist status of a resume."""
+    is_shortlisted: bool
+
+
+class InterviewQuestionBase(BaseModel):
+    """Base model for an interview question."""
+    user_id: str = Field(..., description="The ID of the user creating the question.")
+    question_text: str = Field(..., max_length=1000, description="The text of the interview question.")
+    category: Optional[str] = Field(None, max_length=100, description="A category for the question (e.g., 'Technical', 'Behavioral').")
+
+
+class InterviewQuestionCreate(InterviewQuestionBase):
+    """Model for creating a new interview question."""
+    pass
+
+
+class InterviewQuestionUpdate(BaseModel):
+    """Model for updating an existing interview question. All fields are optional."""
+    question_text: Optional[str] = Field(None, max_length=1000, description="The updated text of the interview question.")
+    category: Optional[str] = Field(None, max_length=100, description="The updated category for the question.")
+
+
+class InterviewQuestionInDB(InterviewQuestionBase):
+    """Model representing an interview question as stored in the database."""
+    id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class CallInitiationRequest(BaseModel):
+    """Model for a request to initiate an interview call."""
+    resume_id: uuid.UUID = Field(..., description="The ID of the resume/candidate to call.")
+    user_id: str = Field(..., description="The ID of the user initiating the call.")
+    notes: Optional[str] = Field(None, description="Optional notes for the call.")
+
+
+class CallRecord(BaseModel):
+    """Model representing a logged interview call as stored in the database."""
+    id: uuid.UUID
+    resume_id: uuid.UUID
+    user_id: str
+    call_status: str
+    initiated_at: datetime
+    notes: Optional[str] = None
+
+    class Config:
+        from_attributes = True
