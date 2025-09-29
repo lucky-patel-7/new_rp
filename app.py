@@ -2867,27 +2867,17 @@ async def search_resumes_intent_based(
                 detail="No final requirements extracted from query"
             )
 
-        logger.info("Final requirements extracted: %s", final_requirements)
+        logger.info(f"📋 Final requirements extracted: {final_requirements}")
 
-        search_strategy = (
-            final_requirements.get("search_strategy")
-            or intent_data.get("search_strategy")
-            or {}
-        )
-        extracted_components = intent_data.get("extracted_components", {})
-        has_component_requirements = any(
-            isinstance(component, dict) and component.get("has_requirement")
-            for component in extracted_components.values()
-        )
+        search_strategy = final_requirements.get("search_strategy", {})
         if (
             not final_requirements.get("qdrant_filters")
             and not final_requirements.get("search_keywords")
             and final_requirements.get("filter_count", 0) == 0
-            and not has_component_requirements
-            and search_strategy.get("primary_intent") in (None, "unknown")
+            and search_strategy.get("primary_intent") == "unknown"
         ):
             logger.info(
-                "Intent analysis returned no actionable filters or keywords; skipping semantic search."
+                "Intent analysis returned unknown intent with no actionable filters; skipping semantic search."
             )
             return {
                 "success": True,
@@ -2896,7 +2886,7 @@ async def search_resumes_intent_based(
                 "total_results": 0,
                 "intent_analysis": {
                     "final_requirements": final_requirements,
-                    "filters_applied": final_requirements.get("qdrant_filters", {}),
+                    "filters_applied": {},
                     "search_strategy": search_strategy,
                 },
                 "results": [],
@@ -2912,7 +2902,7 @@ async def search_resumes_intent_based(
                     "filter_types_applied": [],
                     "search_approach": "semantic_only",
                     "margin": {"enabled": False, "ratio": None, "top_semantic_score": 0.0},
-                    "notes": "Intent analyzer returned no actionable criteria; search skipped.",
+                    "notes": "No actionable criteria were extracted from the query; nothing to search.",
                 },
             }
 
