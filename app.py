@@ -1,4 +1,4 @@
-"""
+﻿"""
 Main FastAPI application for Resume Parser.
 
 A modern, well-organized resume parsing API with comprehensive extraction capabilities.
@@ -1129,514 +1129,610 @@ async def manual_increment_user_resume_count(
         raise HTTPException(status_code=500, detail=f"Failed to increment resume count: {str(e)}")
 
 
-# Add this route to your app.py
+@app.post("/analyze-query-intent")
+async def analyze_query_intent(
+    query: str = Form(...),
+    user_id: Optional[str] = Form(None),
+) -> Dict[str, Any]:
+    """Enhanced query intent analyzer that prepares filters and keywords for downstream search."""
+    import json
+    import re
 
-# @app.post("/analyze-query-intent")
-# async def analyze_query_intent(query: str = Form(...)):
-#     """
-#     Enhanced query intent analyzer capable of handling very complex multi-dimensional queries.
-    
-#     Handles complex queries like:
-#     "I'm looking for Principal Software Architects with PhD in Computer Science from top universities 
-#     (Stanford, MIT, Carnegie Mellon), 10+ years experience, who have worked at FAANG companies 
-#     (Facebook, Apple, Amazon, Netflix, Google), know distributed systems, Kubernetes, Java, Go, 
-#     currently in Silicon Valley or willing to relocate to San Francisco"
-#     """
-    
-#     try:
-#         from src.resume_parser.clients.azure_openai import azure_client
-#         import json
-#         import re
-        
-#         client = azure_client.get_sync_client()
-#         chat_deployment = azure_client.get_chat_deployment()
-        
-#         # Enhanced prompt with better complex query handling
-#         enhanced_intent_prompt = f"""
-# You are an advanced query intent analyzer for a resume search system. Analyze this job search query and extract ALL components with high precision. Return ONLY a JSON object.
+    started = time.perf_counter()
+    normalized_query = (query or "").strip()
+    if not normalized_query:
+        return {
+            "success": False,
+            "error": "Query text is required for intent analysis.",
+            "query": query,
+            "user_id": user_id,
+        }
 
-# Query: "{query}"
+    ai_response: Optional[str] = None
+    intent_data: Dict[str, Any] = {}
+    used_llm = False
 
-# Extract and classify ALL components from this query. Be thorough and precise:
+    client = None
+    chat_deployment = None
+    try:
+        from src.resume_parser.clients.azure_openai import azure_client  # local import to avoid circular load
+        client = azure_client.get_sync_client()
+        chat_deployment = azure_client.get_chat_deployment()
+    except Exception as exc:
+        logger.info(f"[INTENT] Azure OpenAI client unavailable: {exc}")
+        client = None
+        chat_deployment = None
 
-# {{
-#     "query_metadata": {{
-#         "complexity_level": "simple|moderate|complex|very_complex",
-#         "query_type": "single_criteria|multi_criteria|comprehensive",
-#         "primary_intent": "education|role|skills|company|location|experience|hybrid",
-#         "secondary_intents": ["education", "role", "skills", "company", "location"],
-#         "confidence_score": 0.95,
-#         "intent_explanation": "Detailed explanation of the query structure and why this classification was chosen"
-#     }},
-    
-#     "extracted_components": {{
-#         "education_requirements": {{
-#             "has_requirement": true/false,
-#             "degree_levels": ["PhD", "Master's", "Bachelor's", "Associate"],
-#             "specific_degrees": ["PhD in Computer Science", "Master of Science", etc],
-#             "fields_of_study": ["Computer Science", "Engineering", "Data Science", etc],
-#             "institutions": ["Stanford University", "MIT", "Carnegie Mellon University", etc],
-#             "institution_tiers": ["top_tier", "ivy_league", "technical_schools"],
-#             "education_keywords": ["from top universities", "prestigious", etc]
-#         }},
-        
-#         "role_requirements": {{
-#             "has_requirement": true/false,
-#             "job_titles": ["Principal Software Architect", "Senior Engineer", etc],
-#             "role_levels": ["Principal", "Senior", "Lead", "Staff", "Director"],
-#             "role_categories": ["Engineering", "Management", "Technical", etc],
-#             "role_keywords": ["architect", "lead", "principal", etc]
-#         }},
-        
-#         "skill_requirements": {{
-#             "has_requirement": true/false,
-#             "technical_skills": ["distributed systems", "Kubernetes", "Java", "Go", "Python"],
-#             "frameworks": ["React", "Angular", "Spring", etc],
-#             "technologies": ["AWS", "Docker", "Microservices", etc],
-#             "domains": ["machine learning", "data science", "cybersecurity", etc],
-#             "skill_categories": ["programming", "architecture", "devops", "cloud"],
-#             "proficiency_indicators": ["expert", "advanced", "proficient"]
-#         }},
-        
-#         "company_requirements": {{
-#             "has_requirement": true/false,
-#             "specific_companies": ["Google", "Facebook", "Apple", "Amazon", "Netflix"],
-#             "company_groups": ["FAANG", "Big Tech", "Fortune 500"],
-#             "company_types": ["startup", "enterprise", "public", "private"],
-#             "company_sizes": ["large", "medium", "small"],
-#             "industry_sectors": ["technology", "finance", "healthcare", etc]
-#         }},
-        
-#         "experience_requirements": {{
-#             "has_requirement": true/false,
-#             "min_years": 10,
-#             "max_years": null,
-#             "specific_experience": ["10+ years", "5-8 years", etc],
-#             "experience_types": ["industry", "relevant", "total"],
-#             "seniority_levels": ["junior", "mid", "senior", "principal", "staff"]
-#         }},
-        
-#         "location_requirements": {{
-#             "has_requirement": true/false,
-#             "current_locations": ["Silicon Valley", "San Francisco", "New York"],
-#             "preferred_locations": ["San Francisco", "Bay Area"],
-#             "relocation_indicators": ["willing to relocate", "open to relocation"],
-#             "location_flexibility": "strict|flexible|remote_ok",
-#             "geographic_regions": ["West Coast", "East Coast", "US", "Global"]
-#         }},
-        
-#         "additional_criteria": {{
-#             "certifications": ["AWS Certified", "PMP", etc],
-#             "languages": ["English", "Spanish", etc],
-#             "work_authorization": ["US Citizen", "H1B", etc],
-#             "availability": ["immediate", "2 weeks notice", etc],
-#             "salary_expectations": "competitive|market_rate|specific_range",
-#             "work_preferences": ["remote", "hybrid", "on-site"]
-#         }}
-#     }},
-    
-#     "search_strategy": {{
-#         "recommended_approach": "education_first|role_first|skills_first|company_first|semantic_hybrid|multi_stage_filtering",
-#         "filtering_priority": ["education", "role", "experience", "skills", "company", "location"],
-#         "search_complexity": "single_pass|multi_pass|cascading_filters|ml_ranking",
-#         "expected_result_size": "very_small|small|medium|large",
-#         "fallback_strategies": ["relax_education", "expand_companies", "broader_location"]
-#     }},
-    
-#     "query_understanding": {{
-#         "key_constraints": ["PhD required", "FAANG experience", "10+ years", "specific skills"],
-#         "optional_preferences": ["Silicon Valley", "relocation flexibility"],
-#         "deal_breakers": ["education_level", "experience_minimum"],
-#         "negotiable_items": ["specific_location", "company_size"],
-#         "query_ambiguities": ["definition of top universities", "distributed systems scope"]
-#     }}
-# }}
+    if client and chat_deployment:
+        try:
+            enhanced_intent_prompt = f"""
+You are an advanced query intent analyzer for a resume search system. Analyze this job search query and extract ALL components with high precision. Return ONLY a JSON object.
 
-# IMPORTANT EXTRACTION RULES:
-# 1. For EDUCATION: Extract exact degree requirements, specific institutions mentioned, and education-related keywords
-# 2. For COMPANIES: Identify specific companies, company groups (like FAANG), and company characteristics
-# 3. For SKILLS: Separate technical skills, frameworks, domains, and proficiency levels
-# 4. For EXPERIENCE: Extract numeric requirements, seniority indicators, and experience types
-# 5. For LOCATION: Distinguish between current location, preferred location, and relocation willingness
-# 6. For COMPLEXITY: Classify based on number of criteria and specificity of requirements
+Query: "{normalized_query}"
 
-# EXAMPLES OF COMPLEX QUERIES:
+Extract and classify ALL components from this query. Be thorough and precise:
 
-# "Senior Data Scientist with PhD in Statistics from Ivy League, 8+ years at tech companies, expert in PyTorch, TensorFlow, MLOps, currently in NYC or SF"
-# → complexity_level: "very_complex", primary_intent: "hybrid", multiple strict requirements
+{{
+    "query_metadata": {{
+        "complexity_level": "simple|moderate|complex|very_complex",
+        "query_type": "single_criteria|multi_criteria|comprehensive",
+        "primary_intent": "education|role|skills|company|location|experience|hybrid",
+        "secondary_intents": ["education", "role", "skills", "company", "location"],
+        "confidence_score": 0.95,
+        "intent_explanation": "Detailed explanation of the query structure and why this classification was chosen"
+    }},
 
-# "Full-stack developer, React + Node.js, startup experience, remote OK"
-# → complexity_level: "moderate", primary_intent: "skills", some flexibility
+    "extracted_components": {{
+        "education_requirements": {{
+            "has_requirement": true/false,
+            "degree_levels": ["PhD", "Master's", "Bachelor's", "Associate"],
+            "specific_degrees": ["PhD in Computer Science", "Master of Science"],
+            "fields_of_study": ["Computer Science", "Engineering", "Data Science"],
+            "institutions": ["Stanford University", "MIT", "Carnegie Mellon University"],
+            "institution_tiers": ["top_tier", "ivy_league", "technical_schools"],
+            "education_keywords": ["from top universities", "prestigious"]
+        }},
 
-# "Looking for ML engineers from Google, Facebook, or similar, with computer vision expertise"
-# → complexity_level: "complex", primary_intent: "company", specific domain skills
+        "role_requirements": {{
+            "has_requirement": true/false,
+            "job_titles": ["Principal Software Architect", "Senior Engineer"],
+            "role_levels": ["Principal", "Senior", "Lead", "Staff"],
+            "role_categories": ["Engineering", "Management", "Technical"],
+            "role_keywords": ["architect", "lead", "principal"]
+        }},
 
-# Return only the JSON object, no additional text or explanations.
-# """
+        "skill_requirements": {{
+            "has_requirement": true/false,
+            "technical_skills": ["distributed systems", "Kubernetes", "Java", "Go"],
+            "frameworks": ["React", "Angular", "Spring"],
+            "technologies": ["AWS", "Docker", "Microservices"],
+            "domains": ["machine learning", "data science", "cybersecurity"],
+            "skill_categories": ["programming", "architecture", "devops", "cloud"],
+            "proficiency_indicators": ["expert", "advanced", "proficient"]
+        }},
 
-#         # Make the API call
-#         response = client.chat.completions.create(
-#             model=chat_deployment,
-#             messages=[
-#                 {
-#                     "role": "system", 
-#                     "content": "You are an advanced query intent analyzer that returns comprehensive JSON analysis of job search queries. Focus on extracting ALL components with high precision."
-#                 },
-#                 {"role": "user", "content": enhanced_intent_prompt}
-#             ],
-#             max_tokens=1500,  # Increased for complex responses
-#             temperature=0.05   # Lower temperature for more consistent extraction
-#         )
+        "company_requirements": {{
+            "has_requirement": true/false,
+            "specific_companies": ["Google", "Facebook", "Apple", "Amazon", "Netflix"],
+            "company_groups": ["FAANG", "Big Tech", "Fortune 500"],
+            "company_types": ["startup", "enterprise", "public", "private"],
+            "company_sizes": ["large", "medium", "small"],
+            "industry_sectors": ["technology", "finance", "healthcare"]
+        }},
 
-#         ai_response = response.choices[0].message.content
-        
-#         if ai_response:
-#             ai_response = ai_response.strip()
+        "experience_requirements": {{
+            "has_requirement": true/false,
+            "min_years": 10,
+            "max_years": null,
+            "specific_experience": ["10+ years", "5-8 years"],
+            "experience_types": ["industry", "relevant", "total"],
+            "seniority_levels": ["junior", "mid", "senior", "principal", "staff"]
+        }},
 
-#             # Clean up markdown formatting
-#             if ai_response.startswith("```json"):
-#                 ai_response = ai_response[7:]
-#             elif ai_response.startswith("```"):
-#                 ai_response = ai_response[3:]
-#             if ai_response.endswith("```"):
-#                 ai_response = ai_response[:-3]
+        "location_requirements": {{
+            "has_requirement": true/false,
+            "current_locations": ["Silicon Valley", "San Francisco", "New York"],
+            "preferred_locations": ["San Francisco", "Bay Area"],
+            "relocation_indicators": ["willing to relocate", "open to relocation"],
+            "location_flexibility": "strict|flexible|remote_ok",
+            "geographic_regions": ["West Coast", "East Coast", "US", "Global"]
+        }},
 
-#             ai_response = ai_response.strip()
+        "additional_criteria": {{
+            "certifications": ["AWS Certified Solutions Architect"],
+            "languages": ["English", "Spanish"],
+            "work_authorization": ["US Citizen", "Green Card"],
+            "work_preferences": ["remote", "onsite", "hybrid"],
+            "soft_skills": ["communication", "leadership"],
+            "culture_fit": ["startup mindset", "enterprise ready"]
+        }}
+    }},
 
-#             # Parse the enhanced JSON response
-#             intent_data = json.loads(ai_response)
-            
-#             # Add comprehensive query analysis with regex patterns
-#             query_lower = query.lower()
-#             query_words = query_lower.split()
-            
-#             # Enhanced pattern matching for complex queries
-#             patterns = {
-#                 "degree_patterns": [
-#                     r'\b(phd|ph\.d\.?|doctorate|doctoral)\b',
-#                     r'\b(master[\'s]*|ms|m\.s\.?|mba|m\.b\.a\.?)\b',
-#                     r'\b(bachelor[\'s]*|bs|b\.s\.?|ba|b\.a\.?)\b'
-#                 ],
-#                 "university_patterns": [
-#                     r'\b(stanford|mit|harvard|berkeley|caltech|carnegie mellon|princeton|yale)\b',
-#                     r'\b(top universities|prestigious|ivy league|tier[- ]1)\b'
-#                 ],
-#                 "company_patterns": [
-#                     r'\b(google|facebook|apple|amazon|netflix|microsoft|meta)\b',
-#                     r'\b(faang|big tech|fortune 500)\b'
-#                 ],
-#                 "experience_patterns": [
-#                     r'\b(\d+)\+?\s*years?\b',
-#                     r'\b(senior|principal|staff|lead|director|vp|c-level)\b'
-#                 ],
-#                 "location_patterns": [
-#                     r'\b(silicon valley|san francisco|nyc|new york|seattle|austin)\b',
-#                     r'\b(relocate|relocation|willing to move|open to)\b'
-#                 ],
-#                 "skill_patterns": [
-#                     r'\b(python|java|javascript|go|rust|c\+\+)\b',
-#                     r'\b(kubernetes|docker|aws|azure|gcp)\b',
-#                     r'\b(machine learning|ai|distributed systems|microservices)\b'
-#                 ]
-#             }
-            
-#             # Count pattern matches for complexity assessment
-#             pattern_matches = {}
-#             total_matches = 0
-            
-#             for category, pattern_list in patterns.items():
-#                 matches = 0
-#                 for pattern in pattern_list:
-#                     matches += len(re.findall(pattern, query_lower))
-#                 pattern_matches[category] = matches
-#                 total_matches += matches
-            
-#             # Enhanced query analysis
-#             intent_data["advanced_analysis"] = {
-#                 "query_statistics": {
-#                     "query_length": len(query),
-#                     "word_count": len(query_words),
-#                     "sentence_count": len([s for s in query.split('.') if s.strip()]),
-#                     "comma_separated_criteria": len([c for c in query.split(',') if c.strip()]),
-#                     "parenthetical_info": len(re.findall(r'\([^)]+\)', query))
-#                 },
-#                 "pattern_analysis": pattern_matches,
-#                 "complexity_indicators": {
-#                     "multiple_criteria": total_matches >= 3,
-#                     "specific_institutions": pattern_matches.get("university_patterns", 0) > 0,
-#                     "company_requirements": pattern_matches.get("company_patterns", 0) > 0,
-#                     "technical_depth": pattern_matches.get("skill_patterns", 0) >= 2,
-#                     "experience_specific": pattern_matches.get("experience_patterns", 0) > 0,
-#                     "location_constraints": pattern_matches.get("location_patterns", 0) > 0
-#                 },
-#                 "query_structure": {
-#                     "has_conjunctions": any(word in query_lower for word in ['and', 'with', 'who', 'that']),
-#                     "has_qualifiers": any(word in query_lower for word in ['prefer', 'ideal', 'bonus', 'nice to have']),
-#                     "has_requirements": any(word in query_lower for word in ['must', 'required', 'need', 'should']),
-#                     "has_alternatives": any(word in query_lower for word in ['or', 'alternatively', 'either'])
-#                 },
-#                 "semantic_signals": {
-#                     "urgency_indicators": any(word in query_lower for word in ['asap', 'urgent', 'immediately', 'quickly']),
-#                     "flexibility_indicators": any(word in query_lower for word in ['flexible', 'open to', 'willing to', 'consider']),
-#                     "exclusivity_indicators": any(word in query_lower for word in ['only', 'exclusively', 'specifically', 'strictly'])
-#                 }
-#             }
-            
-#             # Determine overall complexity score
-#             complexity_score = min(100, (total_matches * 15) + (len(query_words) * 2))
-#             intent_data["advanced_analysis"]["overall_complexity_score"] = complexity_score
-            
-#             # Add processing recommendations
-#             intent_data["processing_recommendations"] = {
-#                 "use_multi_stage_filtering": complexity_score > 60,
-#                 "require_fuzzy_matching": pattern_matches.get("skill_patterns", 0) > 3,
-#                 "prioritize_exact_matches": intent_data["advanced_analysis"]["semantic_signals"]["exclusivity_indicators"],
-#                 "enable_fallback_search": True,
-#                 "suggested_result_limit": 50 if complexity_score > 70 else 100
-#             }
+    "search_strategy": {{
+        "recommended_approach": "semantic_search|hybrid_search|metadata_first",
+        "search_complexity": "single_pass|multi_pass",
+        "post_filters": ["education", "experience", "skills"]
+    }},
 
-#             # ============= NEW ADDITION: FINAL REQUIREMENTS FOR QDRANT SEARCH =============
-#             # Extract key-value pairs for direct Qdrant filtering
-#             components = intent_data.get("extracted_components", {})
-            
-#             # Initialize Qdrant-ready filters
-#             qdrant_filters = {}
-#             search_keywords = []
-            
-#             identifier_filters = _extract_identifier_filters_from_query(query)
-#             for field, values in identifier_filters.items():
-#                 if not values:
-#                     continue
-#                 existing = qdrant_filters.get(field)
-#                 combined_values: List[str] = []
+    "query_ambiguities": ["Any unclear parts where human confirmation might be needed"]
+}}
+""".strip()
+            response = client.chat.completions.create(
+                model=chat_deployment,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are an advanced query intent analyzer that returns comprehensive JSON analysis of job search queries. Focus on extracting all components with high precision.",
+                    },
+                    {"role": "user", "content": enhanced_intent_prompt},
+                ],
+                max_tokens=1500,
+                temperature=0.05,
+            )
+            if response and response.choices:
+                ai_response = (response.choices[0].message.content or "").strip()
+                used_llm = bool(ai_response)
+        except Exception as exc:
+            logger.error(f"[INTENT] Enhanced intent analysis failed: {exc}")
 
-#                 if isinstance(existing, list):
-#                     combined_values.extend([str(v).strip() for v in existing if str(v).strip()])
-#                 elif existing is not None:
-#                     existing_str = str(existing).strip()
-#                     if existing_str:
-#                         combined_values.append(existing_str)
+    if ai_response:
+        cleaned_response = ai_response
+        if cleaned_response.startswith("```json"):
+            cleaned_response = cleaned_response[7:]
+        elif cleaned_response.startswith("```"):
+            cleaned_response = cleaned_response[3:]
+        if cleaned_response.endswith("```"):
+            cleaned_response = cleaned_response[:-3]
+        cleaned_response = cleaned_response.strip()
+        if cleaned_response:
+            try:
+                intent_data = json.loads(cleaned_response)
+            except json.JSONDecodeError as exc:
+                logger.error(f"[INTENT] Failed to parse AI response: {exc}; payload={cleaned_response[:400]}")
+                intent_data = {}
+    elif client and not ai_response:
+        logger.info("[INTENT] Azure OpenAI intent analyzer returned no content.")
 
-#                 for value in values:
-#                     value_str = str(value).strip()
-#                     if value_str and value_str not in combined_values:
-#                         combined_values.append(value_str)
+    if not isinstance(intent_data, dict):
+        intent_data = {}
 
-#                 if combined_values:
-#                     qdrant_filters[field] = combined_values
-#                     search_keywords.extend(combined_values)
+    components = intent_data.get("extracted_components")
+    if not isinstance(components, dict):
+        components = {}
+    intent_data["extracted_components"] = components
 
-#             # Education filters
-#             if components.get("education_requirements", {}).get("has_requirement", False):
-#                 edu_req = components["education_requirements"]
-                
-#                 if edu_req.get("degree_levels"):
-#                     qdrant_filters["degree_level"] = edu_req["degree_levels"]
-                
-#                 if edu_req.get("fields_of_study"):
-#                     qdrant_filters["field_of_study"] = edu_req["fields_of_study"]
-                
-#                 if edu_req.get("institutions"):
-#                     qdrant_filters["institution"] = edu_req["institutions"]
-                
-#                 # Add to search keywords
-#                 search_keywords.extend(edu_req.get("degree_levels", []))
-#                 search_keywords.extend(edu_req.get("fields_of_study", []))
-#                 search_keywords.extend(edu_req.get("institutions", []))
-            
-#             # Role/Job filters
-#             if components.get("role_requirements", {}).get("has_requirement", False):
-#                 role_req = components["role_requirements"]
-                
-#                 if role_req.get("job_titles"):
-#                     qdrant_filters["job_title"] = role_req["job_titles"]
-                
-#                 if role_req.get("role_levels"):
-#                     qdrant_filters["seniority_level"] = role_req["role_levels"]
-                
-#                 if role_req.get("role_categories"):
-#                     qdrant_filters["role_category"] = role_req["role_categories"]
-                
-#                 # Add to search keywords
-#                 search_keywords.extend(role_req.get("job_titles", []))
-#                 search_keywords.extend(role_req.get("role_levels", []))
-            
-#             # Skills filters
-#             if components.get("skill_requirements", {}).get("has_requirement", False):
-#                 skill_req = components["skill_requirements"]
-                
-#                 all_skills = []
-#                 all_skills.extend(skill_req.get("technical_skills", []))
-#                 all_skills.extend(skill_req.get("frameworks", []))
-#                 all_skills.extend(skill_req.get("technologies", []))
-                
-#                 if all_skills:
-#                     qdrant_filters["skills"] = all_skills
-                
-#                 if skill_req.get("skill_categories"):
-#                     qdrant_filters["skill_category"] = skill_req["skill_categories"]
-                
-#                 # Add to search keywords
-#                 search_keywords.extend(all_skills)
-            
-#             # Company filters
-#             if components.get("company_requirements", {}).get("has_requirement", False):
-#                 comp_req = components["company_requirements"]
-                
-#                 all_companies = []
-#                 all_companies.extend(comp_req.get("specific_companies", []))
-                
-#                 if all_companies:
-#                     qdrant_filters["company"] = all_companies
-                
-#                 if comp_req.get("company_groups"):
-#                     qdrant_filters["company_type"] = comp_req["company_groups"]
-                
-#                 if comp_req.get("industry_sectors"):
-#                     qdrant_filters["industry"] = comp_req["industry_sectors"]
-                
-#                 # Add to search keywords
-#                 search_keywords.extend(all_companies)
-#                 search_keywords.extend(comp_req.get("company_groups", []))
-            
-#             # Experience filters
-#             if components.get("experience_requirements", {}).get("has_requirement", False):
-#                 exp_req = components["experience_requirements"]
-                
-#                 if exp_req.get("min_years") is not None:
-#                     qdrant_filters["min_experience"] = exp_req["min_years"]
-                
-#                 if exp_req.get("max_years") is not None:
-#                     qdrant_filters["max_experience"] = exp_req["max_years"]
-                
-#                 if exp_req.get("seniority_levels"):
-#                     # If not already set from role requirements
-#                     if "seniority_level" not in qdrant_filters:
-#                         qdrant_filters["seniority_level"] = exp_req["seniority_levels"]
-            
-#             # Location filters
-#             if components.get("location_requirements", {}).get("has_requirement", False):
-#                 loc_req = components["location_requirements"]
-                
-#                 all_locations = []
-#                 all_locations.extend(loc_req.get("current_locations", []))
-#                 all_locations.extend(loc_req.get("preferred_locations", []))
+    identifier_filters = _extract_identifier_filters_from_query(normalized_query)
+    qdrant_filters: Dict[str, Any] = {}
+    search_keywords: List[str] = []
 
-#                 # Remove duplicates while preserving order
-#                 unique_locations = list(dict.fromkeys(all_locations))
+    def _normalize_filter_value(value: Any) -> Optional[Any]:
+        if value is None:
+            return None
+        if isinstance(value, (int, float)):
+            return value
+        text = str(value).strip()
+        return text or None
 
-#                 if unique_locations:
-#                     qdrant_filters["location"] = unique_locations
-                
-#                 if loc_req.get("geographic_regions"):
-#                     qdrant_filters["region"] = loc_req["geographic_regions"]
-                
-#                 # Add to search keywords
-#                 search_keywords.extend(all_locations)
-            
-#             # Additional criteria filters
-#             if components.get("additional_criteria"):
-#                 add_criteria = components["additional_criteria"]
-                
-#                 if add_criteria.get("certifications"):
-#                     qdrant_filters["certifications"] = add_criteria["certifications"]
-#                     search_keywords.extend(add_criteria["certifications"])
-                
-#                 if add_criteria.get("languages"):
-#                     qdrant_filters["languages"] = add_criteria["languages"]
-                
-#                 if add_criteria.get("work_authorization"):
-#                     qdrant_filters["work_authorization"] = add_criteria["work_authorization"]
-                
-#                 if add_criteria.get("work_preferences"):
-#                     qdrant_filters["work_preference"] = add_criteria["work_preferences"]
-            
-#             # Clean up search keywords
-#             clean_keywords = list(set([
-#                 kw.strip().lower() for kw in search_keywords 
-#                 if kw and kw.strip() and len(kw.strip()) > 1
-#             ]))
-            
-#             # Determine primary intent override based on identifiers
-#             override_primary_intent = None
-#             if qdrant_filters.get('email') or qdrant_filters.get('phone'):
-#                 override_primary_intent = 'contact_information'
-#             elif qdrant_filters.get('name'):
-#                 override_primary_intent = 'person_name'
+    def _merge_filter(field: str, values: Any) -> None:
+        if values is None:
+            return
+        if isinstance(values, (list, tuple, set)):
+            values_iter = list(values)
+        else:
+            values_iter = [values]
+        existing = qdrant_filters.get(field)
+        if isinstance(existing, list):
+            collected = existing.copy()
+        elif existing is None:
+            collected = []
+        else:
+            collected = [existing]
+        seen = {repr(item).lower() if isinstance(item, str) else repr(item) for item in collected}
+        for raw in values_iter:
+            normalized = _normalize_filter_value(raw)
+            if normalized is None:
+                continue
+            key = normalized.lower() if isinstance(normalized, str) else repr(normalized)
+            if key in seen:
+                continue
+            collected.append(normalized)
+            seen.add(key)
+        if collected:
+            qdrant_filters[field] = collected
 
-#             # Create final requirements structure
-#             final_requirements = {
-#                 "qdrant_filters": qdrant_filters,
-#                 "search_keywords": clean_keywords,
-#                 "filter_count": len(qdrant_filters),
-#                 "has_strict_requirements": len(qdrant_filters) > 0,
-#                 "search_strategy": {
-#                     "primary_intent": override_primary_intent or intent_data.get("query_metadata", {}).get("primary_intent", "hybrid"),
-#                     "recommended_approach": intent_data.get("search_strategy", {}).get("recommended_approach", "semantic_search"),
-#                     "complexity": intent_data.get("search_strategy", {}).get("search_complexity", "single_pass")
-#                 }
-#             }
+    def _extend_keywords(values: Any) -> None:
+        if values is None:
+            return
+        if isinstance(values, (list, tuple, set)):
+            values_iter = values
+        else:
+            values_iter = [values]
+        for raw in values_iter:
+            if raw is None:
+                continue
+            text = str(raw).strip()
+            if text:
+                search_keywords.append(text)
 
-#             # LLM refinement pass for better filters/keywords
-#             try:
-#                 refined = _llm_refine_final_requirements(query, final_requirements)
-#             except Exception as _e:
-#                 refined = None
-#                 logger.info(f"[INTENT_LLM] Skipping refinement: {_e}")
+    for field, values in identifier_filters.items():
+        _merge_filter(field, values)
+        _extend_keywords(values)
 
-#             if refined:
-#                 # Merge refined back (prefer refined values)
-#                 fr_qf = refined.get('qdrant_filters') or {}
-#                 fr_kw = refined.get('search_keywords') or []
-#                 fr_pi = refined.get('primary_intent')
+    edu_req = components.get("education_requirements")
+    if isinstance(edu_req, dict) and edu_req.get("has_requirement"):
+        _merge_filter("degree_level", edu_req.get("degree_levels"))
+        _merge_filter("field_of_study", edu_req.get("fields_of_study"))
+        _merge_filter("institution", edu_req.get("institutions"))
+        _extend_keywords(edu_req.get("degree_levels"))
+        _extend_keywords(edu_req.get("specific_degrees"))
+        _extend_keywords(edu_req.get("fields_of_study"))
+        _extend_keywords(edu_req.get("institutions"))
+        _extend_keywords(edu_req.get("education_keywords"))
 
-#                 if isinstance(fr_qf, dict):
-#                     final_requirements['qdrant_filters'] = fr_qf
-#                     final_requirements['filter_count'] = len(fr_qf)
-#                 if isinstance(fr_kw, list):
-#                     final_requirements['search_keywords'] = fr_kw
-#                 if fr_pi:
-#                     final_requirements['search_strategy']['primary_intent'] = fr_pi
+    role_req = components.get("role_requirements")
+    if isinstance(role_req, dict) and role_req.get("has_requirement"):
+        _merge_filter("job_title", role_req.get("job_titles"))
+        _merge_filter("seniority_level", role_req.get("role_levels"))
+        _merge_filter("role_category", role_req.get("role_categories"))
+        _extend_keywords(role_req.get("job_titles"))
+        _extend_keywords(role_req.get("role_levels"))
+        _extend_keywords(role_req.get("role_keywords"))
 
-#                 logger.info(f"[INTENT_LLM] Refined final requirements: {final_requirements}")
+    skill_req = components.get("skill_requirements")
+    if isinstance(skill_req, dict) and skill_req.get("has_requirement"):
+        all_skills: List[str] = []
+        for key in ("technical_skills", "frameworks", "technologies", "domains"):
+            values = skill_req.get(key)
+            if isinstance(values, list):
+                all_skills.extend(values)
+            elif isinstance(values, str):
+                all_skills.append(values)
+        if all_skills:
+            _merge_filter("skills", all_skills)
+            _extend_keywords(all_skills)
+        if skill_req.get("skill_categories"):
+            _merge_filter("skill_category", skill_req.get("skill_categories"))
+            _extend_keywords(skill_req.get("skill_categories"))
+        if skill_req.get("proficiency_indicators"):
+            _extend_keywords(skill_req.get("proficiency_indicators"))
 
-#             # Add final requirements to the response
-#             intent_data["final_requirements"] = final_requirements
-#             # ============= END OF NEW ADDITION =============
+    comp_req = components.get("company_requirements")
+    if isinstance(comp_req, dict) and comp_req.get("has_requirement"):
+        _merge_filter("company", comp_req.get("specific_companies"))
+        _merge_filter("company_type", comp_req.get("company_groups"))
+        _merge_filter("industry", comp_req.get("industry_sectors"))
+        _extend_keywords(comp_req.get("specific_companies"))
+        _extend_keywords(comp_req.get("company_groups"))
+        _extend_keywords(comp_req.get("company_types"))
+        _extend_keywords(comp_req.get("industry_sectors"))
 
-#             return {
-#                 "success": True,
-#                 "query": query,
-#                 "user_id": user_id,
-#                 "intent_analysis": intent_data,
-#                 "processing_time": "enhanced_analysis_complete"
-#             }
-        
-#         else:
-#             return {
-#                 "success": False,
-#                 "error": "No response from AI service",
-#                 "query": query,
-#                 "user_id": user_id
-#             }
-            
-#     except json.JSONDecodeError as e: # type: ignore
-#         logger.error(f"JSON parsing error in query intent analysis: {e}")
-#         return {
-#             "success": False,
-#             "error": f"Failed to parse AI response: {str(e)}",
-#             "query": query,
-#             "raw_response": ai_response if 'ai_response' in locals() else None # type: ignore
-#         }
-        
-#     except Exception as e:
-#         logger.error(f"Error in enhanced query intent analysis: {e}")
-#         return {
-#             "success": False,
-#             "error": f"Intent analysis failed: {str(e)}",
-#             "query": query,
-#             "user_id": user_id
-#         }
+    exp_req = components.get("experience_requirements")
+    if isinstance(exp_req, dict) and exp_req.get("has_requirement"):
+        if exp_req.get("min_years") is not None:
+            _merge_filter("min_experience", [exp_req.get("min_years")])
+        if exp_req.get("max_years") is not None:
+            _merge_filter("max_experience", [exp_req.get("max_years")])
+        _merge_filter("seniority_level", exp_req.get("seniority_levels"))
+        _extend_keywords(exp_req.get("specific_experience"))
+        _extend_keywords(exp_req.get("experience_types"))
+
+    loc_req = components.get("location_requirements")
+    if isinstance(loc_req, dict) and loc_req.get("has_requirement"):
+        all_locations: List[str] = []
+        for key in ("current_locations", "preferred_locations"):
+            values = loc_req.get(key)
+            if isinstance(values, list):
+                all_locations.extend(values)
+            elif isinstance(values, str):
+                all_locations.append(values)
+        unique_locations: List[str] = []
+        seen_locations = set()
+        for item in all_locations:
+            text = str(item).strip()
+            if not text:
+                continue
+            lowered = text.lower()
+            if lowered in seen_locations:
+                continue
+            seen_locations.add(lowered)
+            unique_locations.append(text)
+        if unique_locations:
+            qdrant_filters["location"] = unique_locations
+            search_keywords.extend(unique_locations)
+        if loc_req.get("geographic_regions"):
+            _merge_filter("region", loc_req.get("geographic_regions"))
+            _extend_keywords(loc_req.get("geographic_regions"))
+        if loc_req.get("relocation_indicators"):
+            _extend_keywords(loc_req.get("relocation_indicators"))
+
+    add_req = components.get("additional_criteria")
+    if isinstance(add_req, dict):
+        if add_req.get("certifications"):
+            _merge_filter("certifications", add_req.get("certifications"))
+            _extend_keywords(add_req.get("certifications"))
+        if add_req.get("languages"):
+            _merge_filter("languages", add_req.get("languages"))
+            _extend_keywords(add_req.get("languages"))
+        if add_req.get("work_authorization"):
+            _merge_filter("work_authorization", add_req.get("work_authorization"))
+            _extend_keywords(add_req.get("work_authorization"))
+        if add_req.get("work_preferences"):
+            _merge_filter("work_preference", add_req.get("work_preferences"))
+            _extend_keywords(add_req.get("work_preferences"))
+        if add_req.get("soft_skills"):
+            _extend_keywords(add_req.get("soft_skills"))
+        if add_req.get("culture_fit"):
+            _extend_keywords(add_req.get("culture_fit"))
+
+    dedup_keywords: List[str] = []
+    seen_kw = set()
+    for kw in search_keywords:
+        text = str(kw).strip()
+        if not text:
+            continue
+        normalized = text.lower()
+        if normalized in seen_kw:
+            continue
+        seen_kw.add(normalized)
+        dedup_keywords.append(text)
+
+    if not dedup_keywords:
+        tokens = re.findall(r"[A-Za-z]{3,}", normalized_query.lower())
+        stopwords = {
+            "the",
+            "and",
+            "for",
+            "with",
+            "from",
+            "that",
+            "this",
+            "have",
+            "need",
+            "looking",
+            "search",
+            "find",
+            "resume",
+            "candidate",
+            "profile",
+            "give",
+            "show",
+            "please",
+            "kindly",
+            "about",
+            "into",
+            "over",
+            "want",
+            "require",
+            "seeking",
+            "someone",
+            "who",
+            "skill",
+            "skills",
+            "years",
+            "year",
+            "experience",
+        }
+        for token in tokens:
+            if token in stopwords or token in seen_kw:
+                continue
+            seen_kw.add(token)
+            dedup_keywords.append(token)
+            if len(dedup_keywords) >= 25:
+                break
+
+    query_lower = normalized_query.lower()
+    pattern_groups = {
+        "degree_patterns": [
+            r"(phd|ph\.d\.?|doctorate|doctoral)",
+            r"(master['’]s|ms|m\.s\.?|mba|m\.b\.a\.?)",
+            r"(bachelor['’]s|bs|b\.s\.?|ba|b\.a\.?)",
+        ],
+        "university_patterns": [
+            r"(stanford|mit|harvard|berkeley|caltech|carnegie mellon|princeton|yale)",
+            r"(top universities|prestigious|ivy league|tier[- ]?1)",
+        ],
+        "company_patterns": [
+            r"(google|facebook|apple|amazon|netflix|microsoft|meta)",
+            r"(faang|big tech|fortune 500)",
+        ],
+        "experience_patterns": [
+            r"\d+\+?\s*years?",
+            r"(senior|principal|staff|lead|director|vp|c-level)",
+        ],
+        "location_patterns": [
+            r"(silicon valley|san francisco|nyc|new york|seattle|austin|remote)",
+            r"(relocate|relocation|willing to move|open to)",
+        ],
+        "skill_patterns": [
+            r"(python|java|javascript|typescript|go|rust|c\+\+)",
+            r"(kubernetes|docker|aws|azure|gcp|terraform)",
+            r"(machine learning|ml|ai|distributed systems|microservices|data science)",
+        ],
+    }
+    pattern_matches: Dict[str, int] = {}
+    total_pattern_hits = 0
+    for key, regex_list in pattern_groups.items():
+        count = 0
+        for pattern in regex_list:
+            count += len(re.findall(pattern, query_lower))
+        pattern_matches[key] = count
+        total_pattern_hits += count
+
+    words = re.findall(r"\w+", normalized_query)
+    sentences = [segment for segment in re.split(r"[.!?]+", normalized_query) if segment.strip()]
+    comma_segments = [segment for segment in normalized_query.split(",") if segment.strip()]
+    parenthetical_segments = re.findall(r"\([^)]+\)", normalized_query)
+    complexity_score = min(100, total_pattern_hits * 15 + len(words) * 2)
+
+    def _score_to_level(score: int) -> str:
+        if score >= 75:
+            return "very_complex"
+        if score >= 55:
+            return "complex"
+        if score >= 35:
+            return "moderate"
+        return "simple"
+
+    complexity_level = _score_to_level(complexity_score)
+
+    override_primary_intent: Optional[str] = None
+    if qdrant_filters.get("email") or qdrant_filters.get("phone"):
+        override_primary_intent = "contact_information"
+    elif qdrant_filters.get("name"):
+        override_primary_intent = "person_name"
+    elif qdrant_filters.get("company"):
+        override_primary_intent = "company"
+    elif qdrant_filters.get("location"):
+        override_primary_intent = "location"
+    elif qdrant_filters.get("job_title") or qdrant_filters.get("skills"):
+        override_primary_intent = "role"
+
+    query_metadata = intent_data.get("query_metadata")
+    if not isinstance(query_metadata, dict):
+        query_metadata = {}
+
+    existing_primary = str(query_metadata.get("primary_intent") or "").strip()
+    if override_primary_intent:
+        if existing_primary.lower() in ("", "unknown", "hybrid"):
+            query_metadata["primary_intent"] = override_primary_intent
+        else:
+            query_metadata["primary_intent"] = override_primary_intent
+    query_metadata.setdefault("primary_intent", "hybrid")
+    query_metadata.setdefault(
+        "complexity_level",
+        complexity_level,
+    )
+    query_metadata.setdefault(
+        "query_type",
+        "multi_criteria" if len(qdrant_filters) > 1 or len(dedup_keywords) > 5 else "single_criteria",
+    )
+    secondary_intents: List[str] = []
+    if qdrant_filters.get("job_title") or qdrant_filters.get("seniority_level"):
+        secondary_intents.append("role")
+    if qdrant_filters.get("skills") or qdrant_filters.get("skill_category"):
+        secondary_intents.append("skills")
+    if qdrant_filters.get("company") or qdrant_filters.get("company_type"):
+        secondary_intents.append("company")
+    if qdrant_filters.get("location") or qdrant_filters.get("region"):
+        secondary_intents.append("location")
+    if qdrant_filters.get("degree_level") or qdrant_filters.get("institution"):
+        secondary_intents.append("education")
+    if qdrant_filters.get("min_experience") or qdrant_filters.get("max_experience"):
+        secondary_intents.append("experience")
+    query_metadata["secondary_intents"] = sorted({value for value in secondary_intents})
+    if "confidence_score" not in query_metadata:
+        query_metadata["confidence_score"] = 0.85 if used_llm else 0.55
+    if "intent_explanation" not in query_metadata:
+        query_metadata["intent_explanation"] = "LLM-based intent analysis" if used_llm else "Heuristic fallback intent analysis"
+    intent_data["query_metadata"] = query_metadata
+
+    advanced_analysis = intent_data.get("advanced_analysis")
+    if not isinstance(advanced_analysis, dict):
+        advanced_analysis = {}
+    advanced_analysis["query_statistics"] = {
+        "query_length": len(normalized_query),
+        "word_count": len(words),
+        "sentence_count": len(sentences),
+        "comma_separated_criteria": len(comma_segments),
+        "parenthetical_info": len(parenthetical_segments),
+    }
+    advanced_analysis["pattern_analysis"] = pattern_matches
+    advanced_analysis["complexity_indicators"] = {
+        "multiple_criteria": len(comma_segments) > 0 or total_pattern_hits >= 3,
+        "specific_institutions": pattern_matches.get("degree_patterns", 0) > 0,
+        "company_requirements": pattern_matches.get("company_patterns", 0) > 0,
+        "technical_depth": pattern_matches.get("skill_patterns", 0) >= 2,
+        "experience_specific": pattern_matches.get("experience_patterns", 0) > 0,
+        "location_constraints": pattern_matches.get("location_patterns", 0) > 0,
+    }
+    advanced_analysis["query_structure"] = {
+        "has_conjunctions": any(token in query_lower for token in (" and ", " with ", " who ", " that ")),
+        "has_qualifiers": any(token in query_lower for token in (" prefer", " ideal", " nice to have", " bonus")),
+        "has_requirements": any(token in query_lower for token in (" must", " required", " need ", " should ")),
+        "has_alternatives": any(token in query_lower for token in (" or ", " alternatively", " either ")),
+    }
+    semantic_signals = {
+        "urgency_indicators": any(token in query_lower for token in (" asap", " urgent", " immediately", " quickly")),
+        "flexibility_indicators": any(token in query_lower for token in (" flexible", " open to", " willing to", " consider")),
+        "exclusivity_indicators": any(token in query_lower for token in (" only", " exclusively", " strictly", " must have")),
+    }
+    advanced_analysis["semantic_signals"] = semantic_signals
+    advanced_analysis["overall_complexity_score"] = complexity_score
+    advanced_analysis["complexity_level"] = complexity_level
+    intent_data["advanced_analysis"] = advanced_analysis
+
+    intent_data["processing_recommendations"] = {
+        "use_multi_stage_filtering": complexity_score > 60 or len(qdrant_filters) >= 3,
+        "require_fuzzy_matching": pattern_matches.get("skill_patterns", 0) > 3,
+        "prioritize_exact_matches": semantic_signals["exclusivity_indicators"],
+        "enable_fallback_search": True,
+        "suggested_result_limit": 50 if complexity_score > 70 else 100,
+    }
+
+    search_strategy = intent_data.get("search_strategy")
+    if not isinstance(search_strategy, dict):
+        search_strategy = {}
+    search_strategy.setdefault("primary_intent", query_metadata.get("primary_intent", "hybrid"))
+    search_strategy.setdefault("recommended_approach", "semantic_search")
+    search_strategy.setdefault(
+        "search_complexity",
+        "multi_pass" if complexity_level in {"complex", "very_complex"} else "single_pass",
+    )
+    search_strategy["complexity"] = search_strategy.get("search_complexity")
+    intent_data["search_strategy"] = search_strategy
+
+    final_requirements = intent_data.get("final_requirements")
+    if not isinstance(final_requirements, dict):
+        final_requirements = {}
+    final_requirements["qdrant_filters"] = qdrant_filters
+    final_requirements["search_keywords"] = dedup_keywords
+    final_requirements["filter_count"] = len(qdrant_filters)
+    final_requirements["has_strict_requirements"] = bool(qdrant_filters)
+    final_requirements["search_strategy"] = {
+        "primary_intent": search_strategy.get("primary_intent"),
+        "recommended_approach": search_strategy.get("recommended_approach"),
+        "complexity": search_strategy.get("search_complexity"),
+    }
+
+    refined_final = None
+    try:
+        refined_final = _llm_refine_final_requirements(normalized_query, final_requirements)
+    except Exception as exc:
+        logger.info(f"[INTENT] Refinement skipped: {exc}")
+        refined_final = None
+
+    if refined_final:
+        refined_filters = refined_final.get("qdrant_filters")
+        if isinstance(refined_filters, dict):
+            final_requirements["qdrant_filters"] = refined_filters
+            final_requirements["filter_count"] = len(refined_filters)
+            final_requirements["has_strict_requirements"] = bool(refined_filters)
+        refined_keywords = refined_final.get("search_keywords")
+        if isinstance(refined_keywords, list):
+            final_requirements["search_keywords"] = refined_keywords
+        refined_primary = refined_final.get("primary_intent")
+        if isinstance(refined_primary, str) and refined_primary.strip():
+            refined_primary_clean = refined_primary.strip()
+            query_metadata["primary_intent"] = refined_primary_clean
+            search_strategy["primary_intent"] = refined_primary_clean
+            final_requirements["search_strategy"]["primary_intent"] = refined_primary_clean
+
+    intent_data["final_requirements"] = final_requirements
+    intent_data["query_metadata"] = query_metadata
+    intent_data["search_strategy"] = search_strategy
+
+    logger.info(f"[INTENT] Final requirements prepared: {final_requirements}")
+
+    duration_ms = (time.perf_counter() - started) * 1000.0
+
+    return {
+        "success": True,
+        "query": normalized_query,
+        "user_id": user_id,
+        "intent_analysis": intent_data,
+        "processing_time_ms": round(duration_ms, 2),
+        "used_llm": used_llm,
+    }
 
 @app.post("/bulk-upload-resumes")
 async def bulk_upload_resumes(files: List[UploadFile] = File(...), user_id: Optional[str] = Form(None)):
@@ -3342,7 +3438,9 @@ async def search_resumes_intent_based(
                                 # Fallback if LLM fails
                                 pass
 
-                    criteria_matches.append(("role_category", category_match, True))
+                    # Treat role category as optional if candidate metadata is missing to avoid false negatives.
+                    is_role_category_required = bool(candidate_role_category.strip())
+                    criteria_matches.append(("role_category", category_match, is_role_category_required))
 
                     if not category_match:
                         logger.info(f"🚫 Role category mismatch for {payload.get('name', 'Unknown')} - '{candidate_role_category}' doesn't match '{role_category_requirements}'")
@@ -3620,7 +3718,9 @@ async def search_resumes_intent_based(
                                 # Fallback if LLM fails
                                 pass
 
-                    criteria_matches.append(("role_category", category_match, True))
+                    # Treat role category as optional if candidate metadata is missing to avoid false negatives.
+                    is_role_category_required = bool(candidate_role_category.strip())
+                    criteria_matches.append(("role_category", category_match, is_role_category_required))
 
                     if not category_match:
                         logger.info(f"🚫 Role category mismatch for {payload.get('name', 'Unknown')} - '{candidate_role_category}' doesn't match '{role_category_requirements}'")
@@ -3734,7 +3834,7 @@ async def search_resumes_intent_based(
             results = filtered_results
 
         # Helper function to generate selection reasons
-        def generate_selection_reason(payload: Dict[str, Any], match_details: Dict[str, bool], qdrant_filters: Dict[str, Any], search_keywords: List[str]) -> str:
+        async def generate_selection_reason(payload: Dict[str, Any], match_details: Dict[str, bool], qdrant_filters: Dict[str, Any], search_keywords: List[str]) -> str:
             """Generate a detailed explanation of why this candidate was selected."""
             candidate_name = payload.get('name', 'Unknown')
             candidate_role = payload.get('current_position', 'Unknown')
@@ -4735,11 +4835,11 @@ async def get_all_resumes(
     # Scope resumes: admin lists all, otherwise require user_id
     owner_user_id: Optional[str]
     if admin_view:
-        owner_user_id = None
+        owner_user_id = str(user_id).strip() if user_id and str(user_id).strip() else None
     else:
-        if not user_id:
+        if not user_id or not str(user_id).strip():
             raise HTTPException(status_code=400, detail="user_id is required when admin_view=false")
-        owner_user_id = user_id
+        owner_user_id = str(user_id).strip()
 
     total, items = await pg_client.list_resumes(
         offset=offset,
@@ -4922,6 +5022,78 @@ async def admin_search_logs(
 
     return {"success": True, "page": page, "limit": limit, "total": total, "items": items, "logs": items}
 
+
+
+
+
+@app.delete("/resumes/{resume_id}")
+async def delete_user_resume(
+    resume_id: str,
+    user_id: str = Query(..., description="The owner user_id of the resume")
+):
+    """Allow a user to delete one of their own resumes."""
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="PostgreSQL not configured or unavailable")
+
+    cleaned_user_id = (user_id or "").strip()
+    if not cleaned_user_id:
+        raise HTTPException(status_code=400, detail="user_id is required")
+
+    try:
+        resume_uuid = uuid.UUID(str(resume_id))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid resume_id format")
+
+    assert pg_client._pool is not None  # type: ignore[attr-defined]
+
+    owner_user_id: Optional[str] = None
+    deleted_pg = False
+    try:
+        async with pg_client._pool.acquire() as conn:  # type: ignore[attr-defined]
+            row = await conn.fetchrow(
+                f"SELECT owner_user_id FROM {pg_client._table} WHERE id = $1",
+                resume_uuid,
+            )  # type: ignore[attr-defined]
+            if not row:
+                raise HTTPException(status_code=404, detail="Resume not found")
+
+            owner_user_id = (row.get("owner_user_id") or "").strip()
+            if owner_user_id != cleaned_user_id:
+                raise HTTPException(status_code=403, detail="You do not have permission to delete this resume")
+
+            res = await conn.execute(
+                f"DELETE FROM {pg_client._table} WHERE id = $1",
+                resume_uuid,
+            )  # type: ignore[attr-defined]
+            deleted_pg = res.upper().startswith("DELETE")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error(
+            f"Error deleting resume {resume_id} for user {cleaned_user_id}: {exc}",
+            exc_info=True,
+        )
+        raise HTTPException(status_code=500, detail="Failed to delete resume")
+
+    deleted_qdrant = False
+    try:
+        deleted_qdrant = await qdrant_client.delete_resume(str(resume_uuid))
+    except Exception as exc:
+        logger.warning(
+            f"Failed to delete resume {resume_id} for user {cleaned_user_id} from Qdrant: {exc}"
+        )
+
+    if not deleted_pg:
+        raise HTTPException(status_code=500, detail="Resume removal failed")
+
+    return {
+        "success": True,
+        "resume_id": str(resume_uuid),
+        "deleted_postgres": deleted_pg,
+        "deleted_qdrant": deleted_qdrant,
+        "decremented_user_count": False,
+    }
 
 @app.delete("/admin/resumes/{resume_id}")
 async def admin_delete_resume(resume_id: str, _auth: None = Depends(require_admin)):
@@ -5345,3 +5517,8 @@ async def update_user_search_prompt_feedback(
         raise HTTPException(status_code=404, detail="Prompt not found or update failed")
 
     return {"success": True, "id": prompt_id, "liked": liked_norm}
+
+
+
+
+
