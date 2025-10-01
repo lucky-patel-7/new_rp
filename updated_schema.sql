@@ -94,6 +94,8 @@ CREATE TABLE IF NOT EXISTS public.interview_questions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id VARCHAR(255) NOT NULL,
     question_text TEXT NOT NULL,
+    expected_answer TEXT,
+    welcome_message TEXT,
     category VARCHAR(100),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -102,6 +104,61 @@ CREATE TABLE IF NOT EXISTS public.interview_questions (
 
 -- Index for fetching questions by user
 CREATE INDEX IF NOT EXISTS idx_interview_questions_user_id ON public.interview_questions(user_id);
+
+-- New table to store interview sessions
+CREATE TABLE IF NOT EXISTS public.interview_sessions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id VARCHAR(255) NOT NULL,
+    session_type VARCHAR(50) NOT NULL, -- 'test' or 'live'
+    question_ids UUID[] NOT NULL,
+    candidate_ids UUID[],
+    current_question_index INTEGER DEFAULT 0,
+    status VARCHAR(50) DEFAULT 'active', -- 'active', 'completed', 'paused'
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_session_user FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE
+);
+
+-- Index for interview sessions
+CREATE INDEX IF NOT EXISTS idx_interview_sessions_user_id ON public.interview_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_interview_sessions_status ON public.interview_sessions(status);
+
+-- New table to store interview transcripts
+CREATE TABLE IF NOT EXISTS public.interview_transcripts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    session_id UUID NOT NULL,
+    question_id UUID NOT NULL,
+    candidate_response TEXT,
+    ai_evaluation TEXT,
+    audio_file_path TEXT,
+    audio_duration FLOAT,
+    response_time_seconds FLOAT,
+    is_match BOOLEAN,  -- New column to store match evaluation result
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_transcript_session FOREIGN KEY (session_id) REFERENCES public.interview_sessions(id) ON DELETE CASCADE,
+    CONSTRAINT fk_transcript_question FOREIGN KEY (question_id) REFERENCES public.interview_questions(id) ON DELETE CASCADE
+);
+
+-- Index for interview transcripts
+CREATE INDEX IF NOT EXISTS idx_interview_transcripts_session_id ON public.interview_transcripts(session_id);
+CREATE INDEX IF NOT EXISTS idx_interview_transcripts_question_id ON public.interview_transcripts(question_id);
+
+-- New table to store interviewer decisions
+CREATE TABLE IF NOT EXISTS public.interviewer_decisions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    session_id UUID NOT NULL,
+    resume_id UUID NOT NULL,
+    decision VARCHAR(50) NOT NULL, -- 'accept', 'reject', 'maybe'
+    notes TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_decision_session FOREIGN KEY (session_id) REFERENCES public.interview_sessions(id) ON DELETE CASCADE,
+    CONSTRAINT fk_decision_resume FOREIGN KEY (resume_id) REFERENCES public.parsed_resumes(id) ON DELETE CASCADE
+);
+
+-- Index for interviewer decisions
+CREATE INDEX IF NOT EXISTS idx_interviewer_decisions_session_id ON public.interviewer_decisions(session_id);
+CREATE INDEX IF NOT EXISTS idx_interviewer_decisions_resume_id ON public.interviewer_decisions(resume_id);
 
 
 -- New table to log interview call records initiated from the UI

@@ -245,3 +245,6 @@ yarn.lock
 api_keys.txt
 credentials.txt
 tokens.txt
+
+uploads/
+venvrp/

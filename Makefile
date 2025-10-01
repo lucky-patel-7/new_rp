@@ -54,7 +54,7 @@ run:
 
 # Check application health
 health:
-	curl -s http://localhost:8001/health | python -m json.tool
+	curl -s http://localhost:8000/health | python -m json.tool
 
 # Run intent analyzer test suite (set INTENT_BASE_URL if not 8000)
 intent-test:

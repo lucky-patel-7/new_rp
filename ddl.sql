@@ -245,6 +245,8 @@ CREATE TABLE public.interview_questions (
     id uuid DEFAULT uuid_generate_v4() NOT NULL,
     user_id varchar(255) NOT NULL,
     question_text text NOT NULL,
+    expected_answer text,
+    welcome_message text,
     category varchar(100),
     created_at timestamptz DEFAULT now() NOT NULL,
     updated_at timestamptz DEFAULT now() NOT NULL,
@@ -253,6 +255,25 @@ CREATE TABLE public.interview_questions (
 );
 
 CREATE INDEX idx_interview_questions_user_id ON public.interview_questions(user_id);
+
+-- New table for interview sessions
+CREATE TABLE public.interviews (
+    id uuid DEFAULT uuid_generate_v4() NOT NULL,
+    user_id varchar(255) NOT NULL,
+    title text NOT NULL,
+    description text,
+    welcome_message text,
+    question_ids uuid[] NOT NULL,
+    candidate_ids uuid[],
+    status varchar(50) DEFAULT 'draft' NOT NULL, -- 'draft', 'active', 'completed', 'cancelled'
+    created_at timestamptz DEFAULT now() NOT NULL,
+    updated_at timestamptz DEFAULT now() NOT NULL,
+    CONSTRAINT interviews_pkey PRIMARY KEY (id),
+    CONSTRAINT fk_interview_user FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_interviews_user_id ON public.interviews(user_id);
+CREATE INDEX idx_interviews_status ON public.interviews(status);
 
 -- New table to log interview call records
 CREATE TABLE public.call_records (

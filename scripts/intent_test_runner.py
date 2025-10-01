@@ -97,7 +97,7 @@ def detect_base_url() -> str:
     if BASE_URL:
         return BASE_URL
     # 2) Try common defaults by pinging /health
-    candidates = ["http://localhost:8000", "http://localhost:8001"]
+    candidates = ["http://localhost:8000", "http://localhost:8000"]
     for base in candidates:
         try:
             with httpx.Client(timeout=3.0) as c:
