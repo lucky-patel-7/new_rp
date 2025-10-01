@@ -160,8 +160,6 @@ class InterviewInDB(BaseModel):
 
     class Config:
         from_attributes = True
-    session_id: str = Field(..., description="The ID of the interview session to start.")
-    resume_id: Optional[str] = Field(None, description="The ID of the resume/candidate (for live interviews).")
 
 class InterviewStartResponse(BaseModel):
     success: bool
@@ -206,7 +204,8 @@ class InterviewActionResponse(BaseModel):
     thank_you_message: Optional[str] = None
 
 class InterviewStartRequest(BaseModel):
-    pass
+    session_id: str = Field(..., description="The ID of the interview session to start.")
+    resume_id: Optional[str] = Field(None, description="The ID of the resume/candidate (for live interviews).")
     
 
 @asynccontextmanager
@@ -2023,10 +2022,13 @@ async def bulk_upload_resumes(files: List[UploadFile] = File(...), user_id: Opti
                 payload = {
                     "user_id": getattr(resume_data, 'user_id', None),
                     "name": getattr(resume_data, 'name', None),
+                    "name_lc": (getattr(resume_data, 'name', '') or '').strip().lower(),
                     "email": getattr(resume_data, 'email', None),
-                    "phone": getattr(resume_data, 'phone', None),
+                    "email_lc": (getattr(resume_data, 'email', '') or '').strip().lower(),
+                    "phone": getattr(resume_data, 'phone', ''),
+                    "phone_digits": re.sub(r"\D", "", str(getattr(resume_data, 'phone', ''))) if getattr(resume_data, 'phone', None) else "",
                     "location": getattr(resume_data, 'location', None),
-                    "linkedin_url": getattr(resume_data, 'linkedin_url', None),
+                    "linkedin_url": getattr(resume_data, 'linkedin_url', ''),
                     "current_position": getattr(resume_data, 'current_position', None),
                     "skills": getattr(resume_data, 'skills', []),
                     "total_experience": getattr(resume_data, 'total_experience', None),
@@ -2044,7 +2046,7 @@ async def bulk_upload_resumes(files: List[UploadFile] = File(...), user_id: Opti
                     "content_hash": file_hash,
                     "extraction_statistics": safe_extraction_statistics,
                     "upload_timestamp": upload_timestamp,
-                    "owner_user_id": owner_user_id,
+                    "owner_user_id": user_id,
                     "is_shortlisted": False  # Initialize as not shortlisted
                 }
 
@@ -5034,7 +5036,9 @@ async def create_interview(user_id: str, interview: InterviewCreate):
         raise HTTPException(status_code=503, detail="Database connection failed.")
     
     try:
-        new_interview = await pg_client.create_interview(user_id, interview)
+        interview_data = interview.dict()
+        interview_data['user_id'] = user_id
+        new_interview = await pg_client.create_interview(interview_data)
         if not new_interview:
             raise HTTPException(status_code=500, detail="Failed to create interview.")
         return new_interview
@@ -5691,7 +5695,7 @@ async def _generate_response_evaluation(
         
         # Enhanced classification prompt that considers question type
         is_salary_question = "salary" in question_text.lower()
-        is_yes_no_question = expected_answer.lower().strip() in ["yes", "no"]
+        is_yes_no_question = str(expected_answer).lower().strip() in ["yes", "no"] if expected_answer else False
         
         system_prompt = """You are a screening call classification assistant. Your only job is to determine the status of the candidate's response to the interview question.
 Follow these rules exactly:
@@ -5751,8 +5755,8 @@ Return ONLY a JSON object in this exact format:
             # Determine if the answer matches the expected answer
             is_match = False
             if expected_answer and candidate_response:
-                expected_norm = expected_answer.lower().strip()
-                response_norm = candidate_response.lower().strip()
+                expected_norm = str(expected_answer).lower().strip()
+                response_norm = str(candidate_response).lower().strip()
                 
                 # For yes/no questions
                 if expected_norm in ['yes', 'no']:
@@ -5808,8 +5812,8 @@ Return ONLY a JSON object in this exact format:
     # Basic fallback matching logic
     is_match = False
     if expected_answer and candidate_response:
-        expected_norm = expected_answer.lower().strip()
-        response_norm = candidate_response.lower().strip()
+        expected_norm = str(expected_answer).lower().strip()
+        response_norm = str(candidate_response).lower().strip()
         
         if expected_norm in ['yes', 'no']:
             affirmative = ['yes', 'y', 'yeah', 'yep', 'sure', 'absolutely', 'definitely', 'certainly', 'of course']
