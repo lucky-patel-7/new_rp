@@ -10,6 +10,7 @@ import uuid
 import tempfile
 import re
 import time
+import hashlib
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Set, Tuple
 from difflib import SequenceMatcher
@@ -852,6 +853,16 @@ async def upload_resume(file: UploadFile = File(...), user_id: Optional[str] = F
         file_content = await file.read()
         file_size = len(file_content)
 
+        file_hash = hashlib.sha256(file_content).hexdigest()
+        duplicate_resume_id = None
+        if user_id and file_hash:
+            try:
+                duplicate_resume_id = await pg_client.find_duplicate_resume(user_id, file_hash, None)
+            except Exception as exc:
+                logger.warning(f"[UPLOAD] Duplicate check skipped for user {user_id}: {exc}")
+            if duplicate_resume_id:
+                raise HTTPException(status_code=409, detail="Duplicate resume detected for this user.")
+
         logger.info(f"[INFO] File size: {file_size} bytes")
 
         # Validate file size
@@ -924,11 +935,27 @@ async def upload_resume(file: UploadFile = File(...), user_id: Optional[str] = F
             "education": safe_education,
             "role_classification": safe_role_classification,
             "original_filename": file.filename,
+            "content_hash": file_hash,
             "extraction_statistics": safe_extraction_statistics,
             "upload_timestamp": upload_timestamp,
             "owner_user_id": user_id,
             "is_shortlisted": False  # Initialize as not shortlisted
         }
+
+        metadata_hash = pg_client.compute_metadata_hash(payload)
+        if metadata_hash:
+            payload["metadata_hash"] = metadata_hash
+        else:
+            payload["metadata_hash"] = None
+
+        if user_id:
+            try:
+                duplicate_resume_id = await pg_client.find_duplicate_resume(user_id, file_hash, metadata_hash)
+            except Exception as exc:
+                logger.warning(f"[UPLOAD] Duplicate check (post-parse) skipped for user {user_id}: {exc}")
+            else:
+                if duplicate_resume_id:
+                    raise HTTPException(status_code=409, detail="Duplicate resume detected for this user.")
 
         # Create embedding and store in Qdrant
         embedding_vector = await resume_parser.create_embedding(resume_data)
@@ -1809,6 +1836,21 @@ async def bulk_upload_resumes(files: List[UploadFile] = File(...), user_id: Opti
                 file_size = len(content)
                 logger.info(f"[INFO] File size: {file_size} bytes")
 
+                file_hash = hashlib.sha256(content).hexdigest()
+                duplicate_resume_id = None
+                if user_id and file_hash:
+                    try:
+                        duplicate_resume_id = await pg_client.find_duplicate_resume(user_id, file_hash, None)
+                    except Exception as exc:
+                        logger.warning(f"[BULK_UPLOAD] Duplicate check skipped for user {user_id}: {exc}")
+                    if duplicate_resume_id:
+                        file_result["status"] = "duplicate"
+                        file_result["error"] = "Duplicate resume detected for this user"
+                        results["failed_uploads"] += 1
+                        results["results"].append(file_result)
+                        continue
+
+
                 # Create temporary file with proper suffix
                 file_suffix = Path(file.filename).suffix.lower()
                 temp_file = tempfile.NamedTemporaryFile(
@@ -1874,11 +1916,31 @@ async def bulk_upload_resumes(files: List[UploadFile] = File(...), user_id: Opti
                     "education": safe_education,
                     "role_classification": safe_role_classification,
                     "original_filename": file.filename,
+                    "content_hash": file_hash,
                     "extraction_statistics": safe_extraction_statistics,
                     "upload_timestamp": upload_timestamp,
-                    "owner_user_id": user_id,
+                    "owner_user_id": owner_user_id,
                     "is_shortlisted": False  # Initialize as not shortlisted
                 }
+
+                metadata_hash = pg_client.compute_metadata_hash(payload)
+                if metadata_hash:
+                    payload["metadata_hash"] = metadata_hash
+                else:
+                    payload["metadata_hash"] = None
+
+                if user_id:
+                    try:
+                        duplicate_resume_id = await pg_client.find_duplicate_resume(user_id, file_hash, metadata_hash)
+                    except Exception as exc:
+                        logger.warning(f"[BULK_UPLOAD] Duplicate check (post-parse) skipped for user {user_id}: {exc}")
+                    else:
+                        if duplicate_resume_id:
+                            file_result["status"] = "duplicate"
+                            file_result["error"] = "Duplicate resume detected for this user"
+                            results["failed_uploads"] += 1
+                            results["results"].append(file_result)
+                            continue
 
                 # Create embedding and store in Qdrant (same as single upload)
                 embedding_vector = await resume_parser.create_embedding(resume_data)
@@ -2041,10 +2103,26 @@ async def bulk_upload_folder(
             if not path.exists() or not path.is_file():
                 raise ValueError("File not found or not a regular file")
 
-            user_id = str(uuid.uuid4())
-            r["user_id"] = user_id
+            resume_id = str(uuid.uuid4())
+            r["resume_id"] = resume_id
+            r["user_id"] = resume_id
+            r["owner_user_id"] = owner_user_id
 
             file_size = path.stat().st_size
+            file_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+
+            duplicate_resume_id = None
+            if owner_user_id and file_hash:
+                try:
+                    duplicate_resume_id = await pg_client.find_duplicate_resume(owner_user_id, file_hash, None)
+                except Exception as exc:
+                    logger.warning(f"[FOLDER_UPLOAD] Duplicate check skipped for user {owner_user_id}: {exc}")
+                if duplicate_resume_id:
+                    r["status"] = "duplicate"
+                    r["error"] = "Duplicate resume detected for this user"
+                    results_summary["skipped"] += 1
+                    results_summary["results"].append(r)
+                    continue
 
             # Process the resume directly from disk
             result: ProcessingResult = await resume_parser.process_resume_file(
@@ -2097,11 +2175,31 @@ async def bulk_upload_folder(
                 "education": safe_education,
                 "role_classification": safe_role_classification,
                 "original_filename": path.name,
+                "content_hash": file_hash,
                 "extraction_statistics": safe_extraction_statistics,
                 "upload_timestamp": upload_timestamp,
-                "owner_user_id": user_id,
+                "owner_user_id": owner_user_id,
                 "is_shortlisted": False  # Initialize as not shortlisted
             }
+
+            metadata_hash = pg_client.compute_metadata_hash(payload)
+            if metadata_hash:
+                payload["metadata_hash"] = metadata_hash
+            else:
+                payload["metadata_hash"] = None
+
+            if owner_user_id:
+                try:
+                    duplicate_resume_id = await pg_client.find_duplicate_resume(owner_user_id, file_hash, metadata_hash)
+                except Exception as exc:
+                    logger.warning(f"[FOLDER_UPLOAD] Duplicate check (post-parse) skipped for user {owner_user_id}: {exc}")
+                else:
+                    if duplicate_resume_id:
+                        r["status"] = "duplicate"
+                        r["error"] = "Duplicate resume detected for this user"
+                        results_summary["skipped"] += 1
+                        results_summary["results"].append(r)
+                        continue
 
             # Create embedding and store in Qdrant
             embedding_vector = await resume_parser.create_embedding(resume_data)
@@ -2134,9 +2232,9 @@ async def bulk_upload_folder(
                 "best_role": getattr(resume_data, 'best_role', None)
             }
             # Increment user's resume count for each successful folder upload
-            if user_id:
+            if owner_user_id:
                 tokens_used = getattr(result, 'tokens_used', 0) if result else 0
-                await pg_client.increment_user_resume_count(user_id, 1, tokens_used)
+                await pg_client.increment_user_resume_count(owner_user_id, 1, tokens_used)
 
             results_summary["processed"] += 1
 
@@ -5517,6 +5615,7 @@ async def update_user_search_prompt_feedback(
         raise HTTPException(status_code=404, detail="Prompt not found or update failed")
 
     return {"success": True, "id": prompt_id, "liked": liked_norm}
+
 
 
 
