@@ -4,6 +4,7 @@ Async PostgreSQL client to persist parsed resume payloads alongside Qdrant.
 
 import asyncio
 import json
+import hashlib
 import logging
 from typing import Any, Dict, Optional, List, Tuple
 import uuid
@@ -126,7 +127,7 @@ class PostgresClient:
             role_category, seniority, best_role,
             skills, work_history, projects, education,
             role_classification, recommended_roles,
-            original_filename, upload_timestamp,
+            original_filename, content_hash, metadata_hash, upload_timestamp,
             embedding_model, embedding_generated_at, created_at, is_shortlisted
         ) VALUES (
             $1, $2, $3,
@@ -135,8 +136,8 @@ class PostgresClient:
             $12, $13, $14,
             $15::jsonb, $16::jsonb, $17::jsonb, $18::jsonb,
             $19::jsonb, $20::jsonb,
-            $21, $22,
-            $23, NOW(), NOW(), FALSE
+            $21, $22, $23, $24,
+            $25, NOW(), NOW(), FALSE
         )
         ON CONFLICT (id) DO UPDATE SET
             vector_id = EXCLUDED.vector_id,
@@ -159,6 +160,8 @@ class PostgresClient:
             role_classification = EXCLUDED.role_classification,
             recommended_roles = EXCLUDED.recommended_roles,
             original_filename = EXCLUDED.original_filename,
+            content_hash = EXCLUDED.content_hash,
+            metadata_hash = EXCLUDED.metadata_hash,
             upload_timestamp = EXCLUDED.upload_timestamp,
             embedding_model = EXCLUDED.embedding_model,
             embedding_generated_at = NOW();
@@ -195,6 +198,8 @@ class PostgresClient:
                     role_classification,
                     recommended_roles,
                     payload.get("original_filename"),
+                    payload.get("content_hash"),
+                    payload.get("metadata_hash"),
                     parse_timestamp(payload.get("upload_timestamp")),
                     embedding_model or 'text-embedding-3-large',
                 )
@@ -204,10 +209,61 @@ class PostgresClient:
             logger.error(f"[PG] Failed to upsert qdrant_resumes {resume_id}: {e}")
             return False
 
+    async def get_resume_owner(self, resume_id: str) -> Optional[str]:
+        """Fetch the owner_user_id for a resume id."""
+        if not await self.connect():
+            return None
+
+        assert self._pool is not None
+
+        try:
+            async with self._pool.acquire() as conn:
+                row = await conn.fetchrow(
+                    f"SELECT owner_user_id FROM {self._table} WHERE id = $1",
+                    resume_id,
+                )
+        except Exception as exc:
+            logger.error(f"[PG] Failed to fetch owner for resume %s: %s", resume_id, exc)
+            return None
+
+        if not row:
+            return None
+
+        owner = row.get("owner_user_id")
+        if owner is None:
+            return None
+
+        owner_str = str(owner).strip()
+        return owner_str if owner_str else None
+
+    async def delete_resume(self, resume_id: str) -> bool:
+        """Delete a resume row from the mirror table."""
+        if not await self.connect():
+            return False
+
+        assert self._pool is not None
+
+        try:
+            async with self._pool.acquire() as conn:
+                result = await conn.execute(
+                    f"DELETE FROM {self._table} WHERE id = $1",
+                    resume_id,
+                )
+        except Exception as exc:
+            logger.error(f"[PG] Failed to delete resume %s: %s", resume_id, exc)
+            return False
+
+        return result.upper().startswith("DELETE")
     async def _ensure_schema(self, conn: asyncpg.Connection) -> None:
         """Best-effort ensure of qdrant_resumes table and columns.
         Works whether table exists or not; adds missing columns if needed."""
         table = self._table
+        # Ensure schema exists before creating tables
+        try:
+            await conn.execute("CREATE SCHEMA IF NOT EXISTS public")
+        except Exception:
+            pass
+
         # Create table if not exists (no-op if exists)
         create_sql = f"""
         CREATE TABLE IF NOT EXISTS {table} (
@@ -232,6 +288,8 @@ class PostgresClient:
             role_classification jsonb DEFAULT '{{}}'::jsonb,
             recommended_roles jsonb DEFAULT '[]'::jsonb,
             original_filename text,
+            content_hash text,
+            metadata_hash text,
             upload_timestamp timestamptz,
             embedding_model varchar(100) DEFAULT 'text-embedding-3-large',
             embedding_generated_at timestamptz,
@@ -264,6 +322,8 @@ class PostgresClient:
             f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS role_classification jsonb DEFAULT '{{}}'::jsonb",
             f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS recommended_roles jsonb DEFAULT '[]'::jsonb",
             f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS original_filename text",
+            f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS content_hash text",
+            f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS metadata_hash text",
             f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS upload_timestamp timestamptz",
             f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS embedding_model varchar(100) DEFAULT 'text-embedding-3-large'",
             f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS embedding_generated_at timestamptz",
@@ -295,6 +355,16 @@ class PostgresClient:
         except Exception:
             pass
         try:
+            await conn.execute(f"CREATE INDEX IF NOT EXISTS idx_qdrant_resumes_metadata_hash ON {table}(metadata_hash)")
+        except Exception:
+            pass
+        try:
+            await conn.execute(
+                f"CREATE UNIQUE INDEX IF NOT EXISTS uq_qdrant_resumes_owner_hash ON {table}(owner_user_id, content_hash) WHERE owner_user_id IS NOT NULL AND content_hash IS NOT NULL"
+            )
+        except Exception:
+            pass
+        try:
             await conn.execute(f"CREATE INDEX IF NOT EXISTS idx_qdrant_resumes_is_shortlisted ON {table}(is_shortlisted)")
         except Exception:
             pass
@@ -318,6 +388,11 @@ class PostgresClient:
         except Exception:
             # constraint may already exist or users table not present; ignore
             pass
+
+        try:
+            await self._backfill_metadata_hashes_with_conn(conn)
+        except Exception as exc:
+            logger.info(f"[PG] Metadata hash backfill skipped during ensure schema: {exc}")
 
     async def _ensure_interview_schema(self, conn: asyncpg.Connection) -> None:
         """Ensure the interview_questions, call_records, and interview_sessions tables exist."""
@@ -369,6 +444,111 @@ class PostgresClient:
         await conn.execute("CREATE INDEX IF NOT EXISTS idx_interview_sessions_user_id ON public.interview_sessions(user_id);")
 
         logger.info("[PG] Ensured interview schema (questions, calls, sessions).")
+
+    @staticmethod
+    def compute_metadata_hash(data: Dict[str, Any]) -> Optional[str]:
+        """Compute a deterministic metadata hash for duplicate detection."""
+        if data is None:
+            return None
+        parts: List[str] = []
+
+        def add(value: Any) -> None:
+            if value is None:
+                return
+            if isinstance(value, str):
+                val = value.strip().lower()
+                if val:
+                    parts.append(val)
+            elif isinstance(value, (int, float)):
+                parts.append(str(value))
+            elif isinstance(value, (list, tuple, set)):
+                items = list(value)
+                try:
+                    items.sort()  # type: ignore[arg-type]
+                except Exception:
+                    try:
+                        items.sort(key=lambda v: str(v))  # type: ignore[arg-type]
+                    except Exception:
+                        pass
+                for item in items:
+                    add(item)
+            elif isinstance(value, dict):
+                for key in sorted(value.keys()):
+                    add(value[key])
+            else:
+                val = str(value).strip().lower()
+                if val:
+                    parts.append(val)
+
+        keys = [
+            "owner_user_id",
+            "name",
+            "email",
+            "phone",
+            "location",
+            "linkedin_url",
+            "current_position",
+            "summary",
+            "total_experience",
+            "role_category",
+            "seniority",
+            "best_role",
+            "recommended_roles",
+            "skills",
+            "work_history",
+            "education",
+            "projects",
+            "role_classification",
+            "extraction_statistics",
+            "original_filename",
+        ]
+        for key in keys:
+            add(data.get(key))
+
+        if not parts:
+            fallback = str(data.get("id") or data.get("vector_id") or data.get("original_filename") or data.get("owner_user_id") or "")
+            if fallback:
+                parts.append(fallback.strip().lower())
+            else:
+                return None
+
+        digest_source = "||".join(parts)
+        return hashlib.sha256(digest_source.encode("utf-8")).hexdigest()
+
+    async def backfill_metadata_hashes(self, batch_size: int = 500) -> None:
+        """Populate metadata_hash for existing resumes lacking it using a new connection."""
+        if not await self.connect():
+            return
+        assert self._pool is not None
+        async with self._pool.acquire() as conn:  # type: ignore[attr-defined]
+            await self._backfill_metadata_hashes_with_conn(conn, batch_size)
+
+    async def _backfill_metadata_hashes_with_conn(
+        self,
+        conn: asyncpg.Connection,
+        batch_size: int = 500
+    ) -> None:
+        table = self._table
+        try:
+            while True:
+                rows = await conn.fetch(
+                    f"SELECT id, owner_user_id, name, email, phone, location, linkedin_url, current_position, summary, total_experience, role_category, seniority, best_role, skills, work_history, projects, education, role_classification, recommended_roles, original_filename FROM {table} WHERE metadata_hash IS NULL LIMIT $1",
+                    batch_size,
+                )
+                if not rows:
+                    break
+                for row in rows:
+                    row_dict = dict(row)
+                    metadata_hash = self.compute_metadata_hash(row_dict)
+                    if not metadata_hash:
+                        metadata_hash = hashlib.sha256(f"fallback:{row_dict.get('id')}".encode("utf-8")).hexdigest()
+                    await conn.execute(
+                        f"UPDATE {table} SET metadata_hash = $1 WHERE id = $2",
+                        metadata_hash,
+                        row_dict.get("id"),
+                    )
+        except Exception as exc:
+            logger.warning(f"[PG] Metadata hash backfill skipped: {exc}")
 
     async def list_resumes(
         self,
@@ -463,7 +643,7 @@ class PostgresClient:
             SELECT id, vector_id, owner_user_id, name, email, phone, location, linkedin_url,
                    current_position, summary, total_experience, role_category, seniority,
                    best_role, skills, work_history, projects, education,
-                   role_classification, recommended_roles, original_filename,
+                   role_classification, recommended_roles, original_filename, content_hash, metadata_hash,
                    upload_timestamp, embedding_model, embedding_generated_at, created_at, is_shortlisted
             FROM {self._table}
             {where_sql}
@@ -478,6 +658,44 @@ class PostgresClient:
         # Convert Record to dict
         items: List[Dict[str, Any]] = [dict(r) for r in rows]
         return int(total or 0), items
+
+    async def find_duplicate_resume(
+        self,
+        owner_user_id: str,
+        content_hash: Optional[str],
+        metadata_hash: Optional[str]
+    ) -> Optional[str]:
+        """Return resume id if a resume with same content or metadata hash exists for this owner."""
+        cleaned_owner = (owner_user_id or '').strip()
+        if not cleaned_owner:
+            return None
+        if not await self.connect():
+            return None
+        assert self._pool is not None
+        async with self._pool.acquire() as conn:  # type: ignore[attr-defined]
+            if not self._schema_ensured:
+                try:
+                    await self._ensure_schema(conn)
+                    self._schema_ensured = True
+                except Exception as exc:
+                    logger.info(f"[PG] Duplicate check schema ensure skipped: {exc}")
+            if content_hash:
+                row = await conn.fetchrow(
+                    f"SELECT id FROM {self._table} WHERE owner_user_id = $1 AND content_hash = $2 LIMIT 1",
+                    cleaned_owner,
+                    content_hash,
+                )
+                if row and row.get('id'):
+                    return str(row['id'])
+            if metadata_hash:
+                row = await conn.fetchrow(
+                    f"SELECT id FROM {self._table} WHERE owner_user_id = $1 AND metadata_hash = $2 LIMIT 1",
+                    cleaned_owner,
+                    metadata_hash,
+                )
+                if row and row.get('id'):
+                    return str(row['id'])
+        return None
 
     # --- Shortlisting Functions ---
 
@@ -1426,6 +1644,8 @@ class PostgresClient:
 
 
 pg_client = PostgresClient()
+
+
 
 
 
