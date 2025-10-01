@@ -320,13 +320,15 @@ class PostgresClient:
             pass
 
     async def _ensure_interview_schema(self, conn: asyncpg.Connection) -> None:
-        """Ensure the interview_questions, call_records, and interview_sessions tables exist."""
+        """Ensure the interview_questions, interviews, call_records, and interview_sessions tables exist."""
         # Create interview_questions table
         await conn.execute("""
             CREATE TABLE IF NOT EXISTS public.interview_questions (
                 id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                 user_id VARCHAR(255) NOT NULL,
                 question_text TEXT NOT NULL,
+                expected_answer TEXT,
+                welcome_message TEXT,
                 category VARCHAR(100),
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -334,6 +336,25 @@ class PostgresClient:
             );
         """)
         await conn.execute("CREATE INDEX IF NOT EXISTS idx_interview_questions_user_id ON public.interview_questions(user_id);")
+
+        # Create interviews table
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS public.interviews (
+                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                user_id VARCHAR(255) NOT NULL,
+                title TEXT NOT NULL,
+                description TEXT,
+                welcome_message TEXT,
+                question_ids UUID[] NOT NULL,
+                candidate_ids UUID[],
+                status VARCHAR(50) DEFAULT 'draft' NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                CONSTRAINT fk_interview_user FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE
+            );
+        """)
+        await conn.execute("CREATE INDEX IF NOT EXISTS idx_interviews_user_id ON public.interviews(user_id);")
+        await conn.execute("CREATE INDEX IF NOT EXISTS idx_interviews_status ON public.interviews(status);")
 
         # Create call_records table
         await conn.execute("""
@@ -368,7 +389,7 @@ class PostgresClient:
         """)
         await conn.execute("CREATE INDEX IF NOT EXISTS idx_interview_sessions_user_id ON public.interview_sessions(user_id);")
 
-        logger.info("[PG] Ensured interview schema (questions, calls, sessions).")
+        logger.info("[PG] Ensured interview schema (questions, interviews, calls, sessions).")
 
     async def list_resumes(
         self,
@@ -553,8 +574,8 @@ class PostgresClient:
             return None
         assert self._pool is not None
         sql = """
-            INSERT INTO public.interview_questions (user_id, question_text, category)
-            VALUES ($1, $2, $3)
+            INSERT INTO public.interview_questions (user_id, question_text, expected_answer, welcome_message, category)
+            VALUES ($1, $2, $3, $4, $5)
             RETURNING *;
         """
         async with self._pool.acquire() as conn:
@@ -562,6 +583,8 @@ class PostgresClient:
                 sql,
                 question_data['user_id'],
                 question_data['question_text'],
+                question_data.get('expected_answer'),
+                question_data.get('welcome_message'),
                 question_data.get('category')
             )
         if row:
@@ -605,7 +628,7 @@ class PostgresClient:
         set_parts = []
         args = []
         for i, (key, value) in enumerate(question_update.items()):
-            if key in ('question_text', 'category'): # Whitelist of updatable columns
+            if key in ('question_text', 'expected_answer', 'welcome_message', 'category'): # Whitelist of updatable columns
                 set_parts.append(f"{key} = ${i + 1}")
                 args.append(value)
         
@@ -650,6 +673,16 @@ class PostgresClient:
                     row_dict[key] = value.isoformat()
             return row_dict
         return None
+
+    async def delete_interview_question(self, question_id: uuid.UUID) -> bool:
+        """Delete an interview question."""
+        if not await self.connect():
+            return False
+        assert self._pool is not None
+        sql = "DELETE FROM public.interview_questions WHERE id = $1"
+        async with self._pool.acquire() as conn:
+            result = await conn.execute(sql, question_id)
+            return result == "DELETE 1"
 
     # --- Call Logging Functions ---
 
@@ -1354,24 +1387,106 @@ class PostgresClient:
             "available_token_slots": max(0, row['token_limit'] - row['tokens_used'])
         }
 
-    async def create_interview_session(self, user_id: str, session_type: str, question_ids: List[uuid.UUID], candidate_ids: Optional[List[uuid.UUID]] = None) -> Optional[Dict[str, Any]]:
-        """Create a new interview session."""
-        ok = await self.connect()
-        if not ok:
+    # --- Interview CRUD Functions ---
+
+    async def create_interview(self, interview_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Create a new interview."""
+        if not await self.connect():
             return None
         assert self._pool is not None
+        sql = """
+            INSERT INTO public.interviews (user_id, title, description, welcome_message, question_ids, candidate_ids)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING *;
+        """
         async with self._pool.acquire() as conn:
             row = await conn.fetchrow(
-                """
-                INSERT INTO public.interview_sessions (user_id, session_type, question_ids, candidate_ids)
-                VALUES ($1, $2, $3, $4)
-                RETURNING id, user_id, session_type, question_ids, candidate_ids, current_question_index, status, created_at, updated_at
-                """,
-                user_id, session_type, question_ids, candidate_ids
+                sql,
+                interview_data['user_id'],
+                interview_data['title'],
+                interview_data.get('description'),
+                interview_data.get('welcome_message'),
+                interview_data['question_ids'],
+                interview_data.get('candidate_ids')
             )
-            if row:
-                return dict(row)
+        if row:
+            row_dict = dict(row)
+            for key, value in row_dict.items():
+                if isinstance(value, uuid.UUID):
+                    row_dict[key] = str(value)
+                elif isinstance(value, datetime):
+                    row_dict[key] = value.isoformat()
+            return row_dict
         return None
+
+    async def get_user_interviews(self, user_id: str) -> List[Dict[str, Any]]:
+        """Retrieve all interviews for a user."""
+        if not await self.connect():
+            return []
+        assert self._pool is not None
+        sql = "SELECT * FROM public.interviews WHERE user_id = $1 ORDER BY created_at DESC"
+        async with self._pool.acquire() as conn:
+            rows = await conn.fetch(sql, user_id)
+        
+        # Convert UUID objects to strings for JSON serialization
+        result = []
+        for row in rows:
+            row_dict = dict(row)
+            for key, value in row_dict.items():
+                if isinstance(value, uuid.UUID):
+                    row_dict[key] = str(value)
+                elif isinstance(value, datetime):
+                    row_dict[key] = value.isoformat()
+            result.append(row_dict)
+        return result
+
+    async def update_interview(self, interview_id: uuid.UUID, interview_update: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Update an existing interview."""
+        if not await self.connect() or not interview_update:
+            return None
+        assert self._pool is not None
+        
+        # Dynamically build the SET clause
+        set_parts = []
+        args = []
+        for i, (key, value) in enumerate(interview_update.items()):
+            if key in ('title', 'description', 'welcome_message', 'question_ids', 'candidate_ids', 'status'): # Whitelist of updatable columns
+                set_parts.append(f"{key} = ${i + 1}")
+                args.append(value)
+        
+        if not set_parts:
+            return None # Nothing to update
+
+        set_clause = ", ".join(set_parts)
+        args.append(interview_id)
+        
+        sql = f"""
+            UPDATE public.interviews
+            SET {set_clause}, updated_at = NOW()
+            WHERE id = ${len(args)}
+            RETURNING *;
+        """
+        async with self._pool.acquire() as conn:
+            row = await conn.fetchrow(sql, *args)
+        if row:
+            row_dict = dict(row)
+            for key, value in row_dict.items():
+                if isinstance(value, uuid.UUID):
+                    row_dict[key] = str(value)
+                elif isinstance(value, datetime):
+                    row_dict[key] = value.isoformat()
+            return row_dict
+        return None
+
+    async def delete_interview(self, interview_id: uuid.UUID) -> bool:
+        """Delete an interview."""
+        if not await self.connect():
+            return False
+        assert self._pool is not None
+        sql = "DELETE FROM public.interviews WHERE id = $1"
+        async with self._pool.acquire() as conn:
+            result = await conn.execute(sql, interview_id)
+            return result == "DELETE 1"
 
     async def get_interview_session(self, session_id: str) -> Optional[Dict[str, Any]]:
         ok = await self.connect()
@@ -1383,7 +1498,34 @@ class PostgresClient:
                 "SELECT * FROM public.interview_sessions WHERE id = $1",
                 session_id
             )
-            return dict(row) if row else None
+            if row:
+                row_dict = dict(row)
+                # Parse question_ids from JSON string to list
+                if 'question_ids' in row_dict and row_dict['question_ids'] is not None:
+                    if isinstance(row_dict['question_ids'], str):
+                        try:
+                            row_dict['question_ids'] = json.loads(row_dict['question_ids'])
+                        except (json.JSONDecodeError, TypeError):
+                            row_dict['question_ids'] = []
+                    elif not isinstance(row_dict['question_ids'], list):
+                        row_dict['question_ids'] = []
+                else:
+                    row_dict['question_ids'] = []
+
+                # Parse candidate_ids from JSON string to list
+                if 'candidate_ids' in row_dict and row_dict['candidate_ids'] is not None:
+                    if isinstance(row_dict['candidate_ids'], str):
+                        try:
+                            row_dict['candidate_ids'] = json.loads(row_dict['candidate_ids'])
+                        except (json.JSONDecodeError, TypeError):
+                            row_dict['candidate_ids'] = []
+                    elif not isinstance(row_dict['candidate_ids'], list):
+                        row_dict['candidate_ids'] = []
+                else:
+                    row_dict['candidate_ids'] = None
+
+                return row_dict
+            return None
 
     async def save_interview_response(
         self,
@@ -1423,6 +1565,371 @@ class PostgresClient:
             except Exception as e:
                 logger.error(f"[PG] Failed to save interview response: {e}")
                 return None
+
+
+    async def create_interview_session(self, user_id: str, session_type: str, question_ids: List[uuid.UUID], candidate_ids: Optional[List[uuid.UUID]] = None) -> Optional[Dict[str, Any]]:
+        """Create a new interview session."""
+        ok = await self.connect()
+        if not ok:
+            return None
+        assert self._pool is not None
+        async with self._pool.acquire() as conn:
+            # Convert UUIDs to strings for JSONB storage
+            import json
+            question_ids_json = json.dumps([str(uid) for uid in question_ids]) if question_ids else json.dumps([])
+            candidate_ids_json = json.dumps([str(uid) for uid in candidate_ids]) if candidate_ids else None
+            
+            row = await conn.fetchrow(
+                """
+                INSERT INTO public.interview_sessions (user_id, session_type, question_ids, candidate_ids)
+                VALUES ($1, $2, $3, $4)
+                RETURNING id, user_id, session_type, question_ids, candidate_ids, current_question_index, status, created_at, updated_at
+                """,
+                user_id, session_type, question_ids_json, candidate_ids_json
+            )
+            if row:
+                row_dict = dict(row)
+                # Parse JSONB columns back to Python objects
+                if 'question_ids' in row_dict and row_dict['question_ids'] is not None:
+                    if isinstance(row_dict['question_ids'], str):
+                        try:
+                            row_dict['question_ids'] = json.loads(row_dict['question_ids'])
+                        except (json.JSONDecodeError, TypeError):
+                            row_dict['question_ids'] = []
+                    elif not isinstance(row_dict['question_ids'], list):
+                        row_dict['question_ids'] = []
+                else:
+                    row_dict['question_ids'] = []
+
+                if 'candidate_ids' in row_dict and row_dict['candidate_ids'] is not None:
+                    if isinstance(row_dict['candidate_ids'], str):
+                        try:
+                            row_dict['candidate_ids'] = json.loads(row_dict['candidate_ids'])
+                        except (json.JSONDecodeError, TypeError):
+                            row_dict['candidate_ids'] = []
+                    elif not isinstance(row_dict['candidate_ids'], list):
+                        row_dict['candidate_ids'] = []
+                else:
+                    row_dict['candidate_ids'] = None
+                return row_dict
+        return None
+
+    async def get_interview_session(self, session_id: str) -> Optional[Dict[str, Any]]:
+        ok = await self.connect()
+        if not ok:
+            return None
+        assert self._pool is not None
+        async with self._pool.acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT * FROM public.interview_sessions WHERE id = $1",
+                session_id
+            )
+            if row:
+                row_dict = dict(row)
+                # Parse JSONB columns back to Python objects
+                if 'question_ids' in row_dict and row_dict['question_ids'] is not None:
+                    if isinstance(row_dict['question_ids'], str):
+                        try:
+                            row_dict['question_ids'] = json.loads(row_dict['question_ids'])
+                        except (json.JSONDecodeError, TypeError):
+                            row_dict['question_ids'] = []
+                    elif not isinstance(row_dict['question_ids'], list):
+                        row_dict['question_ids'] = []
+                else:
+                    row_dict['question_ids'] = []
+
+                if 'candidate_ids' in row_dict and row_dict['candidate_ids'] is not None:
+                    if isinstance(row_dict['candidate_ids'], str):
+                        try:
+                            row_dict['candidate_ids'] = json.loads(row_dict['candidate_ids'])
+                        except (json.JSONDecodeError, TypeError):
+                            row_dict['candidate_ids'] = []
+                    elif not isinstance(row_dict['candidate_ids'], list):
+                        row_dict['candidate_ids'] = []
+                else:
+                    row_dict['candidate_ids'] = None
+                return row_dict
+            return None
+
+    async def get_user_interview_sessions(self, user_id: str) -> List[Dict[str, Any]]:
+        """Get all interview sessions for a user."""
+        ok = await self.connect()
+        if not ok:
+            return []
+        assert self._pool is not None
+        async with self._pool.acquire() as conn:
+            rows = await conn.fetch(
+                "SELECT * FROM public.interview_sessions WHERE user_id = $1 ORDER BY created_at DESC",
+                user_id
+            )
+            # Parse JSONB columns back to Python objects
+            result = []
+            for row in rows:
+                row_dict = dict(row)
+                # Parse question_ids from JSON string to list
+                if 'question_ids' in row_dict and row_dict['question_ids'] is not None:
+                    if isinstance(row_dict['question_ids'], str):
+                        try:
+                            row_dict['question_ids'] = json.loads(row_dict['question_ids'])
+                        except (json.JSONDecodeError, TypeError):
+                            row_dict['question_ids'] = []
+                    elif not isinstance(row_dict['question_ids'], list):
+                        row_dict['question_ids'] = []
+                else:
+                    row_dict['question_ids'] = []
+
+                # Parse candidate_ids from JSON string to list
+                if 'candidate_ids' in row_dict and row_dict['candidate_ids'] is not None:
+                    if isinstance(row_dict['candidate_ids'], str):
+                        try:
+                            row_dict['candidate_ids'] = json.loads(row_dict['candidate_ids'])
+                        except (json.JSONDecodeError, TypeError):
+                            row_dict['candidate_ids'] = []
+                    elif not isinstance(row_dict['candidate_ids'], list):
+                        row_dict['candidate_ids'] = []
+                else:
+                    row_dict['candidate_ids'] = None
+
+                result.append(row_dict)
+            return result
+
+    async def get_candidate_interview_sessions(self, user_id: str) -> List[Dict[str, Any]]:
+        """Get all interview sessions where the user is a candidate."""
+        ok = await self.connect()
+        if not ok:
+            return []
+        assert self._pool is not None
+        async with self._pool.acquire() as conn:
+            # For JSONB arrays, we need to check if the user_id exists in the array
+            rows = await conn.fetch(
+                "SELECT * FROM public.interview_sessions WHERE candidate_ids IS NOT NULL AND candidate_ids::jsonb ? $1 ORDER BY created_at DESC",
+                user_id
+            )
+            # Parse JSONB columns back to Python objects
+            result = []
+            for row in rows:
+                row_dict = dict(row)
+                # Parse question_ids from JSON string to list
+                if 'question_ids' in row_dict and row_dict['question_ids'] is not None:
+                    if isinstance(row_dict['question_ids'], str):
+                        try:
+                            row_dict['question_ids'] = json.loads(row_dict['question_ids'])
+                        except (json.JSONDecodeError, TypeError):
+                            row_dict['question_ids'] = []
+                    elif not isinstance(row_dict['question_ids'], list):
+                        row_dict['question_ids'] = []
+                else:
+                    row_dict['question_ids'] = []
+
+                # Parse candidate_ids from JSON string to list
+                if 'candidate_ids' in row_dict and row_dict['candidate_ids'] is not None:
+                    if isinstance(row_dict['candidate_ids'], str):
+                        try:
+                            row_dict['candidate_ids'] = json.loads(row_dict['candidate_ids'])
+                        except (json.JSONDecodeError, TypeError):
+                            row_dict['candidate_ids'] = []
+                    elif not isinstance(row_dict['candidate_ids'], list):
+                        row_dict['candidate_ids'] = []
+                else:
+                    row_dict['candidate_ids'] = None
+
+                result.append(row_dict)
+            return result
+
+    async def update_interview_session_status(self, session_id: str, status: str, current_question_index: Optional[int] = None) -> bool:
+        """Update interview session status and optionally current question index."""
+        ok = await self.connect()
+        if not ok:
+            return False
+        assert self._pool is not None
+        async with self._pool.acquire() as conn:
+            if current_question_index is not None:
+                result = await conn.execute(
+                    "UPDATE public.interview_sessions SET status = $1, current_question_index = $2, updated_at = NOW() WHERE id = $3",
+                    status, current_question_index, session_id
+                )
+            else:
+                result = await conn.execute(
+                    "UPDATE public.interview_sessions SET status = $1, updated_at = NOW() WHERE id = $2",
+                    status, session_id
+                )
+            return result and result.upper().startswith("UPDATE")
+
+    async def save_interview_transcript(self, session_id: uuid.UUID, question_id: uuid.UUID, candidate_response: Optional[str] = None, ai_evaluation: Optional[str] = None, audio_file_path: Optional[str] = None, audio_duration: Optional[float] = None, response_time_seconds: Optional[float] = None, is_match: Optional[bool] = None) -> Optional[str]:
+        """Save an interview transcript entry."""
+        if not await self.connect():
+            return None
+        assert self._pool is not None
+        
+        sql = """
+            INSERT INTO public.interview_transcripts (
+                session_id, question_id, candidate_response, ai_evaluation, audio_file_path, 
+                audio_duration, response_time_seconds, is_match
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            RETURNING id
+        """
+        
+        async with self._pool.acquire() as conn:
+            try:
+                transcript_id = await conn.fetchval(
+                    sql,
+                    session_id,
+                    question_id,
+                    candidate_response,
+                    ai_evaluation,
+                    audio_file_path,
+                    audio_duration,
+                    response_time_seconds,
+                    is_match
+                )
+                return str(transcript_id) if transcript_id else None
+            except Exception as e:
+                logger.error(f"[PG] Failed to save interview transcript: {e}")
+                return None
+
+    async def get_interview_transcripts(self, session_id: str) -> List[Dict[str, Any]]:
+        """Get all transcripts for an interview session."""
+        ok = await self.connect()
+        if not ok:
+            return []
+        assert self._pool is not None
+        async with self._pool.acquire() as conn:
+            rows = await conn.fetch(
+                """
+                SELECT t.*, q.question_text, q.expected_answer, q.category
+                FROM public.interview_transcripts t
+                LEFT JOIN public.interview_questions q ON t.question_id = q.id
+                WHERE t.session_id = $1::uuid
+                ORDER BY t.created_at ASC
+                """,
+                session_id
+            )
+            return [dict(row) for row in rows]
+
+    async def save_interviewer_decision(self, session_id: uuid.UUID, resume_id: uuid.UUID, decision: str, notes: Optional[str] = None) -> Optional[str]:
+        """Save an interviewer decision."""
+        if not await self.connect():
+            return None
+        assert self._pool is not None
+        
+        sql = """
+            INSERT INTO public.interviewer_decisions (session_id, resume_id, decision, notes)
+            VALUES ($1, $2, $3, $4)
+            RETURNING id
+        """
+        
+        async with self._pool.acquire() as conn:
+            try:
+                decision_id = await conn.fetchval(sql, session_id, resume_id, decision, notes)
+                return str(decision_id) if decision_id else None
+            except Exception as e:
+                logger.error(f"[PG] Failed to save interviewer decision: {e}")
+                return None
+
+    async def get_interviewer_decisions(self, session_id: str) -> List[Dict[str, Any]]:
+        """Get all interviewer decisions for a session."""
+        ok = await self.connect()
+        if not ok:
+            return []
+        assert self._pool is not None
+        async with self._pool.acquire() as conn:
+            rows = await conn.fetch(
+                "SELECT * FROM public.interviewer_decisions WHERE session_id = $1::uuid ORDER BY created_at DESC",
+                session_id
+            )
+            return [dict(row) for row in rows]
+
+    async def get_user_interview_decisions(self, user_id: str) -> List[Dict[str, Any]]:
+        """Get all interviewer decisions for a user's sessions."""
+        ok = await self.connect()
+        if not ok:
+            return []
+        assert self._pool is not None
+        async with self._pool.acquire() as conn:
+            rows = await conn.fetch(
+                """
+                SELECT d.*, s.session_type, r.name as candidate_name, r.current_position
+                FROM public.interviewer_decisions d
+                JOIN public.interview_sessions s ON d.session_id = s.id
+                JOIN public.parsed_resumes r ON d.resume_id = r.id
+                WHERE s.user_id = $1
+                ORDER BY d.created_at DESC
+                """,
+                user_id
+            )
+            return [dict(row) for row in rows]
+
+    async def get_interview_questions_by_ids(self, question_ids: List[uuid.UUID]) -> List[Dict[str, Any]]:
+        """Get interview questions by their IDs."""
+        if not await self.connect():
+            return []
+        assert self._pool is not None
+        
+        if not question_ids:
+            return []
+        
+        # Create placeholders for the IN clause
+        placeholders = ', '.join(f'${i+1}' for i in range(len(question_ids)))
+        sql = f"SELECT * FROM public.interview_questions WHERE id IN ({placeholders})"
+        
+        async with self._pool.acquire() as conn:
+            rows = await conn.fetch(sql, *question_ids)
+            
+            # Convert UUID objects to strings for JSON serialization
+            result = []
+            for row in rows:
+                row_dict = dict(row)
+                for key, value in row_dict.items():
+                    if isinstance(value, uuid.UUID):
+                        row_dict[key] = str(value)
+                    elif isinstance(value, datetime):
+                        row_dict[key] = value.isoformat()
+                result.append(row_dict)
+            
+            # Sort results to match the order of question_ids
+            id_to_index = {str(qid): i for i, qid in enumerate(question_ids)}
+            result.sort(key=lambda q: id_to_index.get(q['id'], 999))
+            
+            return result
+
+    async def get_interview(self, interview_id: uuid.UUID) -> Optional[Dict[str, Any]]:
+        """Get a single interview by ID."""
+        if not await self.connect():
+            return None
+        assert self._pool is not None
+        sql = "SELECT * FROM public.interviews WHERE id = $1"
+        async with self._pool.acquire() as conn:
+            row = await conn.fetchrow(sql, interview_id)
+        if row:
+            row_dict = dict(row)
+            for key, value in row_dict.items():
+                if isinstance(value, uuid.UUID):
+                    row_dict[key] = str(value)
+                elif isinstance(value, datetime):
+                    row_dict[key] = value.isoformat()
+            return row_dict
+        return None
+
+    async def update_transcript_evaluation(self, transcript_id: str, evaluation: Dict[str, Any]) -> bool:
+        """Update the AI evaluation of an interview transcript."""
+        if not await self.connect():
+            return False
+        assert self._pool is not None
+        
+        sql = """
+            UPDATE public.interview_transcripts
+            SET ai_evaluation = $2, updated_at = NOW()
+            WHERE id = $1
+        """
+        
+        async with self._pool.acquire() as conn:
+            try:
+                result = await conn.execute(sql, transcript_id, json.dumps(evaluation))
+                return result and result.upper().startswith("UPDATE")
+            except Exception as e:
+                logger.error(f"[PG] Failed to update transcript evaluation: {e}")
+                return False
 
 
 pg_client = PostgresClient()

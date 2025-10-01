@@ -39,7 +39,28 @@ from config.settings import settings
 setup_logging()
 logger = get_logger(__name__)
 
-# --- Pydantic Models for New Features ---
+# Whisper import for audio transcription
+try:
+    import whisper
+    WHISPER_AVAILABLE = True
+except ImportError:
+    WHISPER_AVAILABLE = False
+    logger.warning("Whisper not available. Audio transcription will be disabled.")
+
+# --- Strict Prompt for Screening Call Logic ---
+CALL_PROMPT_TEMPLATE = """You are a screening call classification assistant. Your only job is to determine the status of the candidate's answer.
+Follow these rules exactly:
+1.  **Analyze the Candidate's Transcript** and the **Question**.
+2.  Determine if the transcript is a direct answer, a refusal/evasion, or completely unrelated.
+3.  Respond with ONLY a valid JSON object containing the status.
+
+- If the candidate gives a clear, direct answer to the question, set status to 'ANSWERED_SUCCESS'.
+- If the candidate refuses, evades, asks for the question to be repeated, or provides a clearly unrelated answer, set status to 'CLARIFICATION_NEEDED'.
+
+---
+**REQUIRED JSON OUTPUT:**
+{{ "status": "<'ANSWERED_SUCCESS' | 'CLARIFICATION_NEEDED'>" }}
+"""
 
 class ShortlistUpdate(BaseModel):
     is_shortlisted: bool
@@ -47,6 +68,8 @@ class ShortlistUpdate(BaseModel):
 class InterviewQuestionBase(BaseModel):
     user_id: str = Field(..., description="The ID of the user creating the question.")
     question_text: str = Field(..., max_length=1000, description="The text of the interview question.")
+    expected_answer: Optional[str] = Field(None, max_length=2000, description="The expected answer for the question.")
+    welcome_message: Optional[str] = Field(None, max_length=500, description="The welcome message for the question.")
     category: Optional[str] = Field(None, max_length=100, description="A category for the question (e.g., 'Technical', 'Behavioral').")
 
 class InterviewQuestionCreate(InterviewQuestionBase):
@@ -54,6 +77,8 @@ class InterviewQuestionCreate(InterviewQuestionBase):
 
 class InterviewQuestionUpdate(BaseModel):
     question_text: Optional[str] = Field(None, max_length=1000, description="The updated text of the interview question.")
+    expected_answer: Optional[str] = Field(None, max_length=2000, description="The updated expected answer for the question.")
+    welcome_message: Optional[str] = Field(None, max_length=500, description="The updated welcome message for the question.")
     category: Optional[str] = Field(None, max_length=100, description="The updated category for the question.")
 
 class InterviewQuestionInDB(InterviewQuestionBase):
@@ -102,25 +127,108 @@ class InterviewSessionInDB(BaseModel):
     class Config:
         from_attributes = True
 
+# --- Interview Models ---
+
+class InterviewCreate(BaseModel):
+    user_id: str = Field(..., description="The ID of the user creating the interview.")
+    title: str = Field(..., description="Title of the interview.")
+    description: Optional[str] = Field(None, description="Description of the interview.")
+    welcome_message: Optional[str] = Field(None, description="Welcome message for the interview.")
+    question_ids: List[uuid.UUID] = Field(..., description="List of question IDs to include in the interview.")
+    candidate_ids: Optional[List[uuid.UUID]] = Field(None, description="List of candidate IDs for the interview.")
+
+class InterviewUpdate(BaseModel):
+    title: Optional[str] = Field(None, description="Updated title of the interview.")
+    description: Optional[str] = Field(None, description="Updated description of the interview.")
+    welcome_message: Optional[str] = Field(None, description="Updated welcome message for the interview.")
+    question_ids: Optional[List[uuid.UUID]] = Field(None, description="Updated list of question IDs.")
+    candidate_ids: Optional[List[uuid.UUID]] = Field(None, description="Updated list of candidate IDs.")
+    status: Optional[str] = Field(None, description="Updated status of the interview.")
+
+class InterviewInDB(BaseModel):
+    id: uuid.UUID
+    user_id: str
+    title: str
+    description: Optional[str]
+    welcome_message: Optional[str]
+    question_ids: List[uuid.UUID]
+    candidate_ids: Optional[List[uuid.UUID]]
+    status: str  # 'draft', 'active', 'completed', 'cancelled'
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+    session_id: str = Field(..., description="The ID of the interview session to start.")
+    resume_id: Optional[str] = Field(None, description="The ID of the resume/candidate (for live interviews).")
+
+class InterviewStartResponse(BaseModel):
+    success: bool
+    session_id: str
+    status: str
+    welcome_message: str
+    current_question: Dict[str, Any]
+    question_number: int
+    total_questions: int
+
 class InterviewResponse(BaseModel):
     question_id: uuid.UUID
     answer_text: str
     audio_duration: Optional[float] = None
     response_time_seconds: Optional[float] = None
 
-class InterviewSetupResponse(BaseModel):
-    available_questions: List[InterviewQuestionInDB]
-    available_candidates: List[Dict[str, Any]]
-    can_create_session: bool
+class InterviewResponseResponse(BaseModel):
+    success: bool
+    transcript_id: str
+    evaluation: Dict[str, Any]
+    next_action: Dict[str, Any]
+    question_number: int
+    total_questions: int
+    interview_completed: bool
+    next_question: Optional[Dict[str, Any]] = None
+    thank_you_message: Optional[str] = None
+
+class InterviewActionRequest(BaseModel):
+    session_id: str = Field(..., description="The ID of the interview session.")
+    action: str = Field(..., description="The action to perform: 'skip', 'clarify', or 'end'.")
+    question_id: Optional[str] = Field(None, description="The ID of the current question (optional).")
+
+class InterviewActionResponse(BaseModel):
+    success: bool
+    action: Optional[str] = None
+    message: Optional[str] = None
+    next_question: Optional[Dict[str, Any]] = None
+    question_number: Optional[int] = None
+    total_questions: Optional[int] = None
+    clarification_question: Optional[str] = None
+    interview_completed: Optional[bool] = None
+    thank_you_message: Optional[str] = None
+
+class InterviewStartRequest(BaseModel):
+    pass
     
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage application lifecycle events."""
+    global whisper_model
+    
     # Startup
     logger.info(f"[STARTUP] Starting {settings.app.app_name}")
-    logger.info(f"[CONFIG] Upload directory: {upload_dir}")
+    logger.info(f"[CONFIG] Upload directory: {settings.app.upload_dir}")
     logger.info(f"[CONFIG] Debug mode: {settings.app.debug}")
+
+    # Initialize Whisper model
+    if WHISPER_AVAILABLE:
+        try:
+            logger.info("[STARTUP] Loading Whisper model...")
+            whisper_model = whisper.load_model("base")
+            logger.info("[SUCCESS] Whisper model loaded successfully")
+        except Exception as e:
+            logger.error(f"[ERROR] Failed to load Whisper model: {e}")
+            whisper_model = None
+    else:
+        logger.warning("[WARNING] Whisper not available - audio transcription disabled")
 
     # Test Qdrant connection
     try:
@@ -155,6 +263,23 @@ app.add_middleware(
 
 # Global resume parser instance
 resume_parser = ResumeParser()
+
+# Global Whisper model instance
+whisper_model = None
+
+def transcribe_audio(audio_file_path: str) -> str:
+    """Transcribe audio file using Whisper model."""
+    global whisper_model
+    
+    if not WHISPER_AVAILABLE or whisper_model is None:
+        raise Exception("Whisper not available or not initialized")
+    
+    try:
+        result = whisper_model.transcribe(audio_file_path)
+        return result["text"].strip()
+    except Exception as e:
+        logger.error(f"Whisper transcription failed: {e}")
+        raise Exception(f"Audio transcription failed: {str(e)}")
 
 # Ensure upload directory exists
 upload_dir = Path(settings.app.upload_dir)
@@ -4748,7 +4873,881 @@ async def save_interview_response(
         logger.error(f"Failed to save interview response for user {user_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Could not save interview response.")
 
+# --- Interview Session Endpoints ---
+
+@app.post("/users/{user_id}/interview-sessions", response_model=InterviewSessionInDB, status_code=201, summary="Create Interview Session", tags=["Interviews"])
+async def create_interview_session(user_id: str, session: InterviewSessionCreate):
+    """Create a new interview session for a user."""
+    if user_id != session.user_id:
+        raise HTTPException(status_code=403, detail="User ID mismatch.")
+    
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="Database connection failed.")
+    
+    try:
+        # Convert question_ids from strings to UUIDs if needed
+        question_ids = []
+        for qid in session.question_ids:
+            if isinstance(qid, str):
+                question_ids.append(uuid.UUID(qid))
+            else:
+                question_ids.append(qid)
+        
+        # Remove duplicates while preserving order
+        question_ids = list(dict.fromkeys(question_ids))
+        
+        # Convert candidate_ids from strings to UUIDs if needed
+        candidate_ids = None
+        if session.candidate_ids:
+            candidate_ids = []
+            for cid in session.candidate_ids:
+                if isinstance(cid, str):
+                    candidate_ids.append(uuid.UUID(cid))
+                else:
+                    candidate_ids.append(cid)
+        
+        new_session = await pg_client.create_interview_session(
+            user_id=user_id,
+            session_type=session.session_type,
+            question_ids=question_ids,
+            candidate_ids=candidate_ids
+        )
+        if not new_session:
+            raise HTTPException(status_code=500, detail="Failed to create interview session.")
+        return new_session
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to create interview session for user {user_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Could not create interview session.")
+
+# --- Interview Endpoints ---
+
+@app.get("/users/{user_id}/interviews", response_model=List[InterviewInDB], summary="Get User Interviews", tags=["Interviews"])
+async def get_user_interviews(user_id: str):
+    """Retrieve all interviews for a user."""
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="Database connection failed.")
+    
+    try:
+        interviews = await pg_client.get_user_interviews(user_id)
+        return interviews
+    except Exception as e:
+        logger.error(f"Failed to get interviews for user {user_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Could not retrieve interviews.")
+
+@app.post("/users/{user_id}/interviews", response_model=InterviewInDB, status_code=201, summary="Create Interview", tags=["Interviews"])
+async def create_interview(user_id: str, interview: InterviewCreate):
+    """Create a new interview for a user."""
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="Database connection failed.")
+    
+    try:
+        new_interview = await pg_client.create_interview(user_id, interview)
+        if not new_interview:
+            raise HTTPException(status_code=500, detail="Failed to create interview.")
+        return new_interview
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to create interview for user {user_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Could not create interview.")
+
+@app.get("/interviews/{interview_id}", response_model=InterviewInDB, summary="Get Interview", tags=["Interviews"])
+async def get_interview(interview_id: str):
+    """Retrieve a specific interview by ID."""
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="Database connection failed.")
+    
+    try:
+        interview = await pg_client.get_interview(interview_id)
+        if not interview:
+            raise HTTPException(status_code=404, detail="Interview not found.")
+        return interview
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get interview {interview_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Could not retrieve interview.")
+
+@app.put("/interviews/{interview_id}", response_model=InterviewInDB, summary="Update Interview", tags=["Interviews"])
+async def update_interview(interview_id: str, interview_update: InterviewUpdate):
+    """Update an existing interview."""
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="Database connection failed.")
+    
+    try:
+        updated_interview = await pg_client.update_interview(interview_id, interview_update)
+        if not updated_interview:
+            raise HTTPException(status_code=404, detail="Interview not found.")
+        return updated_interview
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to update interview {interview_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Could not update interview.")
+
+@app.delete("/interviews/{interview_id}", summary="Delete Interview", tags=["Interviews"])
+async def delete_interview(interview_id: str):
+    """Delete an interview."""
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="Database connection failed.")
+    
+    try:
+        deleted = await pg_client.delete_interview(interview_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Interview not found.")
+        return {"success": True, "message": "Interview deleted successfully."}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete interview {interview_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Could not delete interview.")
+
+@app.get("/users/{user_id}/interview-sessions", response_model=List[InterviewSessionInDB], summary="Get User Interview Sessions", tags=["Interviews"])
+async def get_user_interview_sessions(user_id: str):
+    """Retrieve all interview sessions for a user."""
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="Database connection failed.")
+    
+    try:
+        sessions = await pg_client.get_user_interview_sessions(user_id)
+        return sessions
+    except Exception as e:
+        logger.error(f"Failed to get interview sessions for user {user_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Could not retrieve interview sessions.")
+
+@app.get("/interview-sessions/{session_id}", response_model=InterviewSessionInDB, summary="Get Interview Session", tags=["Interviews"])
+async def get_interview_session(session_id: str):
+    """Retrieve a specific interview session by ID."""
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="Database connection failed.")
+    
+    try:
+        session = await pg_client.get_interview_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Interview session not found.")
+        return session
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get interview session {session_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Could not retrieve interview session.")
+
+@app.post("/interview-sessions/{session_id}/start", response_model=InterviewStartResponse, summary="Start Interview Session", tags=["Interviews"])
+async def start_interview_session(session_id: str, request: InterviewStartRequest):
+    """Start an interview session by setting it to active and returning the first question."""
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="Database connection failed.")
+    
+    try:
+        # Get the interview session
+        session = await pg_client.get_interview_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Interview session not found.")
+        
+        # Update session status to active and set current question index to 0
+        updated = await pg_client.update_interview_session_status(session_id, "active", 0)
+        if not updated:
+            raise HTTPException(status_code=500, detail="Failed to update interview session status.")
+        
+        # Get questions by IDs
+        question_ids = [uuid.UUID(qid) for qid in session.get("question_ids", [])]
+        questions = await pg_client.get_interview_questions_by_ids(question_ids)
+        
+        if not questions:
+            raise HTTPException(status_code=404, detail="No questions found for this interview session.")
+        
+        # Get the first question
+        first_question = questions[0]
+        
+        # Create welcome message
+        welcome_message = "Welcome to your interview! Let's begin with the first question."
+        
+        return InterviewStartResponse(
+            success=True,
+            session_id=session_id,
+            status="active",
+            welcome_message=welcome_message,
+            current_question={
+                "id": str(first_question["id"]),
+                "question_text": first_question.get("question_text") or first_question.get("question", ""),
+                "expected_answer": first_question.get("expected_answer", ""),
+                "category": first_question.get("category", "general"),
+            },
+            question_number=1,
+            total_questions=len(questions)
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to start interview session {session_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Could not start interview session.")
+
 # --- Call Initiation Endpoint ---
+
+@app.post("/interview-sessions/{session_id}/respond", response_model=InterviewResponseResponse, summary="Submit Interview Response", tags=["Interviews"])
+async def submit_interview_response(
+    session_id: str,
+    session_id_form: str = Form(..., description="Session ID (should match URL param)"),
+    question_id: str = Form(..., description="Question ID being answered"),
+    response_text: str = Form("", description="Text response from candidate"),
+    response_time_seconds: float = Form(30.0, description="Time taken to respond"),
+    audio_file: Optional[UploadFile] = File(None, description="Optional audio response file"),
+    audio_duration: Optional[float] = Form(None, description="Duration of audio file in seconds")
+):
+    """Submit a response to an interview question, with optional audio file upload."""
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="Database connection failed.")
+    
+    try:
+        # Validate session exists and is active
+        session = await pg_client.get_interview_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Interview session not found.")
+        
+        if session.get("status") != "active":
+            raise HTTPException(status_code=400, detail="Interview session is not active.")
+        
+        # Get current question index
+        current_index = session.get("current_question_index", 0)
+        question_ids = session.get("question_ids", [])
+        total_questions = len(question_ids)
+        
+        if current_index >= len(question_ids):
+            raise HTTPException(status_code=400, detail="No more questions in this session.")
+        
+        # Get all questions for the session
+        all_questions = await pg_client.get_interview_questions_by_ids([uuid.UUID(qid) for qid in question_ids])
+        if not all_questions or current_index >= len(all_questions):
+            raise HTTPException(status_code=404, detail="Question not found.")
+        
+        question = all_questions[current_index]
+        
+        # Handle audio file if provided
+        audio_file_path = None
+        if audio_file:
+            # Save audio file
+            audio_dir = Path(settings.app.upload_dir) / "interview_audio"
+            audio_dir.mkdir(exist_ok=True)
+            
+            file_extension = Path(audio_file.filename).suffix if audio_file.filename else ".wav"
+            audio_filename = f"{session_id}_{question_ids[current_index]}_{uuid.uuid4()}{file_extension}"
+            audio_file_path = audio_dir / audio_filename
+            
+            with open(audio_file_path, "wb") as f:
+                content = await audio_file.read()
+                f.write(content)
+            
+            # Transcribe audio if Whisper is available
+            if response_text == "" and audio_file_path:
+                try:
+                    transcript = transcribe_audio(str(audio_file_path))
+                    response_text = transcript
+                    logger.info(f"Audio transcribed successfully for session {session_id}")
+                except Exception as e:
+                    logger.error(f"Failed to transcribe audio for session {session_id}: {e}")
+                    response_text = "Audio transcription failed."
+        
+        # Generate evaluation using AI
+        evaluation = await _generate_response_evaluation(
+            question_text=question.get("question_text") or question.get("question", ""),
+            expected_answer=question.get("expected_answer", ""),
+            candidate_response=response_text,
+            audio_file_path=audio_file_path
+        )
+        
+        logger.info(f"Generated evaluation for session {session_id}: {evaluation}")
+        
+        # Extract is_match from evaluation
+        is_match = evaluation.get('is_match', False)
+        
+        # Save response to database
+        transcript_id = await pg_client.save_interview_transcript(
+            session_id=uuid.UUID(session_id),
+            question_id=uuid.UUID(question_ids[current_index]),
+            candidate_response=response_text,
+            audio_file_path=str(audio_file_path) if audio_file_path else None,
+            audio_duration=audio_duration,
+            response_time_seconds=response_time_seconds,
+            is_match=is_match
+        )
+        
+        if not transcript_id:
+            raise HTTPException(status_code=500, detail="Failed to save interview response.")
+        
+        # Save the evaluation to the transcript
+        success = await pg_client.update_transcript_evaluation(str(transcript_id), evaluation)
+        if success:
+            logger.info(f"Successfully saved evaluation for transcript {transcript_id}")
+        else:
+            logger.error(f"Failed to save evaluation for transcript {transcript_id}")
+        
+        # Determine next action based on classification status
+        status = evaluation.get('status', 'CLARIFICATION_NEEDED')
+        next_action = {}
+        
+        if status == 'ANSWERED_SUCCESS':
+            # Proceed to next question or complete interview
+            if current_index + 1 >= total_questions:
+                # Interview completed
+                next_action = {
+                    "action": "interview_completed",
+                    "message": "Thank you for completing the interview. Your responses have been recorded."
+                }
+                # Update session status
+                await pg_client.update_interview_session_status(session_id, "completed", current_index + 1)
+            else:
+                # Move to next question
+                next_index = current_index + 1
+                await pg_client.update_interview_session_status(session_id, "active", next_index)
+                
+                if next_index < len(all_questions):
+                    next_question = all_questions[next_index]
+                    next_action = {
+                        "action": "next_question",
+                        "message": f"Moving to question {next_index + 1}.",
+                    }
+                else:
+                    next_action = {
+                        "action": "interview_completed",
+                        "message": "Thank you for completing the interview."
+                    }
+        elif status == 'CLARIFICATION_NEEDED':
+            # Stay on current question and seek clarification
+            next_action = {
+                "action": "seek_clarification",
+                "message": "I need more details to understand your response. Could you please clarify or provide more information?"
+            }
+            # Do not update session status - stay on current question
+            next_question = None
+        
+        response_data = InterviewResponseResponse(
+            success=True,
+            transcript_id=str(transcript_id),
+            evaluation=evaluation,
+            next_action=next_action,
+            question_number=current_index + 1,
+            total_questions=total_questions,
+            interview_completed=(next_action.get("action") == "interview_completed")
+        )
+        
+        if next_action.get("action") == "next_question" and next_question:
+            response_data.next_question = {
+                "id": str(next_question["id"]),
+                "question_text": next_question.get("question_text") or next_question.get("question", ""),
+                "expected_answer": next_question.get("expected_answer", ""),
+                "category": next_question.get("category", "general")
+            }
+            response_data.question_number = next_index + 1
+        
+        if response_data.interview_completed:
+            response_data.thank_you_message = "Thank you for completing the interview!"
+        
+        return response_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to process interview response for session {session_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Could not process interview response.")
+
+
+@app.post("/interview-sessions/{session_id}/action", response_model=InterviewActionResponse, summary="Handle Interview Actions", tags=["Interviews"])
+async def handle_interview_action(
+    session_id: str,
+    action_request: InterviewActionRequest
+):
+    """Handle interview actions like skip, clarify, or end."""
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="Database connection failed.")
+    
+    try:
+        # Validate session exists and is active
+        session = await pg_client.get_interview_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Interview session not found.")
+        
+        if session.get("status") != "active":
+            raise HTTPException(status_code=400, detail="Interview session is not active.")
+        
+        current_index = session.get("current_question_index", 0)
+        question_ids = session.get("question_ids", [])
+        total_questions = len(question_ids)
+        
+        action = action_request.action
+        response_data = InterviewActionResponse(
+            success=True,
+            action=action,
+            message="",
+            question_number=current_index + 1,
+            total_questions=total_questions,
+            interview_completed=False
+        )
+        
+        if action == "skip":
+            # Move to next question
+            if current_index + 1 >= total_questions:
+                # Interview completed
+                response_data.message = "Interview completed - no more questions to skip to."
+                response_data.interview_completed = True
+                await pg_client.update_interview_session_status(session_id, "completed", current_index + 1)
+            else:
+                next_index = current_index + 1
+                await pg_client.update_interview_session_status(session_id, "active", next_index)
+                
+                # Get next question details
+                # Safely convert question_ids to UUIDs, filtering out invalid ones
+                valid_question_ids = []
+                for qid in question_ids:
+                    try:
+                        valid_question_ids.append(uuid.UUID(str(qid)))
+                    except (ValueError, TypeError):
+                        logger.warning(f"Invalid question ID in session {session_id}: {qid}")
+                
+                all_questions = await pg_client.get_interview_questions_by_ids(valid_question_ids)
+                if all_questions and next_index < len(all_questions):
+                    next_question = all_questions[next_index]
+                    response_data.message = f"Skipped question {current_index + 1}. Moving to question {next_index + 1}."
+                    response_data.next_question = {
+                        "id": str(next_question["id"]),
+                        "question_text": next_question.get("question_text") or next_question.get("question", ""),
+                        "expected_answer": next_question.get("expected_answer", ""),
+                        "category": next_question.get("category", "general")
+                    }
+                    response_data.question_number = next_index + 1
+                else:
+                    response_data.message = f"Skipped question {current_index + 1}."
+        
+        elif action == "clarify":
+            # Generate a clarification question based on current question
+            # Safely convert question_ids to UUIDs, filtering out invalid ones
+            valid_question_ids = []
+            for qid in question_ids:
+                try:
+                    valid_question_ids.append(uuid.UUID(str(qid)))
+                except (ValueError, TypeError):
+                    logger.warning(f"Invalid question ID in session {session_id}: {qid}")
+            
+            all_questions = await pg_client.get_interview_questions_by_ids(valid_question_ids)
+            if all_questions and current_index < len(all_questions):
+                current_question = all_questions[current_index]
+                question_text = current_question.get("question_text") or current_question.get("question", "")
+                
+                # Generate clarification using AI
+                try:
+                    from src.resume_parser.clients.azure_openai import azure_client
+                    client = azure_client.get_sync_client()
+                    chat_deployment = azure_client.get_chat_deployment()
+                    
+                    prompt = f"""
+                    The candidate asked for clarification on this interview question:
+                    "{question_text}"
+                    
+                    Generate a brief, helpful clarification question that helps them understand what is being asked.
+                    Keep it concise and focused on clarifying the original question.
+                    """
+                    
+                    ai_response = client.chat.completions.create(
+                        model=chat_deployment,
+                        messages=[
+                            {"role": "system", "content": "You are an expert interviewer helping candidates understand questions better."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        max_tokens=150,
+                        temperature=0.3
+                    )
+                    
+                    clarification = ai_response.choices[0].message.content.strip()
+                    response_data.message = f"Clarification: {clarification}"
+                    
+                except Exception as e:
+                    logger.warning(f"Failed to generate AI clarification: {e}")
+                    response_data.message = "Could you please elaborate on what aspect of the question you'd like clarified?"
+            else:
+                response_data.message = "No current question to clarify."
+        
+        elif action == "end":
+            # End the interview
+            response_data.message = "Interview ended by candidate."
+            response_data.interview_completed = True
+            await pg_client.update_interview_session_status(session_id, "completed", current_index)
+        
+        else:
+            raise HTTPException(status_code=400, detail=f"Unknown action: {action}")
+        
+        return response_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to process interview action for session {session_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Could not process interview action.")
+
+@app.get("/interview-sessions/{session_id}/transcripts", summary="Get Interview Transcripts", tags=["Interviews"])
+async def get_interview_transcripts(session_id: str):
+    """Retrieve all transcripts for a specific interview session."""
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="Database connection failed.")
+    
+    try:
+        transcripts = await pg_client.get_interview_transcripts(session_id)
+        return transcripts
+    except Exception as e:
+        logger.error(f"Failed to get transcripts for session {session_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Could not retrieve interview transcripts.")
+
+@app.post("/interview-sessions/{session_id}/regenerate-evaluations", summary="Regenerate AI Evaluations", tags=["Interviews"])
+async def regenerate_evaluations(session_id: str):
+    """Regenerate AI evaluations for all transcripts in a session."""
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="Database connection failed.")
+    
+    try:
+        # Get all transcripts for the session
+        transcripts = await pg_client.get_interview_transcripts(session_id)
+        
+        updated_count = 0
+        for transcript in transcripts:
+            # Get question details
+            question_id = transcript.get('question_id')
+            if question_id:
+                # Get question details
+                questions = await pg_client.get_interview_questions_by_ids([question_id])
+                if questions:
+                    question = questions[0]
+                    question_text = question.get("question_text") or question.get("question", "")
+                    expected_answer = question.get("expected_answer", "")
+                    candidate_response = transcript.get('candidate_response', '')
+                    
+                    # Generate evaluation
+                    evaluation = await _generate_response_evaluation(
+                        question_text=question_text,
+                        expected_answer=expected_answer,
+                        candidate_response=candidate_response
+                    )
+                    
+                    # Save evaluation
+                    success = await pg_client.update_transcript_evaluation(str(transcript['id']), evaluation)
+                    if success:
+                        updated_count += 1
+                        logger.info(f"Regenerated evaluation for transcript {transcript['id']}")
+        
+        return {"success": True, "updated_count": updated_count}
+    
+    except Exception as e:
+        logger.error(f"Failed to regenerate evaluations for session {session_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Could not regenerate evaluations.")
+
+@app.post("/interview-sessions/{session_id}/decisions", summary="Save Interviewer Decision", tags=["Interviews"])
+async def save_interviewer_decision(
+    session_id: str,
+    decision: str = Form(..., description="Decision value"),
+    resume_id: str = Form(..., description="Resume ID"),
+    notes: Optional[str] = Form(None, description="Optional notes")
+):
+    """Save an interviewer decision for a session."""
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="Database connection failed.")
+    
+    try:
+        # Validate session exists
+        session = await pg_client.get_interview_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Interview session not found.")
+        
+        # Save the decision
+        result = await pg_client.save_interviewer_decision(
+            session_id=session_id,
+            resume_id=resume_id,
+            decision=decision,
+            notes=notes
+        )
+        
+        if not result:
+            raise HTTPException(status_code=500, detail="Failed to save decision.")
+        
+        return {"success": True, "message": "Decision saved successfully."}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to save decision for session {session_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Could not save interviewer decision.")
+
+
+
+
+
+async def evaluate_answer_match_with_llm(question, transcript):
+    """
+    Evaluates if a candidate's answer matches the expected criteria for a 'closed' question.
+    Enhanced to handle various question types and expected answer formats.
+    """
+    if not question.expected_answer:
+        return {'is_match': False}
+
+    expected = question.expected_answer.strip()
+    response = transcript.strip()
+
+    # Quick preprocessing for common cases
+    def normalize_text(text):
+        return text.lower().strip()
+
+    expected_norm = normalize_text(expected)
+    response_norm = normalize_text(response)
+
+    # Handle yes/no questions
+    if expected_norm in ['yes', 'no', 'y', 'n']:
+        affirmative = ['yes', 'y', 'yeah', 'yep', 'sure', 'absolutely', 'definitely', 'certainly', 'of course']
+        negative = ['no', 'n', 'nope', 'nah', 'never', 'not really', 'not at all']
+        
+        if expected_norm in ['yes', 'y']:
+            return {'is_match': any(word in response_norm for word in affirmative)}
+        elif expected_norm in ['no', 'n']:
+            return {'is_match': any(word in response_norm for word in negative)}
+
+    # Handle numeric ranges (e.g., "40,000-50,000", "80000-95000")
+    import re
+    range_pattern = re.compile(r'(\d{1,3}(?:,\d{3})*(?:\.\d+)?)\s*[-–]\s*(\d{1,3}(?:,\d{3})*(?:\.\d+)?)')
+    range_match = range_pattern.search(expected_norm)
+    if range_match:
+        try:
+            min_val = float(range_match.group(1).replace(',', ''))
+            max_val = float(range_match.group(2).replace(',', ''))
+            
+            # Extract numbers from response
+            numbers_in_response = re.findall(r'\d{1,3}(?:,\d{3})*(?:\.\d+)?', response)
+            if numbers_in_response:
+                response_num = float(numbers_in_response[0].replace(',', ''))
+                return {'is_match': min_val <= response_num <= max_val}
+        except ValueError:
+            pass
+
+    # Handle "any number" patterns
+    if 'any number' in expected_norm.lower():
+        numbers_in_response = re.findall(r'\d+', response)
+        return {'is_match': len(numbers_in_response) > 0}
+
+    # Use LLM for complex cases
+    try:
+        from src.resume_parser.clients.azure_openai import azure_client
+        import json
+        
+        client = azure_client.get_sync_client()
+        chat_deployment = azure_client.get_chat_deployment()
+        
+        # Enhanced prompt with more context
+        user_prompt = f"""
+**Question Type Analysis:**
+- Question: "{question.question_text}"
+- Expected Answer: "{expected}"
+- Candidate Response: "{response}"
+
+**Additional Context:**
+- If this is a salary question, accept reasonable numeric responses
+- If this is a yes/no question, accept clear affirmative/negative answers
+- If this is a range question, check if the response falls within the range
+- Consider synonyms, abbreviations, and reasonable variations
+"""
+        
+        response_llm = client.chat.completions.create(
+            model=chat_deployment,
+            response_format={"type": "json_object"},
+            messages=[
+                {"role": "system", "content": MATCH_PROMPT_TEMPLATE},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.1,  # Lower temperature for more consistent evaluation
+            max_tokens=100
+        )
+        
+        llm_output_content = response_llm.choices[0].message.content
+        parsed_json = json.loads(llm_output_content)
+        
+        if 'is_match' in parsed_json:
+            return parsed_json
+        else:
+            raise json.JSONDecodeError("Missing 'is_match' key", llm_output_content, 0)
+    except Exception as e:
+        logger.error(f"Error during answer match evaluation with Azure OpenAI: {e}")
+        # Fallback: check for basic substring match
+        return {'is_match': expected_norm in response_norm}
+
+
+async def _generate_response_evaluation(
+    question_text: str,
+    expected_answer: str,
+    candidate_response: str,
+    audio_file_path: Optional[Path] = None
+) -> Dict[str, Any]:
+    """Generate AI classification of the candidate's response for interview flow control."""
+    try:
+        from src.resume_parser.clients.azure_openai import azure_client
+        
+        client = azure_client.get_sync_client()
+        chat_deployment = azure_client.get_chat_deployment()
+        
+        # Enhanced classification prompt that considers question type
+        is_salary_question = "salary" in question_text.lower()
+        is_yes_no_question = expected_answer.lower().strip() in ["yes", "no"]
+        
+        system_prompt = """You are a screening call classification assistant. Your only job is to determine the status of the candidate's response to the interview question.
+Follow these rules exactly:
+1. Analyze the Candidate's Transcript and the Question.
+2. Determine if the transcript is a direct answer, a refusal/evasion, or completely unrelated.
+3. Respond with ONLY a valid JSON object containing the status.
+
+- If the candidate gives a clear, direct answer to the question, set status to 'ANSWERED_SUCCESS'.
+- If the candidate refuses, evades, asks for the question to be repeated, or provides a clearly unrelated answer, set status to 'CLARIFICATION_NEEDED'.
+- For salary questions: Accept detailed responses that explain focusing on role fit and mutual benefits as valid answers.
+- For yes/no questions: Accept clear affirmative/negative answers.
+
+Return ONLY a JSON object in this exact format:
+{ "status": "<'ANSWERED_SUCCESS' | 'CLARIFICATION_NEEDED'>" }
+"""
+        
+        user_prompt = f"""
+**Question:** {question_text}
+**Expected Answer:** {expected_answer}
+**Candidate Response:** {candidate_response}
+
+**Additional Context:**
+{'This is a salary question - accept professional responses about focusing on role fit.' if is_salary_question else ''}
+{'This is a yes/no question - accept clear affirmative/negative answers.' if is_yes_no_question else ''}
+
+Analyze the candidate's response and classify it as either:
+- "ANSWERED_SUCCESS": If the response directly answers the question or provides relevant information
+- "CLARIFICATION_NEEDED": If the response is evasive, refuses to answer, is unclear, or doesn't address the question
+
+Return ONLY a JSON object in this exact format:
+{{ "status": "<'ANSWERED_SUCCESS' | 'CLARIFICATION_NEEDED'>" }}
+"""
+        
+        logger.info(f"Sending classification prompt to Azure OpenAI: {user_prompt[:200]}...")
+        
+        response = client.chat.completions.create(
+            model=chat_deployment,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            max_tokens=50,
+            temperature=0.1
+        )
+        
+        ai_response = response.choices[0].message.content
+        logger.info(f"Received AI classification response: {ai_response}")
+        
+        if ai_response:
+            # Parse JSON response
+            import json
+            classification = json.loads(ai_response.strip())
+            
+            status = classification.get('status', 'CLARIFICATION_NEEDED')
+            logger.info(f"Parsed classification: {status}")
+            
+            # Determine if the answer matches the expected answer
+            is_match = False
+            if expected_answer and candidate_response:
+                expected_norm = expected_answer.lower().strip()
+                response_norm = candidate_response.lower().strip()
+                
+                # For yes/no questions
+                if expected_norm in ['yes', 'no']:
+                    affirmative = ['yes', 'y', 'yeah', 'yep', 'sure', 'absolutely', 'definitely', 'certainly', 'of course']
+                    negative = ['no', 'n', 'nope', 'nah', 'never', 'not really', 'not at all']
+                    
+                    if expected_norm in ['yes', 'y']:
+                        is_match = any(word in response_norm for word in affirmative)
+                    elif expected_norm in ['no', 'n']:
+                        is_match = any(word in response_norm for word in negative)
+                else:
+                    # For other questions, check for substring match or semantic similarity
+                    is_match = expected_norm in response_norm or response_norm in expected_norm
+            
+            # Generate dynamic scores based on status and response analysis
+            if status == 'ANSWERED_SUCCESS':
+                # For successful answers, give higher scores
+                relevance_score = 9
+                completeness_score = 8
+                clarity_score = 9
+                overall_assessment = "Response successfully answers the question"
+                strengths = ["Direct answer provided", "Clear and relevant response"]
+                weaknesses = []
+            else:
+                # For clarification needed, give lower scores
+                relevance_score = 6
+                completeness_score = 5
+                clarity_score = 7
+                overall_assessment = "Response requires clarification"
+                strengths = ["Attempted to answer"]
+                weaknesses = ["Unclear or incomplete response", "May need follow-up"]
+            
+            # Return evaluation with dynamic scores
+            return {
+                "status": status,
+                "is_match": is_match,
+                "relevance_score": relevance_score,
+                "completeness_score": completeness_score,
+                "clarity_score": clarity_score,
+                "overall_assessment": overall_assessment,
+                "strengths": strengths,
+                "weaknesses": weaknesses,
+                "needs_clarification": status == 'CLARIFICATION_NEEDED',
+                "feedback": "Evaluation complete."
+            }
+        
+    except Exception as e:
+        logger.warning(f"Failed to generate AI classification: {e}")
+    
+    # Fallback classification
+    logger.info("Using fallback classification")
+    
+    # Basic fallback matching logic
+    is_match = False
+    if expected_answer and candidate_response:
+        expected_norm = expected_answer.lower().strip()
+        response_norm = candidate_response.lower().strip()
+        
+        if expected_norm in ['yes', 'no']:
+            affirmative = ['yes', 'y', 'yeah', 'yep', 'sure', 'absolutely', 'definitely', 'certainly', 'of course']
+            negative = ['no', 'n', 'nope', 'nah', 'never', 'not really', 'not at all']
+            
+            if expected_norm in ['yes', 'y']:
+                is_match = any(word in response_norm for word in affirmative)
+            elif expected_norm in ['no', 'n']:
+                is_match = any(word in response_norm for word in negative)
+        else:
+            is_match = expected_norm in response_norm
+    
+    fallback_eval = {
+        "status": "CLARIFICATION_NEEDED",
+        "is_match": is_match,
+        "relevance_score": 6,
+        "completeness_score": 5,
+        "clarity_score": 7,
+        "overall_assessment": "Response received and recorded.",
+        "strengths": ["Attempted to answer the question", "Clear communication"],
+        "weaknesses": ["Could provide more detail"],
+        "needs_clarification": True,
+        "feedback": "Thank you for your response. Could you please clarify?"
+    }
+    
+    return fallback_eval
 
 @app.post("/interviews/call", response_model=CallRecord, status_code=201, summary="Initiate an Interview Call", tags=["Interviews"])
 async def initiate_interview_call(call_request: CallInitiationRequest):

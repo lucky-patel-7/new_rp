@@ -1,7 +1,7 @@
 import requests
 
 # Test the /resumes endpoint with the user that has resumes
-url = 'http://localhost:8000/resumes'
+url = 'http://localhost:8002/resumes'
 params = {'user_id': '108849531532929381403', 'page': 1, 'page_size': 10}
 
 response = requests.get(url, params=params)

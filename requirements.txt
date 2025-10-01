@@ -16,6 +16,7 @@ python-docx==0.8.11           # DOC/DOCX parsing
 
 # AI & Embeddings (Azure OpenAI)
 openai==1.51.2                # OpenAI API for embeddings and parsing
+openai-whisper==20240930       # Local Whisper model for transcription
 
 # Basic utilities
 python-dotenv==1.1.0           # Environment variables

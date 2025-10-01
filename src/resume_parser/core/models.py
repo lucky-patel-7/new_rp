@@ -148,6 +148,8 @@ class InterviewQuestionBase(BaseModel):
     """Base model for an interview question."""
     user_id: str = Field(..., description="The ID of the user creating the question.")
     question_text: str = Field(..., max_length=1000, description="The text of the interview question.")
+    expected_answer: Optional[str] = Field(None, max_length=2000, description="The expected answer for the question.")
+    welcome_message: Optional[str] = Field(None, max_length=500, description="A welcome message to display before the question.")
     category: Optional[str] = Field(None, max_length=100, description="A category for the question (e.g., 'Technical', 'Behavioral').")
 
 
@@ -159,6 +161,8 @@ class InterviewQuestionCreate(InterviewQuestionBase):
 class InterviewQuestionUpdate(BaseModel):
     """Model for updating an existing interview question. All fields are optional."""
     question_text: Optional[str] = Field(None, max_length=1000, description="The updated text of the interview question.")
+    expected_answer: Optional[str] = Field(None, max_length=2000, description="The updated expected answer for the question.")
+    welcome_message: Optional[str] = Field(None, max_length=500, description="The updated welcome message for the question.")
     category: Optional[str] = Field(None, max_length=100, description="The updated category for the question.")
 
 
@@ -187,6 +191,36 @@ class CallRecord(BaseModel):
     call_status: str
     initiated_at: datetime
     notes: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class InterviewTranscript(BaseModel):
+    """Model representing an interview transcript entry."""
+    id: uuid.UUID
+    session_id: uuid.UUID
+    question_id: uuid.UUID
+    candidate_response: Optional[str] = None
+    ai_evaluation: Optional[str] = None
+    audio_file_path: Optional[str] = None
+    audio_duration: Optional[float] = None
+    response_time_seconds: Optional[float] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class InterviewerDecision(BaseModel):
+    """Model representing an interviewer decision on a candidate."""
+    id: uuid.UUID
+    session_id: uuid.UUID
+    resume_id: uuid.UUID
+    decision: str  # 'accept', 'reject', 'maybe'
+    notes: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True
