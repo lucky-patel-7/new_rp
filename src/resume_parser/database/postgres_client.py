@@ -1785,7 +1785,7 @@ class PostgresClient:
                 return None
 
 
-    async def create_interview_session(self, user_id: str, session_type: str, question_ids: List[uuid.UUID], candidate_ids: Optional[List[uuid.UUID]] = None) -> Optional[Dict[str, Any]]:
+    async def create_interview_session(self, user_id: str, session_type: str, question_ids: List[uuid.UUID], candidate_ids: Optional[List[uuid.UUID]] = None, metadata: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
         """Create a new interview session."""
         ok = await self.connect()
         if not ok:
@@ -1796,14 +1796,15 @@ class PostgresClient:
             import json
             question_ids_json = json.dumps([str(uid) for uid in question_ids]) if question_ids else json.dumps([])
             candidate_ids_json = json.dumps([str(uid) for uid in candidate_ids]) if candidate_ids else None
+            metadata_json = json.dumps(metadata) if metadata else json.dumps({})
             
             row = await conn.fetchrow(
                 """
-                INSERT INTO public.interview_sessions (user_id, session_type, question_ids, candidate_ids)
-                VALUES ($1, $2, $3, $4)
-                RETURNING id, user_id, session_type, question_ids, candidate_ids, current_question_index, status, created_at, updated_at
+                INSERT INTO public.interview_sessions (user_id, session_type, question_ids, candidate_ids, metadata, status)
+                VALUES ($1, $2, $3, $4, $5, $6)
+                RETURNING id, user_id, session_type, question_ids, candidate_ids, current_question_index, status, metadata, created_at, updated_at
                 """,
-                user_id, session_type, question_ids_json, candidate_ids_json
+                user_id, session_type, question_ids_json, candidate_ids_json, metadata_json, 'created'
             )
             if row:
                 row_dict = dict(row)
@@ -1829,6 +1830,19 @@ class PostgresClient:
                         row_dict['candidate_ids'] = []
                 else:
                     row_dict['candidate_ids'] = None
+
+                # Parse metadata
+                if 'metadata' in row_dict and row_dict['metadata'] is not None:
+                    if isinstance(row_dict['metadata'], str):
+                        try:
+                            row_dict['metadata'] = json.loads(row_dict['metadata'])
+                        except (json.JSONDecodeError, TypeError):
+                            row_dict['metadata'] = {}
+                    elif not isinstance(row_dict['metadata'], dict):
+                        row_dict['metadata'] = {}
+                else:
+                    row_dict['metadata'] = {}
+
                 return row_dict
         return None
 
@@ -1866,6 +1880,19 @@ class PostgresClient:
                         row_dict['candidate_ids'] = []
                 else:
                     row_dict['candidate_ids'] = None
+
+                # Parse metadata
+                if 'metadata' in row_dict and row_dict['metadata'] is not None:
+                    if isinstance(row_dict['metadata'], str):
+                        try:
+                            row_dict['metadata'] = json.loads(row_dict['metadata'])
+                        except (json.JSONDecodeError, TypeError):
+                            row_dict['metadata'] = {}
+                    elif not isinstance(row_dict['metadata'], dict):
+                        row_dict['metadata'] = {}
+                else:
+                    row_dict['metadata'] = {}
+
                 return row_dict
             return None
 
@@ -1907,6 +1934,18 @@ class PostgresClient:
                         row_dict['candidate_ids'] = []
                 else:
                     row_dict['candidate_ids'] = None
+
+                # Parse metadata
+                if 'metadata' in row_dict and row_dict['metadata'] is not None:
+                    if isinstance(row_dict['metadata'], str):
+                        try:
+                            row_dict['metadata'] = json.loads(row_dict['metadata'])
+                        except (json.JSONDecodeError, TypeError):
+                            row_dict['metadata'] = {}
+                    elif not isinstance(row_dict['metadata'], dict):
+                        row_dict['metadata'] = {}
+                else:
+                    row_dict['metadata'] = {}
 
                 result.append(row_dict)
             return result
@@ -2149,6 +2188,64 @@ class PostgresClient:
                 logger.error(f"[PG] Failed to update transcript evaluation: {e}")
                 return False
 
+    async def get_pending_telegram_session(self, telegram_username: str) -> Optional[Dict[str, Any]]:
+        """Get pending telegram interview session for a username."""
+        ok = await self.connect()
+        if not ok:
+            return None
+        assert self._pool is not None
+        async with self._pool.acquire() as conn:
+            # Query for telegram sessions that are not yet started
+            row = await conn.fetchrow(
+                """
+                SELECT * FROM public.interview_sessions 
+                WHERE session_type = 'telegram' 
+                AND status = 'created'
+                AND metadata->>'telegram_username' = $1
+                ORDER BY created_at DESC
+                LIMIT 1
+                """,
+                telegram_username
+            )
+            if row:
+                row_dict = dict(row)
+                # Parse JSONB columns back to Python objects
+                if 'question_ids' in row_dict and row_dict['question_ids'] is not None:
+                    if isinstance(row_dict['question_ids'], str):
+                        try:
+                            row_dict['question_ids'] = json.loads(row_dict['question_ids'])
+                        except (json.JSONDecodeError, TypeError):
+                            row_dict['question_ids'] = []
+                    elif not isinstance(row_dict['question_ids'], list):
+                        row_dict['question_ids'] = []
+                else:
+                    row_dict['question_ids'] = []
+
+                if 'candidate_ids' in row_dict and row_dict['candidate_ids'] is not None:
+                    if isinstance(row_dict['candidate_ids'], str):
+                        try:
+                            row_dict['candidate_ids'] = json.loads(row_dict['candidate_ids'])
+                        except (json.JSONDecodeError, TypeError):
+                            row_dict['candidate_ids'] = []
+                    elif not isinstance(row_dict['candidate_ids'], list):
+                        row_dict['candidate_ids'] = []
+                else:
+                    row_dict['candidate_ids'] = None
+
+                # Parse metadata
+                if 'metadata' in row_dict and row_dict['metadata'] is not None:
+                    if isinstance(row_dict['metadata'], str):
+                        try:
+                            row_dict['metadata'] = json.loads(row_dict['metadata'])
+                        except (json.JSONDecodeError, TypeError):
+                            row_dict['metadata'] = {}
+                    elif not isinstance(row_dict['metadata'], dict):
+                        row_dict['metadata'] = {}
+                else:
+                    row_dict['metadata'] = {}
+
+                return row_dict
+        return None
 
 pg_client = PostgresClient()
 

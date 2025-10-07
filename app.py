@@ -36,6 +36,7 @@ from src.resume_parser.utils.file_handler import FileHandler
 from src.resume_parser.clients.azure_openai import azure_client
 from config.settings import settings
 
+
 # Setup logging
 setup_logging()
 logger = get_logger(__name__)
@@ -207,6 +208,15 @@ class InterviewStartRequest(BaseModel):
     session_id: str = Field(..., description="The ID of the interview session to start.")
     resume_id: Optional[str] = Field(None, description="The ID of the resume/candidate (for live interviews).")
     
+
+
+
+class TelegramInterviewRequest(BaseModel):
+    user_id: str = Field(..., description="The ID of the user initiating the interview.")
+    telegram_username: str = Field(..., description="The candidate's Telegram username (with @).")
+    welcome_message: Optional[str] = Field("Welcome to your interview! Please reply with 'start' to begin.", description="Custom welcome message.")
+    question_ids: List[str] = Field(..., description="List of question IDs to include in the interview.")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -985,7 +995,12 @@ async def upload_resume(file: UploadFile = File(...), user_id: Optional[str] = F
             except Exception as exc:
                 logger.warning(f"[UPLOAD] Duplicate check skipped for user {user_id}: {exc}")
             if duplicate_resume_id:
-                raise HTTPException(status_code=409, detail="Duplicate resume detected for this user.")
+                # Allow re-upload of the same resume for telegram bot use case
+                if user_id == "telegram_bot":
+                    logger.info(f"[UPLOAD] Allowing duplicate resume upload for telegram bot user {user_id}")
+                    duplicate_resume_id = None
+                else:
+                    raise HTTPException(status_code=409, detail="Duplicate resume detected for this user.")
 
         logger.info(f"[INFO] File size: {file_size} bytes")
 
@@ -5875,6 +5890,70 @@ async def initiate_interview_call(call_request: CallInitiationRequest):
         logger.error(f"Error initiating call for resume {call_request.resume_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Could not initiate the call.")
 
+
+@app.post("/telegram-interview/initiate", response_model=dict, status_code=201, summary="Initiate Telegram Interview", tags=["Interviews"])
+async def initiate_telegram_interview(request: TelegramInterviewRequest):
+    """
+    Initiates a Telegram interview by sending a welcome message to the candidate
+    and creating an interview session with the selected questions.
+    """
+    ok = await pg_client.connect()
+    if not ok:
+        raise HTTPException(status_code=503, detail="Database connection failed.")
+
+    # Validate telegram username format
+    if not request.telegram_username.startswith('@'):
+        raise HTTPException(status_code=400, detail="Telegram username must start with @")
+
+    # Validate that questions exist
+    if not request.question_ids:
+        raise HTTPException(status_code=400, detail="At least one question must be selected")
+
+    # Check if questions exist
+    for question_id_str in request.question_ids:
+        try:
+            question_id = uuid.UUID(question_id_str)
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Invalid question ID format: {question_id_str}")
+        question = await pg_client.get_interview_question(question_id)
+        if not question:
+            raise HTTPException(status_code=400, detail=f"Question {question_id_str} not found")
+
+    logger.info(f"Initiating Telegram interview for user {request.user_id} with candidate {request.telegram_username}")
+
+    try:
+        # Create interview session first
+        session_data = {
+            "user_id": request.user_id,
+            "session_type": "telegram",
+            "question_ids": [uuid.UUID(qid) for qid in request.question_ids],
+            "candidate_ids": [],  # No specific candidate resume for telegram interviews
+            "metadata": {
+                "telegram_username": request.telegram_username,
+                "welcome_message": request.welcome_message
+            }
+        }
+        
+        session = await pg_client.create_interview_session(**session_data)
+        if not session:
+            raise HTTPException(status_code=500, detail="Failed to create interview session")
+
+        # Session created successfully - bot will handle messaging reactively
+        logger.info(f"Telegram interview session created for {request.telegram_username}. Candidate must start the bot to begin.")
+
+        logger.info(f"Telegram interview initiated for {request.telegram_username} with session {session.get('id')}")
+
+        return {
+            "success": True,
+            "session_id": session.get("id"),
+            "message": f"Interview session created for {request.telegram_username}. The candidate needs to message the bot to start.",
+            "status": "created"
+        }
+
+    except Exception as e:
+        logger.error(f"Error initiating Telegram interview: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Could not initiate Telegram interview.")
+
 if __name__ == "__main__":
     import uvicorn
 
@@ -6608,9 +6687,3 @@ async def update_user_search_prompt_feedback(
         raise HTTPException(status_code=404, detail="Prompt not found or update failed")
 
     return {"success": True, "id": prompt_id, "liked": liked_norm}
-
-
-
-
-
-

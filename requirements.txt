@@ -29,3 +29,7 @@ regex==2023.10.3              # Enhanced regex for text processing
 
 # HTTP client (for external APIs)
 httpx==0.28.1                  # HTTP requests
+
+# Telegram Bot
+python-telegram-bot==21.4      # Telegram bot API
+requests==2.32.3               # HTTP requests for Telegram
