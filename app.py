@@ -125,6 +125,7 @@ class InterviewSessionInDB(BaseModel):
     status: str  # 'active', 'completed', 'paused'
     created_at: datetime
     updated_at: datetime
+    metadata: Optional[Dict[str, Any]] = None
 
     class Config:
         from_attributes = True

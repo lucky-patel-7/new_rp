@@ -463,6 +463,8 @@ class PostgresClient:
             );
         """)
         await conn.execute("CREATE INDEX IF NOT EXISTS idx_interview_sessions_user_id ON public.interview_sessions(user_id);")
+        # Ensure metadata column exists
+        await conn.execute("ALTER TABLE public.interview_sessions ADD COLUMN IF NOT EXISTS metadata JSONB;")
 
         logger.info("[PG] Ensured interview schema (questions, interviews, calls, sessions).")
 
